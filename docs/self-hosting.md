@@ -123,6 +123,58 @@ invites are transactional email and land in spam without proper domain authentic
 Send yourself a test envelope after configuring, and confirm the link resolves against
 your `PUBLIC_BASE_URL`.
 
+### Provider quickstart
+
+Ready-to-paste settings for common providers — swap in your own credentials and addresses.
+
+#### Gmail
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=you@gmail.com
+SMTP_PASSWORD=your-16-char-app-password
+SMTP_STARTTLS=true
+MAIL_FROM=you@gmail.com
+```
+
+`SMTP_PASSWORD` must be an [App Password](https://support.google.com/accounts/answer/185833),
+which requires 2-Step Verification on the account — your normal Google password will not
+authenticate, and `MAIL_FROM` should be the same Gmail address (Gmail rewrites mismatched
+senders).
+
+#### Amazon SES
+
+```env
+SMTP_HOST=email-smtp.us-east-1.amazonaws.com
+SMTP_PORT=587
+SMTP_USER=your-ses-smtp-username
+SMTP_PASSWORD=your-ses-smtp-password
+SMTP_STARTTLS=true
+MAIL_FROM=sign@yourdomain.com
+```
+
+SES SMTP credentials are generated in the SES console (Account dashboard → SMTP settings
+→ Create SMTP credentials) and are **not** your AWS access keys — IAM keys will not work
+here. Use the endpoint for your region, and note `MAIL_FROM` must be a verified identity;
+new SES accounts start in sandbox mode, where you can only send to verified recipients
+until you request production access.
+
+#### Postmark
+
+```env
+SMTP_HOST=smtp.postmarkapp.com
+SMTP_PORT=587
+SMTP_USER=your-postmark-server-token
+SMTP_PASSWORD=your-postmark-server-token
+SMTP_STARTTLS=true
+MAIL_FROM=sign@yourdomain.com
+```
+
+Postmark uses the Server API Token as **both** username and password; mail is delivered
+on the server's default transactional message stream, and `MAIL_FROM` must be a confirmed
+Sender Signature or verified domain.
+
 ---
 
 ## 3. Switching to Postgres
