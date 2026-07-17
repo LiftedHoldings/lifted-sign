@@ -406,8 +406,10 @@ has no third-party asset host in its trust boundary.
 
 - **Run it.** `python -m sign` (or `docker compose up`). The default is SQLite +
   console email + magic-link — nothing but `SIGN_SECRET` required.
-- **Health.** `GET /health` / `/healthz` → `{"ok": true, "service":
-  "lifted-sign"}`.
+- **Health.** `GET /healthz` → `{"status": "ok"}` (liveness — never touches the
+  DB). `GET /readyz` → `{"status": "ready", "checks": {"db": true}}` (readiness —
+  200 only when the database answers, else 503). `GET /health` → `{"ok": true,
+  "service": "lifted-sign"}` (back-compat alias).
 - **Operator console.** `/api/sign-ops/*` is closed by default and opens only to a
   signed-in account whose email is in `ADMIN_EMAILS`; empty `ADMIN_EMAILS` means
   every operator route returns 403, so a fresh self-host exposes no unauthenticated

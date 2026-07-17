@@ -202,7 +202,7 @@ def _apply_security_headers(resp):
 
 
 # --- CSRF / Origin defense --------------------------------------------------
-# Our own hostname(s), derived from PUBLIC_BASE_URL — never a hardcoded estate host. The
+# Our own hostname(s), derived from PUBLIC_BASE_URL — never a hardcoded host. The
 # request's own Host is always added at check time, and localhost is allowed for dev.
 def _own_hosts() -> set[str]:
     hosts = {"localhost", "127.0.0.1", "testserver"}

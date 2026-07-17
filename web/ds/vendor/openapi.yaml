@@ -102,7 +102,7 @@ info:
     ## Status vocabulary
 
     **Envelope status:** `draft` · `out_for_signature` · `completed` · `declined` ·
-    `voided` · `cancelled`.
+    `voided` · `expired`.
 
     **Signer status:** `pending` · `sent` · `viewed` · `signed` · `declined`.
 
@@ -161,8 +161,9 @@ info:
 
     ## Rate limits
 
-    The API permits a sustained **120 requests/minute** per account. Bursts above the
-    limit receive `429 Too Many Requests`; back off and retry with jitter. File uploads
+    Per-account request limits may apply on the managed cloud tier, so a well-behaved
+    client should handle `429 Too Many Requests` defensively — back off and retry with
+    jitter whenever it sees one. Self-hosted installs set their own policy. File uploads
     are capped at **60 MB** per PDF.
 
     ## Hosted documentation
@@ -1365,7 +1366,7 @@ components:
         status:
           type: string
           description: Lifecycle state.
-          enum: [draft, out_for_signature, completed, declined, voided, cancelled]
+          enum: [draft, out_for_signature, completed, declined, voided, expired]
           example: out_for_signature
         order_mode:
           type: string

@@ -165,6 +165,35 @@ def _totp_last_step_key(account_id: int) -> str:
     return f"sign_totp_last_step:{int(account_id)}"
 
 
+def verify_totp_for_pending(account_id: int, secret_b32: str, code: str, window: int = 1) -> bool:
+    """Per-account TOTP verify against a NOT-YET-STORED pending secret (enrollment confirm).
+
+    Identical replay protection to :func:`verify_totp_for_account`, but the secret is supplied by
+    the caller (it lives in the enrollment cookie, not the account row yet). Using the per-account
+    ``sign_totp_last_step:{aid}`` marker instead of ``webauth.totp_verify``'s single GLOBAL marker
+    is what stops one account's confirm from spuriously rejecting another account's valid code in
+    the same 30-second step."""
+    if totp_locked(account_id):
+        return False
+    step = webauth._totp_match_step(secret_b32, code, window) if secret_b32 else None
+    if step is None:
+        totp_record(account_id, False)
+        return False
+    try:
+        last = int(db.get_setting(_totp_last_step_key(account_id), 0) or 0)
+    except (TypeError, ValueError):
+        last = 0
+    if step <= last:
+        totp_record(account_id, False)
+        return False
+    try:
+        db.set_setting(_totp_last_step_key(account_id), step)
+    except Exception:
+        return False
+    totp_record(account_id, True)
+    return True
+
+
 def verify_totp_for_account(account_id: int, code: str, window: int = 1) -> bool:
     """Per-account TOTP verify with a per-account single-use replay marker (T6). Mirrors
     webauth.totp_verify but keyed per account so one account's accepted step can't block

@@ -1,12 +1,11 @@
 /* ============================================================================
    LIFTED — COLOR TOKENS
    One charged accent leads; deep ink neutrals carry the interface.
-   Neutrals are shared across every Lifted product. The accent ramp is what
-   changes per brand (Payments = green, Sign = blue, …) — see the [data-brand]
-   theme scopes at the bottom of this file.
+   The accent ramp is the per-brand layer (Sign = lift blue) — see the
+   [data-brand] theme scope at the bottom of this file.
    ============================================================================ */
 :root {
-  /* ---- Neutrals: the ink spine (shared by all products) ---------------- */
+  /* ---- Neutrals: the ink spine ----------------------------------------- */
   --void:        #05080E;  /* deepest background, page base on dark */
   --ink-900:     #0B1020;  /* primary dark surface */
   --ink-800:     #141D31;  /* raised card surface */
@@ -19,58 +18,16 @@
   --mist-100:    #EFF3F9;  /* lightest surface, text on dark */
   --white:       #FFFFFF;
 
-  /* ---- Brand accent ramps (base values, referenced by themes) ---------- */
-  /* Payments — electric green */
-  --green-bright:#2BF5A6;
-  --green:       #00E18C;
-  --green-600:   #00B85C;
-  --green-700:   #00A356;
-  --green-800:   #007138;
-
-  /* Sign — lift blue */
+  /* ---- Accent ramp: lift blue (referenced by the brand theme) ---------- */
   --blue-bright: #5AA6FF;
   --blue:        #2E6BFF;
   --blue-600:    #1E6BFF;
   --blue-700:    #1E4FD6;
   --blue-800:    #143CA8;
 
-  /* PoS — electric violet  (defined by this system; no brand book supplied) */
-  --violet-bright:#9B7BFF;
-  --violet:      #7A5CFF;
-  --violet-600:  #5F3FEF;
-  --violet-700:  #4A2FD0;
-  --violet-800:  #34209C;
-
-  /* Holdings — royal indigo (parent wordmark) */
-  --indigo-bright:#5E7BFF;
-  --indigo:      #2D4BD8;
-  --indigo-600:  #243CB0;
-  --indigo-700:  #1B2E8A;
-
-  /* Gateway — signal orange (advanced routing between payment providers) */
-  --orange-bright:#FFA94D;
-  --orange:      #FF7A1A;
-  --orange-600:  #ED5E00;
-  --orange-700:  #C44A00;
-  --orange-800:  #8F3500;
-
-  /* Vending — pulse red (smart vending / unattended retail) */
-  --red-bright:  #FF6B6B;
-  --vred:        #F5333D;
-  --vred-600:    #D81E2A;
-  --vred-700:    #A8141F;
-  --vred-800:    #730C14;
-
-  /* ScreenCast — beam yellow (screen recording / broadcast) */
-  --yellow-bright:#FFD84D;
-  --yellow:      #FFC01E;
-  --yellow-600: #E0A400;
-  --yellow-700: #B07F00;
-  --yellow-800: #6E4F00;
+  --violet:      #7A5CFF;  /* processor accent (consumed by the app kit) */
 
   --cyan:        #19C7F5;  /* shared accent cyan — links, info highlights */
-  --teal:        #1AD4CF;  /* portal teal — second stop of the brand gradient */
-  --cyan-bright: #5FD0FF;  /* portal cyan — link / highlight on glass */
 
   /* ---- Functional ------------------------------------------------------ */
   --success:     #00E18C;
@@ -80,20 +37,20 @@
 
   /* ============================================================
      SEMANTIC ALIASES — author UIs against these, not raw values.
-     Default brand = Payments (green). Override with [data-brand].
+     Default (and only) brand scope = Sign (blue). Override with [data-brand].
      ============================================================ */
-  --brand:            var(--green);
-  --brand-bright:     var(--green-bright);
-  --brand-deep:       var(--green-600);
-  --brand-darker:     var(--green-800);
-  --brand-contrast:   var(--ink-900);     /* text/icon color on a solid brand fill */
-  --brand-tint:       rgba(0,225,140,0.12);
-  --brand-tint-strong:rgba(0,225,140,0.22);
+  --brand:            var(--blue);
+  --brand-bright:     var(--blue-bright);
+  --brand-deep:       var(--blue-700);
+  --brand-darker:     var(--blue-800);
+  --brand-contrast:   var(--white);       /* text/icon color on a solid brand fill */
+  --brand-tint:       rgba(46,107,255,0.14);
+  --brand-tint-strong:rgba(46,107,255,0.26);
   --brand-glow:       none; /* @kind shadow */  /* glow removed — professional, no neon */
 
   /* Brand gradient + glass (borrowed, cleaned up, from the live portal/signer).
      --brand-grad-to is overridden per brand scope; the gradients re-resolve. */
-  --brand-grad-to:    var(--teal);
+  --brand-grad-to:    var(--cyan);
   --grad-brand:       linear-gradient(120deg, var(--brand), var(--brand-grad-to));
   --grad-word:        linear-gradient(102deg, var(--white) 2%, var(--brand) 48%, var(--brand-grad-to) 86%);
   --glass-surface:    color-mix(in srgb, var(--ink-800) 68%, transparent);
@@ -122,7 +79,7 @@
   --text-body:        var(--mist-300);
   --text-muted:       var(--slate-400);
   --text-faint:       var(--slate-500);
-  --text-on-brand:    var(--ink-900);
+  --text-on-brand:    var(--white);
 
   /* Borders */
   --border-subtle:    rgba(174,184,208,0.10);
@@ -131,22 +88,13 @@
   --border-brand:     var(--brand);
 
   /* Focus ring */
-  --ring:             rgba(0,225,140,0.55);
+  --ring:             rgba(46,107,255,0.60);
 }
 
 /* ============================================================
-   BRAND THEME SCOPES
-   Wrap any subtree in data-brand="payments|sign|pos|holdings"
-   (or set it on <html>) to retint the whole interface.
+   BRAND THEME SCOPE
+   Pages set data-brand="sign" on <html> to apply the Sign accent.
    ============================================================ */
-[data-brand="payments"] {
-  --brand: var(--green); --brand-bright: var(--green-bright); --brand-grad-to: var(--teal);
-  --brand-deep: var(--green-600); --brand-darker: var(--green-800);
-  --brand-tint: rgba(0,225,140,0.12); --brand-tint-strong: rgba(0,225,140,0.22);
-  --brand-glow: none; /* @kind shadow */
-  --brand-contrast: var(--ink-900); --text-on-brand: var(--ink-900);
-  --ring: rgba(0,225,140,0.55);
-}
 [data-brand="sign"] {
   --brand: var(--blue); --brand-bright: var(--blue-bright); --brand-grad-to: var(--cyan);
   --brand-deep: var(--blue-700); --brand-darker: var(--blue-800);
@@ -154,50 +102,6 @@
   --brand-glow: none; /* @kind shadow */
   --brand-contrast: var(--white); --text-on-brand: var(--white);
   --ring: rgba(46,107,255,0.60);
-}
-[data-brand="pos"] {
-  --brand: var(--violet); --brand-bright: var(--violet-bright); --brand-grad-to: var(--violet-bright);
-  --brand-deep: var(--violet-600); --brand-darker: var(--violet-800);
-  --brand-tint: rgba(122,92,255,0.14); --brand-tint-strong: rgba(122,92,255,0.26);
-  --brand-glow: none; /* @kind shadow */
-  --brand-contrast: var(--white); --text-on-brand: var(--white);
-  --ring: rgba(122,92,255,0.60);
-}
-[data-brand="holdings"] {
-  --brand: var(--indigo); --brand-bright: var(--indigo-bright); --brand-grad-to: var(--cyan-bright);
-  --brand-deep: var(--indigo-600); --brand-darker: var(--indigo-700);
-  --brand-tint: rgba(45,75,216,0.14); --brand-tint-strong: rgba(45,75,216,0.26);
-  --brand-glow: none; /* @kind shadow */
-  --brand-contrast: var(--white); --text-on-brand: var(--white);
-  --ring: rgba(45,75,216,0.60);
-}
-/* NOTE: this orange gateway brand applies to any surface that opts into
-   data-brand="gateway". A surface may re-override --brand inline to agree with
-   a different processor accent; when it does, that inline override is the source
-   of truth for that surface. Divergence is deliberate. */
-[data-brand="gateway"] {
-  --brand: var(--orange); --brand-bright: var(--orange-bright); --brand-grad-to: var(--orange-bright);
-  --brand-deep: var(--orange-600); --brand-darker: var(--orange-800);
-  --brand-tint: rgba(255,122,26,0.14); --brand-tint-strong: rgba(255,122,26,0.26);
-  --brand-glow: none; /* @kind shadow */
-  --brand-contrast: var(--ink-900); --text-on-brand: var(--ink-900);
-  --ring: rgba(255,122,26,0.60);
-}
-[data-brand="vending"] {
-  --brand: var(--vred); --brand-bright: var(--red-bright); --brand-grad-to: var(--red-bright);
-  --brand-deep: var(--vred-600); --brand-darker: var(--vred-800);
-  --brand-tint: rgba(245,51,61,0.14); --brand-tint-strong: rgba(245,51,61,0.26);
-  --brand-glow: none; /* @kind shadow */
-  --brand-contrast: var(--white); --text-on-brand: var(--white);
-  --ring: rgba(245,51,61,0.60);
-}
-[data-brand="screencast"] {
-  --brand: var(--yellow); --brand-bright: var(--yellow-bright); --brand-grad-to: var(--yellow-bright);
-  --brand-deep: var(--yellow-600); --brand-darker: var(--yellow-800);
-  --brand-tint: rgba(255,192,30,0.14); --brand-tint-strong: rgba(255,192,30,0.26);
-  --brand-glow: none; /* @kind shadow */
-  --brand-contrast: var(--ink-900); --text-on-brand: var(--ink-900);
-  --ring: rgba(255,192,30,0.55);
 }
 
 /* ============================================================
@@ -247,7 +151,7 @@
   --amber:    #B7791F;   /* alias some pages reference */
   --red:      #C81E4E;
   --danger:   #C81E4E;
-  --green-ink:#067A46;   /* readable green for text/marks on white (fills stay --green) */
+  --green-ink:#067A46;   /* readable green for text/marks on white (fills stay #00E18C) */
 
   /* ---- glass: DS glass is a white sheen tuned for dark grounds; on white it must
           become a warm-white frosted plane, or cards read as flat grey blocks. --- */

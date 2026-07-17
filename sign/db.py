@@ -564,6 +564,24 @@ def set_setting(key: str, value: Any) -> None:
         conn.close()
 
 
+def claim_once(key: str, value: Any = None) -> bool:
+    """Atomically claim a one-time marker. Returns True the first time ``key`` is claimed and
+    False on every subsequent call — the ``settings`` primary key makes the INSERT-if-absent
+    race-safe (``ON CONFLICT DO NOTHING`` touches no row on a repeat), so two concurrent callers
+    can never both win. Used to make single-use tokens (magic-link, email-verify) genuinely
+    one-time. The caller stores an expiry in ``value`` and is responsible for pruning."""
+    conn = connect()
+    try:
+        cur = conn.execute(
+            "INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO NOTHING",
+            (key, json.dumps(value)),
+        )
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
+
+
 # ---------------------------------------------------------------------------
 # Auth throttling — brute-force lockout (auth_limits) + fixed-window rate
 # limiting (auth_rate_limits). Both do their read-modify-write atomically in a

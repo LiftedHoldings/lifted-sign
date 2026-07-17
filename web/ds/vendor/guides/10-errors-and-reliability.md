@@ -125,7 +125,7 @@ client patterns.
 | `403` | `{ok,error}` | **Hard gate**: `subscription_inactive` (adds `billing:true`) or `email_unverified`. Send blocked, nothing dispatched. | No — resolve billing / verify email, then re-send. |
 | `404` | `{error}` | **Not found / not owned**: the envelope or template isn't yours (or doesn't exist), or a binary endpoint has no document yet. | No. |
 | `409` | `{ok,error}` | **Conflict**: `DELETE` on a sent envelope, or a page-edit on a non-draft. | No — `void` instead of delete. |
-| `429` | `{error}` | **Rate limited**: over 120 req/min. | **Yes** — back off with jitter. |
+| `429` | `{error}` | **Rate limited**: per-account limits may apply on the managed cloud. | **Yes** — back off with jitter. |
 | `5xx` / network | — | Transient server/transport error. | **Yes** — backoff, but verify state for non-idempotent calls. |
 
 A few of these are worth spelling out.
@@ -206,9 +206,9 @@ frozen) — one more reason to branch on `ok`. Full placement mechanics are in
 
 ## Rate limits & backing off
 
-The API permits a sustained **120 requests/minute** per account. Over that, requests get
-`429 Too Many Requests`. File uploads are independently capped at **60 MB** per PDF (a larger
-upload is a `400`, not a `429`).
+Per-account request limits may apply on the managed cloud tier; a client should handle
+`429 Too Many Requests` defensively when it sees one. File uploads are independently capped at
+**60 MB** per PDF (a larger upload is a `400`, not a `429`).
 
 The correct response to a `429` is **exponential backoff with jitter** — never a tight retry
 loop, and never a fixed delay (fixed delays make every client retry in lockstep and re-collide).
@@ -321,9 +321,9 @@ except LiftedSignError as e:
 respond `2xx`. Failed deliveries retry a few times over seconds but are **not** redelivered
 later, so reconcile gaps by **polling**: `GET /api/mysign/agreements/{aid}` returns the current
 `status`, per-signer `status`, and the ordered `events` audit trail; `GET /api/mysign/agreements`
-pages the whole account. Poll on a sane interval (seconds-to-minutes, not a hot loop — the
-120 req/min limit applies), and stop once `status` reaches a terminal value (`completed`,
-`declined`, `voided`, `cancelled`). See [12 — Webhooks](./12-webhooks-and-polling.md) for the
+pages the whole account. Poll on a sane interval (seconds-to-minutes, not a hot loop —
+managed-cloud rate limits may apply), and stop once `status` reaches a terminal value (`completed`,
+`declined`, `voided`, `expired`). See [12 — Webhooks](./12-webhooks-and-polling.md) for the
 delivery contract, signature verification, and the polling fallback.
 
 ---

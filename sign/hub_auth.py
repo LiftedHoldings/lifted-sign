@@ -22,11 +22,14 @@ process environment.
 from __future__ import annotations
 
 import hmac
+import logging
 import os
 from typing import Any
 from urllib.parse import urlencode
 
 import httpx
+
+log = logging.getLogger(__name__)
 
 
 def _google_cfg() -> dict[str, str]:
@@ -75,7 +78,15 @@ def _verify_google_id_token(idt: str, client_id: str) -> dict[str, Any] | None:
     try:
         from google.auth.transport import requests as google_requests
         from google.oauth2 import id_token as google_id_token
-
+    except ImportError:
+        # Google sign-in is configured but the optional dependency isn't installed. Log it clearly
+        # so this reads as a setup gap, not a mysterious "bad token" rejection.
+        log.warning(
+            "Google sign-in is configured but 'google-auth' is not installed "
+            "(pip install 'lifted-sign[google]'); Google login is unavailable."
+        )
+        return None
+    try:
         claims = google_id_token.verify_oauth2_token(
             idt, google_requests.Request(), audience=client_id
         )
@@ -85,7 +96,7 @@ def _verify_google_id_token(idt: str, client_id: str) -> dict[str, Any] | None:
         ):
             return None
         return claims
-    except Exception:
+    except Exception:  # noqa: BLE001 — any verification failure is an invalid/expired token
         return None
 
 

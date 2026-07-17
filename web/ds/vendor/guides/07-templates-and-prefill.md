@@ -382,7 +382,7 @@ await ls.send(draft.id);
 
 ## Rate limits
 
-Template calls count against the standard **120 requests/minute** per account. Bursts above it get `429 Too Many Requests` — back off and retry with jitter. PDF uploads (the `create_agreement` step) are capped at **60 MB**.
+Per-account request limits may apply on the managed cloud tier — handle `429 Too Many Requests` defensively, backing off and retrying with jitter. PDF uploads (the `create_agreement` step) are capped at **60 MB**.
 
 ## Webhooks
 

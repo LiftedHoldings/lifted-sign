@@ -76,8 +76,6 @@ For a tour of how Lifted Sign is built — the ESIGN/UETA compliance model, the
 three-runtime design, and the security and persistence layers — see
 [**docs/ARCHITECTURE.md**](./docs/ARCHITECTURE.md).
 
-For a tour of how Lifted Sign is built — the ESIGN/UETA compliance model, the three-runtime design, and the security and persistence layers — see [**docs/ARCHITECTURE.md**](./docs/ARCHITECTURE.md).
-
 ## Developer API
 
 Lifted Sign exposes a REST API under `/api/mysign/*` for creating envelopes, adding

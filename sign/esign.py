@@ -17,6 +17,7 @@ import datetime
 import io
 import json
 import logging
+import os
 import re
 import secrets
 import time
@@ -1596,7 +1597,7 @@ def create_template(
         signers = list(layout.get("signers") or [])
         fields = list(layout.get("fields") or [])
         if layout.get("source_doc_id"):
-            # Company-doc ingestion was an estate-only feature (a host document library). The
+            # Company-doc ingestion was a feature of the original internal build (a host document library). The
             # standalone engine builds templates ONLY from uploaded PDF bytes or an agreement it
             # owns (source_agreement_id) — there is no external doc store to read from.
             raise ValueError("doc_id ingestion is not supported in standalone")
@@ -1803,7 +1804,7 @@ def instantiate_agreement_from_template(
     except Exception:
         tpl_fields = []
 
-    # Resolve the blank source PDF from the engine-owned snapshot file. (The estate build also
+    # Resolve the blank source PDF from the engine-owned snapshot file. (The original internal build also
     # fell back to a linked company-doc; that external store does not exist in standalone, so a
     # template with no snapshot simply reports no source.)
     pdf_bytes: bytes | None = None
@@ -2791,7 +2792,21 @@ def submit_signature(
         ) or ""
         _ADOPT = {"draw", "type", "reuse"}
         adopted_imgs = set()
-        for fid, val in (values or {}).items():
+        # Sanitize the client-supplied values map before it reaches the DB: keys must be
+        # integer field ids and values must be strings. A signer's browser is untrusted input
+        # on this public token endpoint — a stray non-integer key or non-string value must yield
+        # a clean rejection, not an int()/SQLite-binding crash (HTTP 500) that also locks a
+        # legitimate signer out of ever completing.
+        clean_values: dict[int, str] = {}
+        for _k, _v in (values or {}).items():
+            try:
+                _fid = int(_k)
+            except (TypeError, ValueError):
+                return {"ok": False, "error": "malformed submission"}
+            if not isinstance(_v, str):
+                return {"ok": False, "error": "malformed submission"}
+            clean_values[_fid] = _v
+        for fid, val in clean_values.items():
             meta = field_meta.get(str(fid)) or field_meta.get(fid) or {}
             method = str(meta.get("method") or "").lower()
             method = method if method in _ADOPT else ""
@@ -3156,8 +3171,12 @@ def decline(token: str, reason: str = "", ip: str = "", ua: str = "") -> dict:
                 agr.get("name", ""), decliner, reason or "", agr.get("envelope_id", "")
             )
             mailer.send_html(sender_email, f"Declined: {agr.get('name', '')}", html)
-    except Exception:
-        pass
+    except Exception:  # noqa: BLE001 — notification is best-effort; never block the decline
+        log.warning(
+            "decline-notification email failed for agreement %s",
+            (agr or {}).get("id"),
+            exc_info=True,
+        )
     # Outbound webhook: envelope.declined. Lazy import + guarded so a webhook fault NEVER affects signing.
     try:
         from . import webhooks
@@ -3299,11 +3318,15 @@ def ensure_signing_material() -> None:
         cert_pem, key_pem = pdf_sign.generate_self_signed()
         cert_path.parent.mkdir(parents=True, exist_ok=True)
         cert_path.write_bytes(cert_pem)
-        key_path.write_bytes(key_pem)
-        try:  # best-effort private-key lockdown (POSIX; no-op semantics on Windows)
-            key_path.chmod(0o600)
-        except OSError:
-            pass
+        # Write the PRIVATE key atomically at 0600 (O_CREAT|O_EXCL with an explicit mode) so it is
+        # never briefly world-readable at the process umask on a multi-user POSIX host. On a repeat
+        # boot O_EXCL means the file already exists → we skip (handled by the exists() check above).
+        # Windows ignores the mode bits but O_EXCL still gives an atomic create.
+        fd = os.open(str(key_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        try:
+            os.write(fd, key_pem)
+        finally:
+            os.close(fd)
     except Exception:
         # Never block startup on provisioning — the engine falls back to the AES seal.
         return

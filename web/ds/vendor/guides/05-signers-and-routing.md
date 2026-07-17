@@ -210,7 +210,7 @@ A signer moves through these states. Read them on any envelope via `GET /api/mys
 | `signed` | The signer completed and applied their signature. |
 | `declined` | The signer declined to sign. |
 
-These are the **signer** statuses. The **envelope** has its own separate lifecycle (`draft` · `out_for_signature` · `completed` · `declined` · `voided` · `cancelled`) — see [Envelopes](./04-envelopes.md) and [Sending & tracking](./08-sending-and-tracking.md).
+These are the **signer** statuses. The **envelope** has its own separate lifecycle (`draft` · `out_for_signature` · `completed` · `declined` · `voided` · `expired`) — see [Envelopes](./04-envelopes.md) and [Sending & tracking](./08-sending-and-tracking.md).
 
 ---
 

@@ -204,7 +204,7 @@ async def signp_magic_verify(req: Request, token: str = ""):
     A clicked link proves control of the mailbox — the SAME ownership proof Google gives — so a
     first click both creates the account (gated on SIGNUPS_OPEN) and marks its email verified.
     An armed TOTP is honored (hand off to the 2FA step) so a magic link can't bypass 2FA."""
-    from .. import config, sign_accounts, sign_portal_auth
+    from .. import config, db, sign_accounts, sign_portal_auth
 
     d = await asyncio.to_thread(sign_portal_auth.read_magic_token, token)
     if not d:
@@ -212,6 +212,14 @@ async def signp_magic_verify(req: Request, token: str = ""):
     email = str(d.get("em") or "").strip().lower()
     name = str(d.get("nm") or "").strip()
     if "@" not in email:
+        return RedirectResponse("/app?sign_error=magic")
+    # Single-use: atomically consume the token's jti BEFORE minting a session, so a link that
+    # lingers in a mail relay / proxy / scanner log or shared mailbox can't be replayed to open a
+    # second session after the legitimate click. claim_once returns False on any repeat.
+    jti = str(d.get("jti") or "")
+    if not jti or not await asyncio.to_thread(
+        db.claim_once, f"magic_used:{jti}", {"exp": d.get("exp")}
+    ):
         return RedirectResponse("/app?sign_error=magic")
     acct = await asyncio.to_thread(sign_accounts.account_by_email, email)
     if not acct:
@@ -398,7 +406,7 @@ async def signp_totp_enroll(req: Request) -> Any:
 
 @router.post("/api/sign-portal/auth/totp/confirm")
 async def signp_totp_confirm(req: Request) -> Any:
-    from .. import crypto, sign_accounts, webauth
+    from .. import crypto, sign_accounts, sign_portal_auth, webauth
 
     acct = _sign_acct(req)
     if not acct:
@@ -408,7 +416,11 @@ async def signp_totp_confirm(req: Request) -> Any:
     if not (pend and pend.get("k") == "signtotp" and int(pend.get("aid", 0)) == acct["id"]):
         return JSONResponse({"ok": False, "error": "expired"}, status_code=400)
     secret = pend.get("s") or ""
-    if not webauth.totp_verify(secret, b.get("code", ""), window=1):
+    # Per-account replay marker (not the global one) so a concurrent enrollment can't reject a
+    # valid confirm code in the same 30s step.
+    if not await asyncio.to_thread(
+        sign_portal_auth.verify_totp_for_pending, acct["id"], secret, b.get("code", "")
+    ):
         return JSONResponse({"ok": False, "error": "invalid_code"}, status_code=400)
     await asyncio.to_thread(sign_accounts.set_totp, acct["id"], crypto.encrypt(secret))
     resp = JSONResponse({"ok": True})

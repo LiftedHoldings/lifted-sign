@@ -24,13 +24,16 @@ dependencies = [
     "Pillow>=10",             # HPND — image validation / redaction painting
     "pyhanko>=0.35",          # MIT — PAdES/PKCS#7 certification signatures
     "segno>=1.6",             # BSD — TOTP QR codes
+    "PyYAML>=6",              # MIT — transcodes the vendored OpenAPI spec for /developers
 ]
 
 [project.optional-dependencies]
-postgres = ["psycopg[binary]>=3.2"]  # optional Postgres backend
-hosted = ["stripe>=10"]              # hosted-tier billing only
+postgres = ["psycopg[binary,pool]>=3.2"]  # optional Postgres backend (with connection pooling)
+google = ["google-auth>=2"]               # optional "Continue with Google" sign-in
+hosted = ["stripe>=10"]                    # hosted-tier billing only
 dev = [
     "pytest>=8",
+    "pytest-cov>=5",
     "ruff>=0.6",
 ]
 

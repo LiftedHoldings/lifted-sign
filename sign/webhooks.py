@@ -35,11 +35,13 @@ Persistence lives in this module (``ensure_tables`` self-runs at import, mirrori
 ``sign_api_keys``); everything is scoped to ``owner_account_id`` — the same tenant identity
 the ``/api/mysign/*`` API authorizes on.
 
-Security note (SSRF): a webhook URL is operator/tenant supplied and delivery POSTs to it
-from the server. Redirects are not followed. Restricting delivery to public IP ranges (to
-prevent access to internal metadata endpoints) is deployment policy and left to the operator
-via network egress rules; this module deliberately does not block loopback so local
-development and self-hosted receivers on the same host keep working.
+Security note (SSRF): a webhook URL is operator/tenant supplied and delivery POSTs to it from
+the server. Redirects are not followed, and — by default — the target host is resolved and any
+URL that maps to a loopback, private, link-local, or cloud-metadata (169.254.169.254) address is
+refused, both at subscription time and again immediately before each POST (blunting DNS
+rebinding). This matters most on the multi-tenant hosted tier where subscription URLs are
+untrusted. A single-tenant self-hoster who legitimately needs to deliver to a loopback/internal
+receiver opts out with ``SIGN_WEBHOOK_ALLOW_INTERNAL=true``.
 """
 
 from __future__ import annotations

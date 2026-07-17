@@ -29,6 +29,10 @@ USER sign
 
 # SQLite database and sealed PDFs live here by default (override with SIGN_DATA_DIR).
 ENV SIGN_DATA_DIR=/app/data
+# Containers publish a port to the host, which DNATs to the container interface, not loopback —
+# so the server must listen on all interfaces. The container is expected to sit behind the
+# operator's TLS-terminating reverse proxy (see docs/self-hosting.md).
+ENV SIGN_BIND_HOST=0.0.0.0
 
 EXPOSE 8080
 

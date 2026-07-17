@@ -147,7 +147,7 @@ Remind is subject to the **same `403` gates** as send (`subscription_inactive`, 
 | `error` (example)                          | Cause |
 |--------------------------------------------|-------|
 | `no pending signers to remind`             | Everyone has signed, or no signer holds a live token. |
-| `can't remind — agreement is completed`    | The envelope is `completed`, `voided`, `cancelled`, `draft`, or `expired` — remind only applies while `out_for_signature`. |
+| `can't remind — agreement is completed`    | The envelope is `completed`, `voided`, `draft`, or `expired` — remind only applies while `out_for_signature`. |
 
 ```python
 ls.remind(42)
@@ -249,7 +249,7 @@ The top-level `status` is your headline state:
 | `completed`         | All signers signed; executed PDF + certificate available. |
 | `declined`          | A signer declined. |
 | `voided`            | Voided by the sender (terminal). |
-| `cancelled`         | Cancelled (terminal). |
+| `expired`           | Auto-expired (terminal). |
 
 `sent_at` and `completed_at` are Unix epoch seconds (or `null` before that transition).
 
@@ -339,7 +339,7 @@ ls = LiftedSign(api_key="sk_live_...")
 def wait_for_completion(aid, interval=30, timeout=7 * 24 * 3600):
     """Poll until the envelope reaches a terminal status."""
     deadline = time.time() + timeout
-    terminal = {"completed", "declined", "voided", "cancelled"}
+    terminal = {"completed", "declined", "voided", "expired"}
     while time.time() < deadline:
         env = ls.get(aid)
         if env["status"] in terminal:
@@ -355,8 +355,8 @@ if env["status"] == "completed":
 
 Polling guidance:
 
-- **Poll on a sane interval** (e.g. every 30–60 s). The account limit is **120 requests/minute**; bursts over it get `429 Too Many Requests`, so back off with jitter.
-- **Stop on any terminal status** — `completed`, `declined`, `voided`, or `cancelled` — not just `completed`.
+- **Poll on a sane interval** (e.g. every 30–60 s). Per-account request limits may apply on the managed cloud, so handle `429 Too Many Requests` defensively — back off with jitter.
+- **Stop on any terminal status** — `completed`, `declined`, `voided`, or `expired` — not just `completed`.
 - Once `completed`, retrieve the executed PDF (`GET …/download`) and the audit certificate (`GET …/certificate`). See [Downloads & certificate](./09-downloads-and-certificates.md).
 
 ---

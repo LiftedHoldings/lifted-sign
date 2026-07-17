@@ -17,7 +17,7 @@ that keep the project clean and self-contained.
   and domains are *configuration, not code*. Every such value reads from an env var with
   a blank (or neutral) default — see `sign/config.py`.
 - **No host coupling.** Lifted Sign is a standalone package. Do not add a dependency on
-  any external estate service or private infrastructure (secret vaults, mail-provider
+  any external services or private infrastructure (secret vaults, mail-provider
   SDKs beyond the ones already vendored, telemetry sinks, activity feeds). Everything a
   self-hoster runs must be in this repository and configurable from the environment.
 

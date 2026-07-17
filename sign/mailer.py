@@ -1,4 +1,4 @@
-"""Outbound transactional email over plain SMTP (self-host friendly, zero estate coupling).
+"""Outbound transactional email over plain SMTP (self-host friendly, no external dependencies).
 
 Used by the e-sign flow to deliver signing-link invites, reminders, the declined
 notice, the expired notice, the envelope-access link, one-time verification codes,

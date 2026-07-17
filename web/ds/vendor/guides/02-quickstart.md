@@ -309,7 +309,7 @@ consent, authentication events) become downloadable.
 ### Envelope status vocabulary
 
 `draft` · `out_for_signature` · `completed` · `declined` · `voided` ·
-`cancelled`
+`expired`
 
 ### Signer status vocabulary
 

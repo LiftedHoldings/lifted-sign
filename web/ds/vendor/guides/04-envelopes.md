@@ -360,7 +360,7 @@ Required in every serialization: `id`, `name`, `status`, `created_at`, `signers`
 | `completed` | Every signer has signed. Executed PDF + Certificate downloadable. |
 | `declined` | A signer declined. Terminal. |
 | `voided` | Sender voided it; all live signing links revoked. Terminal. |
-| `cancelled` | Cancelled. Terminal. |
+| `expired` | Auto-expired; signing window elapsed. Terminal. |
 
 ### Signer status
 
@@ -381,7 +381,7 @@ Required in every serialization: `id`, `name`, `status`, `created_at`, `signers`
 | `401` | Missing or invalid API key. |
 | `404` | No such envelope owned by this account (existence not leaked). |
 | `409` | Locked — `DELETE` on a sent envelope, or a page/content edit after send. |
-| `429` | Rate limited (120 req/min per account). Back off and retry with jitter. |
+| `429` | Rate limited. Per-account limits may apply on the managed cloud — handle it defensively: back off and retry with jitter. |
 
 ---
 

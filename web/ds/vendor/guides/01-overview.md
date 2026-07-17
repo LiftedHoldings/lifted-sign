@@ -90,11 +90,11 @@ An envelope is a small state machine. You drive the top row; signers and the sys
        │  editable: signers,                    │  frozen bytes; accrues
        │  fields, order-mode                    │  viewed/signed events
        │                                        │
-    delete()                          ┌─────────┼─────────────┬──────────────┐
-   (gone; draft only)                 ▼         ▼             ▼              ▼
-                                  declined    voided      cancelled       expired
-                                 (a signer   (you        (system /       (auto-expiry
-                                  refused)    void()d it)  admin)          sweep)
+    delete()                          ┌─────────┼──────────────┐
+   (gone; draft only)                 ▼         ▼              ▼
+                                  declined    voided        expired
+                                 (a signer   (you          (auto-expiry
+                                  refused)    void()d it)    sweep)
 ```
 
 **The happy path is three states:** `draft` → `out_for_signature` → `completed`.
@@ -109,8 +109,7 @@ An envelope is a small state machine. You drive the top row; signers and the sys
 |--------|------------------|-------|
 | `declined` | A signer refuses to sign | Envelope stops; recorded in the audit trail. |
 | `voided` | You call `POST /agreements/{aid}/void` | Immediately revokes all live signing sessions and outstanding links. Terminal legal record. |
-| `cancelled` | System / administrative cancellation | Treated like `voided` for signing purposes — no new signing actions accepted. |
-| `expired` | Auto-expiry sweep flips an unsigned `out_for_signature` envelope past its expiry window | A real terminal state the server sets on its own; unsigned signers can no longer act and must be re-sent. *Not yet in the OpenAPI `status` enum — the spec documents the six states above; `expired` is set by the backend sweep.* |
+| `expired` | Auto-expiry sweep flips an unsigned `out_for_signature` envelope past its expiry window | A real terminal state the server sets on its own; unsigned signers can no longer act and must be re-sent. |
 
 Two rules that catch integrators off guard:
 
