@@ -320,12 +320,95 @@ cookie you can't see.
 
 ---
 
-## 6. Checklist before taking real signatures
+## 6. Backup & restore
+
+A self-hosted install has three things worth losing sleep over: the database, the sealed
+PDFs, and the signing key. All three live under `SIGN_DATA_DIR` by default, but Postgres
+and operator-supplied certificates move pieces of that out to their own locations — make
+sure your backup routine actually covers wherever each piece ends up.
+
+### Database + sealed PDFs (SQLite, default)
+
+With `DATABASE_URL` unset, Lifted Sign uses SQLite as its canonical backend. The database
+file is created on first use at `$SIGN_DATA_DIR/sign.db`, and sealed PDFs live alongside it
+under the same directory.
+
+For a hot backup — safe to run while the server keeps serving traffic — use SQLite's own
+backup command rather than a raw file copy:
+
+```bash
+sqlite3 $SIGN_DATA_DIR/sign.db ".backup '$SIGN_DATA_DIR/sign.db.backup'"
+```
+
+Then copy `sign.db.backup`, plus the rest of `SIGN_DATA_DIR` (which holds the sealed PDFs),
+off-host.
+
+For a simple cold backup, stop the server first, then tar the whole data directory:
+
+```bash
+tar czf lifted-sign-data-$(date +%F).tgz -C "$SIGN_DATA_DIR" .
+```
+
+SQLite consistency matters here: a raw `tar`/`cp` of a *live* `sign.db` is only safe when
+the server is stopped, since SQLite files can be mid-write — otherwise use the `.backup`
+command above, which is designed to produce a consistent snapshot of a database that's
+actively in use.
+
+### Database (Postgres)
+
+When `DATABASE_URL` is set (see [§3](#3-switching-to-postgres)), back up and restore with
+the standard Postgres tools:
+
+```bash
+pg_dump "$DATABASE_URL" -Fc -f lifted-sign-$(date +%F).dump
+# restore into a fresh/empty database:
+pg_restore -d "$DATABASE_URL" lifted-sign-$(date +%F).dump
+```
+
+Postgres mode still needs the sealed PDFs backed up separately — they live on disk under
+`SIGN_DATA_DIR`, not in the database, regardless of which database backend is active.
+
+### Signing material
+
+There are two cases, and both need to be covered:
+
+- **Auto-provisioned (default).** With `SIGN_PADES_AUTOCERT` unset or `true`, a
+  self-signed cert/key pair is generated on first boot at
+  `$SIGN_DATA_DIR/signing/self-signed-cert.pem` and
+  `$SIGN_DATA_DIR/signing/self-signed-key.pem`. This directory is already inside
+  `SIGN_DATA_DIR`, so it's already covered by the backups in the section above — there's
+  no separate step needed for it.
+- **Operator-supplied.** If `SIGN_PADES_CERT_PATH` / `SIGN_PADES_KEY_PATH` are set (see
+  [§4](#4-pades-signing-certificate)), that material lives wherever you put it — commonly
+  a `./secrets/` directory *outside* `SIGN_DATA_DIR`, as in §4's example — and is **not**
+  covered by a `SIGN_DATA_DIR` backup. Make sure that path is included in your own
+  backup or secret-store process.
+
+Why this matters: losing the signing key doesn't destroy anything you've already sealed,
+but it does mean a restored install has no way to reuse it. Restoring without the original
+key forces the server to generate a **new** self-signed identity (or you supply new
+operator material), which changes the certification identity used on any signature made
+*after* the restore. PDFs already sealed and delivered before the loss are unaffected —
+they're self-contained, independently verifiable artifacts and don't depend on the server
+retaining the original key.
+
+### Docker named volumes
+
+If you're running via Docker Compose with the named `signdata` volume, back it up with a
+throwaway container rather than reaching into the volume directly — this is the Docker
+equivalent of the bare-metal `tar` command above. The canonical form of that command is
+already documented as a comment next to the `signdata` volume in
+[`docker-compose.yml`](../docker-compose.yml); use that rather than duplicating it here,
+since the volume name may differ if you've renamed the project or service.
+
+---
+
+## 7. Checklist before taking real signatures
 
 - [ ] `SIGN_SECRET` set to a long random value (not a placeholder).
 - [ ] `PUBLIC_BASE_URL` is your real HTTPS URL.
 - [ ] SMTP configured and a test invite received (also makes magic-link sign-in deliver by email instead of the console).
-- [ ] `SIGN_DATA_DIR` (or Postgres) is on persistent, backed-up storage.
+- [ ] `SIGN_DATA_DIR` (or Postgres) is on persistent storage, with a working [Backup & restore](#6-backup--restore) procedure covering the database, sealed PDFs, and signing material.
 - [ ] `LEGAL_ENTITY`, `LEGAL_ADDRESS`, `SUPPORT_EMAIL` filled in with your own details.
 - [ ] `OPERATOR_NAME` / `OPERATOR_URL` set (or left to their defaults) — no `example.com` on your public pages.
 - [ ] TLS terminating in front of the app; forwarded-IP headers passed through, `SIGN_TRUSTED_PROXIES` set to your proxy IP.
