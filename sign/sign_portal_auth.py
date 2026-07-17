@@ -287,7 +287,11 @@ def send_verify_email(acct: dict) -> None:
     )
     try:
         integrations.send_email(
-            acct["email"], "Confirm your Lifted Sign email", text, html=html, from_addr=_reset_from()
+            acct["email"],
+            "Confirm your Lifted Sign email",
+            text,
+            html=html,
+            from_addr=_reset_from(),
         )
     except Exception:
         pass
