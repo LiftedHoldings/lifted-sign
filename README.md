@@ -8,6 +8,11 @@
 [![Version](https://img.shields.io/badge/version-0.1.0-2E6BFF.svg)](./CHANGELOG.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-2E6BFF.svg)](./CONTRIBUTING.md)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-2E6BFF.svg)](https://www.python.org/)
+[![Coverage](https://img.shields.io/badge/coverage-81%25-2E6BFF.svg)](#tests)
+
+<br />
+
+<img src="docs/images/hero-dark.png" alt="Lifted Sign — legally-binding e-signatures on your own servers" width="100%" />
 
 </div>
 
@@ -16,6 +21,10 @@ signers, place fields by anchor, and send single-use signing links. Every comple
 document is sealed and ships with a Certificate of Completion — the audit trail of
 signer identities, timestamps, IP addresses, and consent records that ESIGN and UETA
 call for.
+
+<div align="center">
+<img src="docs/images/dashboard.png" alt="Your documents — the Lifted Sign dashboard" width="100%" />
+</div>
 
 ## Why Lifted Sign
 
