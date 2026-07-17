@@ -5,8 +5,14 @@ on:
     branches: [main]
   pull_request:
 
+# Least privilege by default; individual jobs opt in to more only if they need it.
 permissions:
   contents: read
+
+# A newer push to the same branch/PR cancels the in-flight run — saves runner minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -33,11 +39,82 @@ jobs:
 
       - name: Lint (ruff)
         run: |
-          ruff check .
+          ruff check sign tests
           ruff format --check .
 
-      - name: Test (pytest)
+      - name: Test (pytest + coverage)
         env:
           # A throwaway secret so config's fail-closed boot check passes in CI.
+          # Not a real credential — sign/config.py only requires length >= 16.
           SIGN_SECRET: ci-only-not-a-real-secret-value-0123456789
-        run: pytest -q
+        run: |
+          pytest -q \
+            --cov=sign \
+            --cov-report=term-missing \
+            --cov-fail-under=80
+
+  boot:
+    name: smoke boot (/healthz)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+
+      - name: Boot the app and probe /healthz
+        env:
+          # Real random secret per run — proves the app boots under the same
+          # fail-closed config gate a production deploy uses.
+          SIGN_BIND_HOST: 127.0.0.1
+          PORT: "8080"
+        run: |
+          set -euo pipefail
+          SIGN_SECRET="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+          export SIGN_SECRET
+
+          # Isolated throwaway data dir so the smoke test never touches a real DB.
+          SIGN_DATA_DIR="$(mktemp -d)"
+          export SIGN_DATA_DIR
+
+          python -m sign &
+          APP_PID=$!
+          # Always tear the server down, even if the probe loop fails.
+          trap 'kill "${APP_PID}" 2>/dev/null || true' EXIT
+
+          # Poll liveness for up to ~30s; fail loudly if it never comes up.
+          for i in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:8080/healthz" -o /tmp/healthz.json; then
+              echo "healthz responded after ${i}s:"
+              cat /tmp/healthz.json
+              grep -q '"status"' /tmp/healthz.json
+              grep -q '"ok"' /tmp/healthz.json
+              exit 0
+            fi
+            # Bail early if the process already died (config/import failure).
+            if ! kill -0 "${APP_PID}" 2>/dev/null; then
+              echo "::error::app process exited before /healthz became reachable" >&2
+              wait "${APP_PID}" || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+          echo "::error::/healthz did not become reachable within 30s" >&2
+          exit 1
+
+  actionlint:
+    name: actionlint (workflow lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint workflows
+        uses: raven-actions/actionlint@v2

@@ -154,14 +154,28 @@ async def mysign_create(req: Request) -> Any:
 
 # --- reusable TEMPLATES (owner-scoped: a tenant sees/uses ONLY its own) ------
 @router.get("/api/mysign/templates")
-async def mysign_templates_list(req: Request) -> Any:
+async def mysign_templates_list(req: Request, limit: int = 50, offset: int = 0) -> Any:
     from .. import esign
 
     acct, err = await _require_sign_acct(req)
     if err:
         return err
-    out = await asyncio.to_thread(esign.list_templates_for_owner, acct["id"])
-    return {"templates": out}
+    limit = max(1, min(int(limit), 200))
+    offset = max(0, int(offset))
+    # esign.list_templates_for_owner takes no limit/offset (shared engine file we don't edit
+    # here), so window the owner's list in the router. Per-tenant template counts are small,
+    # so reading the full owned list and slicing is cheap. Response mirrors the agreements
+    # list: the full page stays under the back-compat `templates` key + pagination metadata.
+    all_rows = await asyncio.to_thread(esign.list_templates_for_owner, acct["id"])
+    total = len(all_rows)
+    out = all_rows[offset : offset + limit]
+    return {
+        "templates": out,
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+        "has_more": offset + len(out) < total,
+    }
 
 
 @router.get("/api/mysign/templates/{tid:int}")

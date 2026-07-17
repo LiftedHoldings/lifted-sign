@@ -88,6 +88,16 @@ def _bool(name: str, default: bool = False) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _int(name: str, default: int) -> int:
+    """Positive int from the env, falling back to ``default`` on missing/unparsable/non-positive —
+    never raises, so a typo'd value can't crash boot (the limiter applies the same fallback)."""
+    try:
+        val = int(_env(name) or default)
+    except (TypeError, ValueError):
+        return default
+    return val if val > 0 else default
+
+
 def _require_secret() -> str:
     secret = os.environ.get("SIGN_SECRET", "").strip()
     if secret in _PLACEHOLDER_SECRETS or len(secret) < 16:
@@ -170,6 +180,12 @@ def page_tokens() -> dict[str, str]:
         "{{LEGAL_ENTITY}}": LEGAL_ENTITY or "[Operator Name]",
     }
 
+
+# Per-account API rate limit (sign.ratelimit). Sustained requests allowed per account/API key
+# per 60s window for the authenticated /api/mysign/* surface. The limiter reads SIGN_API_RATE_LIMIT
+# from os.environ itself on each call (so it is tunable without a restart); this entry surfaces the
+# knob alongside the rest of the env config. Non-positive/unparsable ⇒ the generous default.
+API_RATE_LIMIT: int = _int("SIGN_API_RATE_LIMIT", 120)
 
 # Webhook delivery SSRF guard. By default, webhook delivery refuses to POST to private,
 # loopback, link-local, or otherwise non-public addresses (incl. cloud metadata at

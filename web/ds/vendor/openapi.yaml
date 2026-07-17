@@ -897,21 +897,42 @@ paths:
       tags: [Templates]
       summary: List your templates
       description: >-
-        Return the account's saved templates, newest first. Each includes its signer
-        roles and its full field layout, so you can read the `prefill` fields
+        Return the account's saved templates, newest first, with pagination. Each includes
+        its signer roles and its full field layout, so you can read the `prefill` fields
         (`field_key` + `prompt`) to know what `answers` a `use` call needs.
+      parameters:
+        - name: limit
+          in: query
+          description: Page size, clamped to 1..200 (default 50).
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - name: offset
+          in: query
+          description: Number of rows to skip (default 0).
+          required: false
+          schema: { type: integer, minimum: 0, default: 0 }
       responses:
         '200':
-          description: Your templates.
+          description: A page of your templates.
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  templates:
-                    type: array
-                    items: { $ref: '#/components/schemas/Template' }
-                required: [templates]
+              schema: { $ref: '#/components/schemas/TemplateList' }
+              example:
+                templates:
+                  - id: 5
+                    name: MSA template
+                    created_at: 1752624000.0
+                    page_n: 4
+                    signer_n: 1
+                    field_n: 3
+                    has_source: true
+                    signers:
+                      - { name: '', email: '', role: Client, order: 1 }
+                    fields: []
+                total: 1
+                offset: 0
+                limit: 50
+                has_more: false
         '401':
           $ref: '#/components/responses/Unauthorized'
     post:
@@ -1596,6 +1617,19 @@ components:
         limit: { type: integer, example: 50 }
         has_more: { type: boolean, description: Whether another page exists., example: false }
       required: [agreements, total, has_more]
+
+    TemplateList:
+      type: object
+      description: A paginated list of templates.
+      properties:
+        templates:
+          type: array
+          items: { $ref: '#/components/schemas/Template' }
+        total: { type: integer, description: Total templates owned by the account., example: 1 }
+        offset: { type: integer, example: 0 }
+        limit: { type: integer, example: 50 }
+        has_more: { type: boolean, description: Whether another page exists., example: false }
+      required: [templates, total, has_more]
 
     Account:
       type: object

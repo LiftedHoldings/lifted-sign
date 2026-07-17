@@ -204,5 +204,3 @@ async def sign_disclosure(consumer: int = 0, version: str = "latest") -> dict[st
     from .. import esign_disclosure
 
     return esign_disclosure.disclosure(bool(consumer))
-
-

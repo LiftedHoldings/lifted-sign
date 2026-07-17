@@ -149,6 +149,15 @@ async def _gate(request: Request, call_next):
                     JSONResponse({"error": "unauthorized"}, status_code=401)
                 )
             return _apply_security_headers(PlainTextResponse("Not found", status_code=404))
+    # (2.5) Per-account API rate limit for the authenticated product surface. The prefix guard is an
+    # optimization (avoids the import on every request); ratelimit.check() re-checks the prefix and
+    # fails open, so a limiter fault can never block legitimate traffic.
+    if path.startswith("/api/mysign/"):
+        from . import ratelimit
+
+        limited = await ratelimit.check(request)
+        if limited is not None:
+            return _apply_security_headers(limited)
     # (3) Serve, then harden every response (CSP + security headers) idempotently.
     resp = await call_next(request)
     return _apply_security_headers(resp)

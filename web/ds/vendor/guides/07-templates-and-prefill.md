@@ -91,10 +91,15 @@ curl -sS https://sign.example.com/api/mysign/templates \
 
 ## Listing and reading templates
 
-`GET /api/mysign/templates` returns your templates, newest first, each with its full field layout — so you can read the prefill fields' `field_key` and `prompt` to know what a `use` call needs.
+`GET /api/mysign/templates` returns your templates, **newest first**, with pagination — each with its full field layout, so you can read the prefill fields' `field_key` and `prompt` to know what a `use` call needs.
+
+| Query param | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `limit` | integer | `50` | Page size, clamped server-side to `1..200`. |
+| `offset` | integer | `0` | Rows to skip. Negative values are clamped to `0`. |
 
 ```bash
-curl -sS https://sign.example.com/api/mysign/templates \
+curl -sS "https://sign.example.com/api/mysign/templates?limit=50&offset=0" \
   -H "Authorization: Bearer $LIFTED_SIGN_KEY"
 ```
 
@@ -118,9 +123,15 @@ curl -sS https://sign.example.com/api/mysign/templates \
           "field_key": "company", "prompt": "Company name" }
       ]
     }
-  ]
+  ],
+  "total": 1,
+  "offset": 0,
+  "limit": 50,
+  "has_more": false
 }
 ```
+
+The list stays under the back-compat `templates` key; `total`, `offset`, `limit`, and `has_more` are added alongside it. Paginate by walking `offset` in `limit`-sized steps until `has_more` is `false`.
 
 `GET /api/mysign/templates/{tid}` returns one template under a `template` key with the same shape. This is the canonical way to discover a template's `answers` — filter its `fields` to `prefill: true` and collect each `field_key` + `prompt`:
 
