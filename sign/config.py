@@ -166,6 +166,14 @@ def page_tokens() -> dict[str, str]:
     }
 
 
+# Webhook delivery SSRF guard. By default, webhook delivery refuses to POST to private,
+# loopback, link-local, or otherwise non-public addresses (incl. cloud metadata at
+# 169.254.169.254) so a tenant-supplied URL can't be used to reach internal services — this
+# matters most on the multi-tenant hosted tier where subscription URLs are untrusted. A single-
+# tenant self-hoster who legitimately needs to deliver to a loopback/internal receiver can set
+# SIGN_WEBHOOK_ALLOW_INTERNAL=true to opt out of the guard.
+WEBHOOK_ALLOW_INTERNAL: bool = _bool("SIGN_WEBHOOK_ALLOW_INTERNAL", False)
+
 # Deployment mode / feature flags.
 HOSTED_MODE: bool = _bool("SIGN_HOSTED_MODE", False)
 SIGNUPS_OPEN: bool = _bool("SIGN_SIGNUPS_OPEN", True)

@@ -47,9 +47,11 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import hmac
+import ipaddress
 import json
 import logging
 import secrets
+import socket
 import threading
 import time
 import uuid
@@ -58,7 +60,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from . import db
+from . import config, db
 
 log = logging.getLogger(__name__)
 
@@ -198,14 +200,62 @@ def _matches(stored: str, event: str) -> bool:
     return event in {e for e in stored.split(",") if e}
 
 
+def _blocked_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """True if an address is one delivery must never reach: loopback, private (RFC 1918 /
+    ULA), link-local (incl. the 169.254.169.254 cloud-metadata endpoint), unspecified, or
+    otherwise reserved/non-global. This is the SSRF choke point."""
+    return (
+        ip.is_loopback
+        or ip.is_private
+        or ip.is_link_local
+        or ip.is_unspecified
+        or ip.is_reserved
+        or ip.is_multicast
+        or not ip.is_global
+    )
+
+
+def _assert_public_host(host: str) -> None:
+    """Resolve ``host`` and raise ``ValueError`` if it maps to any non-public address — an
+    SSRF guard so a tenant-supplied webhook URL can't reach internal services (databases,
+    admin panels, cloud metadata). Called at subscription create time AND again immediately
+    before each delivery POST, which blunts DNS-rebinding (a name that resolves public at
+    registration but private at delivery time is caught on the pre-POST check). A self-hoster
+    who needs loopback/internal delivery opts out via SIGN_WEBHOOK_ALLOW_INTERNAL.
+
+    Residual limitation: httpx re-resolves the name for the actual connection, so a name that
+    flips between this check and the socket connect could still slip through in theory; combined
+    with follow_redirects=False and the pre-POST timing this is a narrow window, and pinning the
+    connection to the vetted IP is a documented future hardening.
+    """
+    if config.WEBHOOK_ALLOW_INTERNAL:
+        return
+    # A bare IP literal is checked directly; a hostname is resolved to every A/AAAA record.
+    try:
+        literal = ipaddress.ip_address(host)
+        candidates = [literal]
+    except ValueError:
+        try:
+            infos = socket.getaddrinfo(host, None)
+        except OSError as e:
+            raise ValueError(f"webhook host does not resolve: {host}") from e
+        candidates = [ipaddress.ip_address(info[4][0]) for info in infos]
+    for ip in candidates:
+        if _blocked_ip(ip):
+            raise ValueError("webhook url resolves to a non-public address")
+
+
 def _validate_url(url: str) -> str:
-    """Return the trimmed URL if it is a syntactically valid http(s) endpoint, else raise
-    ``ValueError``. Scheme is restricted to http/https so a subscription can never point the
-    delivery worker at a ``file://`` / ``gopher://`` style target."""
+    """Return the trimmed URL if it is a syntactically valid http(s) endpoint that resolves to a
+    public address, else raise ``ValueError``. Scheme is restricted to http/https so a
+    subscription can never point the delivery worker at a ``file://`` / ``gopher://`` target,
+    and the host is checked against the SSRF guard (see ``_assert_public_host``)."""
     u = (url or "").strip()
     parts = urlsplit(u)
     if parts.scheme not in ("http", "https") or not parts.netloc:
         raise ValueError("url must be an absolute http(s) URL")
+    if parts.hostname:
+        _assert_public_host(parts.hostname)
     return u
 
 
@@ -515,6 +565,10 @@ def _deliver_sync(sub: dict, event: str, envelope: dict, attempts: int = _MAX_AT
             "X-Lifted-Signature": sign_body(sub["secret"], raw),
         }
         url = sub["url"]
+        # SSRF guard: re-resolve + re-check the host immediately before delivery so a name that
+        # was public at registration but now points at an internal address (DNS rebinding) is
+        # refused. Raises ValueError → handled by the isolation boundary below; never signs.
+        _assert_public_host(urlsplit(url).hostname or "")
         last_status: int | None = None
         with httpx.Client(timeout=_TIMEOUT, follow_redirects=False) as client:
             for attempt in range(1, max(1, attempts) + 1):

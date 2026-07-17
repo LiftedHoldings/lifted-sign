@@ -26,6 +26,10 @@ from types import SimpleNamespace
 os.environ.setdefault("SIGN_SECRET", secrets.token_urlsafe(48))
 os.environ.setdefault("SIGN_DATA_DIR", tempfile.mkdtemp(prefix="signtest_"))
 os.environ.setdefault("PUBLIC_BASE_URL", "http://localhost:8080")
+# Webhook delivery tests use a monkeypatched transport with non-resolving example hostnames
+# (and, for a self-hoster, loopback receivers), so opt out of the SSRF public-address guard for
+# the suite. test_webhooks_ssrf exercises the guard directly by flipping this flag back off.
+os.environ.setdefault("SIGN_WEBHOOK_ALLOW_INTERNAL", "true")
 # Keep the optional add-ons OFF so tests assert the zero-config self-host surface.
 for _k in (
     "SMTP_HOST",
