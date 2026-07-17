@@ -64,7 +64,7 @@ async def signp_phone_start(req: Request) -> Any:
 
 @router.post("/api/sign-portal/auth/phone/verify")
 async def signp_phone_verify(req: Request) -> Any:
-    from .. import sign_accounts, sign_portal_auth
+    from .. import config, sign_accounts, sign_portal_auth
 
     b = await req.json()
     pend = sign_portal_auth.redeem_phone_pending(req.cookies.get(sign_portal_auth.COOKIE_PHONE))
@@ -81,6 +81,9 @@ async def signp_phone_verify(req: Request) -> Any:
         name = (pend.get("nm") or (b.get("name") or "")).strip()
         if "@" not in email or "." not in email.split("@")[-1]:
             return JSONResponse({"ok": False, "error": "email_required"}, status_code=200)
+        # Closed install: refuse to create a new account (existing accounts still sign in by phone).
+        if not config.SIGNUPS_OPEN:
+            return JSONResponse({"ok": False, "error": "signups_closed"}, status_code=403)
         # SECURITY: the OTP proves PHONE ownership, NOT email ownership. So we must NEVER attach this
         # phone to an existing account just because the email matches — that would let anyone who
         # knows a victim's email take over their account by verifying their own phone. create_account
@@ -177,6 +180,81 @@ async def signp_resend_verify(req: Request) -> Any:
     return JSONResponse({"ok": True})  # uniform response (don't reveal verified state)
 
 
+# --- email magic-link sign-in (zero-config self-host default) ---------------
+@router.post("/api/sign-portal/auth/magic/start")
+async def signp_magic_start(req: Request) -> Any:
+    """Request a passwordless sign-in link. ENUMERATION-SAFE: always returns {ok:True} — whether
+    a link is actually sent (account exists / signups open) is decided quietly in send_magic_link,
+    never revealed here. Throttled per IP + per email. Needs no external service (the link
+    console-prints when SMTP is unset)."""
+    from .. import sign_portal_auth
+
+    b = await req.json()
+    email = (b.get("email") or "").strip().lower()
+    if "@" not in email or "." not in email.split("@")[-1]:
+        return JSONResponse({"ok": False, "error": "invalid_email"}, status_code=400)
+    if sign_portal_auth.magic_start_allowed(_client_ip(req), email):
+        await asyncio.to_thread(sign_portal_auth.send_magic_link, email, b.get("name") or "")
+    return JSONResponse({"ok": True})  # uniform: never reveal whether the address exists
+
+
+@router.get("/api/sign-portal/auth/magic/verify")
+async def signp_magic_verify(req: Request, token: str = ""):
+    """Consume a magic-link token: create-or-load the account for its email, then mint a session.
+    A clicked link proves control of the mailbox — the SAME ownership proof Google gives — so a
+    first click both creates the account (gated on SIGNUPS_OPEN) and marks its email verified.
+    An armed TOTP is honored (hand off to the 2FA step) so a magic link can't bypass 2FA."""
+    from .. import config, sign_accounts, sign_portal_auth
+
+    d = await asyncio.to_thread(sign_portal_auth.read_magic_token, token)
+    if not d:
+        return RedirectResponse("/app?sign_error=magic")
+    email = str(d.get("em") or "").strip().lower()
+    name = str(d.get("nm") or "").strip()
+    if "@" not in email:
+        return RedirectResponse("/app?sign_error=magic")
+    acct = await asyncio.to_thread(sign_accounts.account_by_email, email)
+    if not acct:
+        # New email → sign up. Refuse creation on a closed install (existing accounts still log in).
+        if not config.SIGNUPS_OPEN:
+            return RedirectResponse("/app?sign_error=closed")
+        res = await asyncio.to_thread(sign_accounts.create_account, email, name, None)
+        if res.get("error"):
+            return RedirectResponse("/app?sign_error=create")
+        # The clicked link proves mailbox control → the email is verified (parity with Google).
+        await asyncio.to_thread(sign_accounts.set_email_verified, res["id"])
+        acct = await asyncio.to_thread(sign_accounts.account_by_id, res["id"])
+    elif not acct.get("email_verified"):
+        # Returning account that never verified: the click proves ownership — mark it verified.
+        await asyncio.to_thread(sign_accounts.set_email_verified, acct["id"])
+    # Optional 2FA: mirror the Google-callback handoff so an armed authenticator isn't bypassed.
+    if acct.get("totp_secret"):
+        resp = RedirectResponse("/app?need_2fa=1")
+        resp.set_cookie(
+            sign_portal_auth.COOKIE_2FA,
+            sign_portal_auth.make_2fa_pending(acct["id"]),
+            max_age=sign_portal_auth.PENDING_2FA_TTL,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+        )
+        return resp
+    await asyncio.to_thread(sign_accounts.touch_login, acct["id"])
+    resp = RedirectResponse("/app")
+    _set_sign_cookie(resp, sign_portal_auth.make_session(acct["id"]))
+    return resp
+
+
+# --- configured sign-in methods (public; drives the SPA auth card) ----------
+@router.get("/api/sign-portal/auth/methods")
+async def signp_methods() -> Any:
+    """Which sign-in methods this install can offer (magic always on; google/phone if configured),
+    so the SPA renders only usable methods and never a dead button."""
+    from .. import sign_portal_auth
+
+    return JSONResponse(sign_portal_auth.available_methods())
+
+
 # --- session lifecycle ------------------------------------------------------
 @router.post("/api/sign-portal/auth/logout")
 async def signp_logout(req: Request) -> Any:
@@ -209,6 +287,10 @@ async def signp_google(req: Request):
     state = _new_oauth_state()
     nonce = _new_oauth_state()
     url = sign_portal_auth.google_login_url(state, nonce)
+    # Google unconfigured ⇒ empty URL. Redirecting to '' makes the browser re-request THIS route
+    # (relative resolve) → redirect loop. Fail to a friendly hint instead of a dead button.
+    if not url:
+        return RedirectResponse("/app?sign_error=google_unconfigured")
     resp = RedirectResponse(url)
     resp.set_cookie(
         sign_portal_auth.STATE_COOKIE,
@@ -231,7 +313,7 @@ async def signp_google(req: Request):
 
 @router.get("/api/sign-portal/auth/google/callback")
 async def signp_google_cb(req: Request, code: str = "", state: str = ""):
-    from .. import sign_accounts, sign_portal_auth
+    from .. import config, sign_accounts, sign_portal_auth
 
     cookie_state = sign_portal_auth.oauth_state_cookie(req.cookies)
     nonce = sign_portal_auth.oauth_nonce_cookie(req.cookies)
@@ -247,6 +329,9 @@ async def signp_google_cb(req: Request, code: str = "", state: str = ""):
     email = email.strip().lower()
     acct = await asyncio.to_thread(sign_accounts.account_by_email, email)
     if not acct:
+        # New account. Refuse creation on a closed install (existing accounts still sign in).
+        if not config.SIGNUPS_OPEN:
+            return RedirectResponse("/app?sign_error=closed")
         acct = await asyncio.to_thread(
             sign_accounts.create_account, email, email.split("@")[0], None, ""
         )

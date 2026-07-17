@@ -117,6 +117,18 @@ PORT: int = int(_env("PORT", "8080") or "8080")
 DATA_DIR: Path = Path(_env("SIGN_DATA_DIR", str(REPO_ROOT / "data")))
 DATABASE_URL: str = _env("DATABASE_URL")  # blank ⇒ SQLite
 
+# PAdES auto-provisioning — when no signing cert/key is configured, generate a self-signed
+# pair on first boot into the (gitignored) data dir so a zero-config install still produces
+# REAL PKCS#7/PAdES certification signatures that pdf_sign.validate() confirms as
+# valid+certified+not-tampered — instead of an AES-only seal that validate() can't attest to.
+# A self-signed cert secures integrity + certification; it simply won't chain to Adobe's trust
+# store without a CA-issued cert. Set SIGN_PADES_AUTOCERT=false to force the AES fallback, or
+# supply your own SIGN_PADES_CERT_/KEY_ material to override.
+PADES_AUTOCERT: bool = _bool("SIGN_PADES_AUTOCERT", True)
+AUTOCERT_DIR: Path = DATA_DIR / "signing"
+AUTOCERT_CERT: Path = AUTOCERT_DIR / "self-signed-cert.pem"
+AUTOCERT_KEY: Path = AUTOCERT_DIR / "self-signed-key.pem"
+
 # Email identity — all default blank; sign.mail falls back to console output
 # when SMTP_HOST is unset and to MAIL_FROM for every from-address.
 MAIL_FROM: str = _env("MAIL_FROM")
@@ -127,12 +139,37 @@ LEGAL_ENTITY: str = _env("LEGAL_ENTITY")
 LEGAL_ADDRESS: str = _env("LEGAL_ADDRESS")
 SUPPORT_EMAIL: str = _env("SUPPORT_EMAIL")
 
+# Public-page identity — the operator name + website shown on the marketing landing (head
+# metadata, footer, hero mockup). Neutral defaults keep a fresh OSS build from shipping a
+# placeholder like "[Operator Name]" or "example.com": OPERATOR_NAME falls back to the legal
+# entity then the mail-from display name; OPERATOR_URL falls back to this install's own URL.
+OPERATOR_NAME: str = _env("OPERATOR_NAME") or LEGAL_ENTITY or MAIL_FROM_NAME
+OPERATOR_URL: str = _env("OPERATOR_URL") or PUBLIC_BASE_URL
+
+
+def public_host() -> str:
+    """Host[:port] of PUBLIC_BASE_URL — the bare domain shown in the hero mockup + footer
+    (e.g. 'sign.example.com'), never a hardcoded value."""
+    from urllib.parse import urlsplit
+
+    return urlsplit(PUBLIC_BASE_URL).netloc or "localhost:8080"
+
+
+def page_tokens() -> dict[str, str]:
+    """The {{token}} substitutions applied to served HTML page shells (see app._page). Every
+    value is env-derived — no hardcoded domain or entity ever reaches the browser."""
+    return {
+        "{{PUBLIC_BASE_URL}}": PUBLIC_BASE_URL,
+        "{{PUBLIC_HOST}}": public_host(),
+        "{{OPERATOR_NAME}}": OPERATOR_NAME,
+        "{{OPERATOR_URL}}": OPERATOR_URL,
+    }
+
+
 # Deployment mode / feature flags.
 HOSTED_MODE: bool = _bool("SIGN_HOSTED_MODE", False)
 SIGNUPS_OPEN: bool = _bool("SIGN_SIGNUPS_OPEN", True)
-ADMIN_EMAILS: list[str] = [
-    e.strip().lower() for e in _env("ADMIN_EMAILS").split(",") if e.strip()
-]
+ADMIN_EMAILS: list[str] = [e.strip().lower() for e in _env("ADMIN_EMAILS").split(",") if e.strip()]
 
 
 def _esign_block() -> dict:
@@ -141,16 +178,27 @@ def _esign_block() -> dict:
     Every from-address defaults to MAIL_FROM (or blank), and the public base to
     PUBLIC_BASE_URL — no hardcoded liftedholdings.com anywhere. Signing material
     is surfaced under the same keys ``_load_signing_material`` already expects.
+
+    Signing material precedence: explicit SIGN_PADES_* env (inline PEM or path) wins;
+    otherwise, when auto-provisioning is on and the self-signed pair exists on disk (written
+    at boot by ensure_signing_material), fall back to it so the engine seals with PAdES.
     """
+    cert_path = _env("SIGN_PADES_CERT_PATH")
+    key_path = _env("SIGN_PADES_KEY_PATH")
+    cert_pem = _env("SIGN_PADES_CERT_PEM")
+    key_pem = _env("SIGN_PADES_KEY_PEM")
+    if not (cert_pem or cert_path or key_pem or key_path) and PADES_AUTOCERT:
+        if AUTOCERT_CERT.exists() and AUTOCERT_KEY.exists():
+            cert_path, key_path = str(AUTOCERT_CERT), str(AUTOCERT_KEY)
     return {
         "sender_email": _env("MAIL_FROM"),
         "notify_email": _env("MAIL_FROM"),
         "otp_from": _env("MAIL_FROM"),
         "public_base": PUBLIC_BASE_URL,
-        "signing_cert_pem": _env("SIGN_PADES_CERT_PEM"),
-        "signing_cert_path": _env("SIGN_PADES_CERT_PATH"),
-        "signing_key_pem": _env("SIGN_PADES_KEY_PEM"),
-        "signing_key_path": _env("SIGN_PADES_KEY_PATH"),
+        "signing_cert_pem": cert_pem,
+        "signing_cert_path": cert_path,
+        "signing_key_pem": key_pem,
+        "signing_key_path": key_path,
         "signing_key_passphrase": _env("SIGN_PADES_KEY_PASSPHRASE"),
     }
 

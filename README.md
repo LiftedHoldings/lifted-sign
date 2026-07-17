@@ -53,9 +53,9 @@ Then open **http://localhost:8080**.
 Every setting is read from the environment (a `.env` file, real env vars, or your
 orchestrator's secret store). Copy [`.env.example`](./.env.example) to `.env` and fill
 in what you need — it documents each variable, its default, and when you actually need
-it. SQLite, console email, and email/password sign-in all work with nothing but
-`SIGN_SECRET` set; SMTP, Postgres, Google/phone sign-in, and PAdES certificates are
-optional add-ons you switch on as you grow.
+it. SQLite, console email, and passwordless email **magic-link** sign-in all work with
+nothing but `SIGN_SECRET` set; SMTP, Postgres, Google/phone sign-in, and PAdES
+certificates are optional add-ons you switch on as you grow.
 
 ## Self-hosting
 

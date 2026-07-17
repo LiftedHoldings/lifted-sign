@@ -560,7 +560,11 @@
 "use strict";
 (function () {
   var app = document.getElementById("app");
-  var state = { account: null, view: "boot", editor: null, trackTimer: null, dash: null };
+  var state = { account: null, view: "boot", editor: null, trackTimer: null, dash: null, methods: null };
+  // Which sign-in methods this install offers. magic (email link) always works — it needs nothing
+  // but SIGN_SECRET — so it's the safe default until /auth/methods answers; google/phone appear only
+  // when the server reports them configured, so a self-hoster never sees a dead button.
+  function authMethods() { return state.methods || { magic: true, google: false, phone: false }; }
 
   // Server-assigned signer palette (esign.py SIGNER_COLORS) — mirror the same array in the
   // same order so pre-send editor colors match the post-send server colors.
@@ -892,6 +896,9 @@
       renderDashboard();
       return maybeSuggest2FA();
     }
+    // Logged out → learn which sign-in methods this install offers, then render the auth card.
+    var mr = await api("/api/sign-portal/auth/methods");
+    if (mr.ok && mr.data) state.methods = mr.data;
     return renderLanding("login");
   }
 
@@ -917,26 +924,96 @@
           "</div>" +
         "</aside>" +
         '<main class="auth__main">' +
-          '<div class="ap-card ap-card--edge authcard">' +
-            '<span class="beta-chip"><span class="live"></span> Free during beta</span>' +
-            '<h2 class="authcard__h">Sign in or sign up</h2>' +
-            '<p class="authcard__sub">No passwords — continue with Google or your phone number.</p>' +
-            // Google verifies the email (no squatting, no verification-email plumbing). Phone-OTP
-            // (Twilio Verify) is the other path — a texted code, plus an email for new accounts.
-            '<button class="ap-btn ap-btn--primary btn-google" id="btn-google">' + googleMark() +
-              " Continue with Google</button>" +
-            '<p class="authcard__hint">Verified by Google — the fastest way in.</p>' +
-            '<div class="divider">or use your phone</div>' +
-            phoneForm() +
-            (msg ? '<p class="ok" style="margin-top:14px">' + esc(msg) + "</p>" : "") +
-            '<div class="auth-trust">' + icLock() + " AES-256 encryption · tamper-evident seal</div>" +
-          "</div>" +
+          authCard(msg) +
         "</main>" +
       "</div>"
     );
     bootGlobes();
-    el("btn-google").onclick = function () { window.location = "/api/sign-portal/auth/google"; };
-    wirePhone();
+    wireAuthCard();
+  }
+
+  // Config-aware auth card: email magic-link is always offered (needs only SIGN_SECRET); Google and
+  // phone appear ONLY when /auth/methods reported them configured, so no dead buttons on a self-host.
+  function authCard(msg) {
+    var m = authMethods();
+    var blocks = [magicForm()];
+    if (m.google) {
+      blocks.push('<div class="divider">or</div>');
+      blocks.push('<button class="ap-btn btn-google" id="btn-google">' + googleMark() + " Continue with Google</button>");
+    }
+    if (m.phone) {
+      blocks.push('<div class="divider">or use your phone</div>');
+      blocks.push(phoneForm());
+    }
+    var sub = (m.google || m.phone)
+      ? "No passwords — get a sign-in link by email, or continue with " +
+        (m.google && m.phone ? "Google or your phone." : m.google ? "Google." : "your phone.")
+      : "No passwords — we'll email you a secure sign-in link.";
+    return (
+      '<div class="ap-card ap-card--edge authcard">' +
+        '<span class="beta-chip"><span class="live"></span> Free during beta</span>' +
+        '<h2 class="authcard__h">Sign in or sign up</h2>' +
+        '<p class="authcard__sub">' + sub + "</p>" +
+        blocks.join("") +
+        (msg ? '<p class="ok" style="margin-top:14px">' + esc(msg) + "</p>" : "") +
+        '<div class="auth-trust">' + icLock() + " AES-256 encryption · tamper-evident seal</div>" +
+      "</div>"
+    );
+  }
+
+  // Email magic-link form — the zero-config default sign-in.
+  function magicForm() {
+    return (
+      '<form class="stack" id="form-magic">' +
+        fld("mg-email", "email", "Email address", ' autocomplete="email" inputmode="email" required aria-describedby="mg-err"') +
+        '<div class="err" id="mg-err" role="alert"></div>' +
+        '<button class="ap-btn ap-btn--primary" type="submit">Email me a sign-in link</button>' +
+      "</form>" +
+      '<p class="authcard__hint" style="margin-top:8px">New here? Clicking the link creates your account. Signed copies go to this address.</p>'
+    );
+  }
+
+  function wireAuthCard() {
+    var m = authMethods();
+    if (m.google) { var g = el("btn-google"); if (g) g.onclick = function () { window.location = "/api/sign-portal/auth/google"; }; }
+    if (m.phone) wirePhone();
+    wireMagic();
+  }
+
+  function wireMagic() {
+    var f = el("form-magic");
+    if (!f) return;
+    f.onsubmit = async function (e) {
+      e.preventDefault();
+      el("mg-err").textContent = "";
+      el("mg-email").removeAttribute("aria-invalid");
+      var email = el("mg-email").value.trim();
+      if (!email || email.indexOf("@") < 1) { el("mg-err").textContent = "Enter a valid email address."; el("mg-email").setAttribute("aria-invalid", "true"); return; }
+      var btn = f.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
+      var r = await api("/api/sign-portal/auth/magic/start", { method: "POST", json: { email: email } });
+      if (btn) btn.disabled = false;
+      if (r.netError) { el("mg-err").textContent = "You appear to be offline — try again."; return; }
+      if (r.status === 400) { el("mg-err").textContent = "Enter a valid email address."; el("mg-email").setAttribute("aria-invalid", "true"); return; }
+      return renderMagicSent(email);
+    };
+  }
+
+  // Enumeration-safe confirmation — never confirms whether the address has an account.
+  function renderMagicSent(email) {
+    h(
+      topbar(false) +
+      '<div class="auth-solo">' +
+        '<div class="auth-solo__globe"><span class="lds-globe" data-size="60" aria-hidden="true"></span></div>' +
+        '<div class="ap-card ap-card--edge authcard" style="max-width:none">' +
+          '<h2 class="solo__h">Check your email</h2>' +
+          '<p class="solo__sub">If <b>' + esc(email) + "</b> can sign in here, a secure link is on its way. It expires in 15 minutes.</p>" +
+          '<button class="ap-btn ap-btn--primary" type="button" id="mg-back">Back to sign in</button>' +
+        "</div>" +
+      "</div>"
+    );
+    bootGlobes();
+    el("mg-back").onclick = function () { renderLanding("login"); };
   }
 
   // Floating-label field: input carries placeholder=" " so :placeholder-shown
@@ -1007,6 +1084,7 @@
       if (err === "email_required") return renderLanding(null, "That number is new — add your email and we'll text a fresh code.");
       if (err === "email_in_use") return renderLanding(null, "That email already has an account — sign in with Google, or use the phone number already on it.");
       if (err === "expired") return renderLanding(null, "That code expired — request a new one.");
+      if (err === "signups_closed") return renderLanding(null, "This install isn't accepting new sign-ups — ask the operator for access.");
       el("pc-err").textContent = "Invalid code — check it and try again.";
       el("pc-code").setAttribute("aria-invalid", "true");
     };
@@ -3775,9 +3853,22 @@
     }
   }
 
-  // handle google-callback error hint on the URL
+  // Surface a sign-in error hint carried back on the URL (Google callback, closed signups,
+  // an expired magic link, …), then clean it off the address bar.
   var qs = new URLSearchParams(window.location.search);
-  if (qs.get("sign_error")) history.replaceState({}, "", "/");
+  var signErr = qs.get("sign_error");
+  if (signErr) {
+    history.replaceState({}, "", "/app");
+    var SIGN_ERR = {
+      closed: "This install isn't accepting new sign-ups right now — ask the operator for access.",
+      google_unconfigured: "Google sign-in isn't set up here — use an email sign-in link instead.",
+      google: "Google sign-in didn't complete — try again, or use an email link.",
+      state: "That sign-in attempt expired — please start again.",
+      create: "We couldn't create your account — please try again.",
+      magic: "That sign-in link is invalid or expired — request a fresh one."
+    };
+    setTimeout(function () { toast(SIGN_ERR[signErr] || "Sign-in failed — please try again.", { error: true }); }, 500);
+  }
 
   boot();
 })();

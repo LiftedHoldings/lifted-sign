@@ -1481,6 +1481,21 @@ def place_fields(agreement_id: int, fields: list) -> dict:
         return {"ok": False, "error": ex.code, "field": ex.field, "detail": ex.detail}
 
     set_fields(agreement_id, resolved)  # replace-all, normalized
+    # Surface the DB-assigned field ids to API/SDK callers. set_fields does a delete-then-insert
+    # in list order, so the ids returned in id order line up 1:1 with `report` (and `resolved`).
+    # Without this, a developer placing fields over the API has no id to prefill/submit against
+    # and must issue a second GET — the signer page gets ids from the token payload, but the
+    # authoring API should too.
+    conn = db.connect()
+    try:
+        rows = conn.execute(
+            "SELECT id FROM agreement_fields WHERE agreement_id=? ORDER BY id",
+            (agreement_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    for rep, row in zip(report, rows):
+        rep["id"] = row[0]
     return {"ok": True, "count": len(resolved), "fields": report}
 
 
@@ -3201,6 +3216,43 @@ def _load_signing_material(es: dict) -> tuple[bytes | None, bytes | None]:
     if cert and key:
         return cert, key
     return None, None
+
+
+def ensure_signing_material() -> None:
+    """Provision a self-signed PAdES cert+key on first boot when none is configured.
+
+    So a zero-config install seals completed documents with a REAL PKCS#7/PAdES certification
+    signature (validate() → valid+certified+not-tampered) instead of the AES-only fallback that
+    validate() cannot attest to. Idempotent: writes the pair once, into the gitignored data dir
+    (0600 key), and never overwrites explicit SIGN_PADES_* material or an existing pair. A no-op
+    when SIGN_PADES_AUTOCERT=false or the operator supplied their own cert/key.
+    """
+    if not _cfg.PADES_AUTOCERT:
+        return
+    cert_path, key_path = _cfg.AUTOCERT_CERT, _cfg.AUTOCERT_KEY
+    # Respect any explicitly-configured material. _esign_block() points signing_cert_path at the
+    # autocert file ONLY when no explicit SIGN_PADES_* is set, so inline PEM, or a resolved path
+    # that is not our autocert path, means the operator supplied their own — don't shadow it.
+    es = _cfg.local().get("esign", {}) or {}
+    if es.get("signing_cert_pem") or es.get("signing_key_pem"):
+        return
+    resolved = es.get("signing_cert_path") or ""
+    if resolved and resolved != str(cert_path):
+        return
+    if cert_path.exists() and key_path.exists():
+        return
+    try:
+        cert_pem, key_pem = pdf_sign.generate_self_signed()
+        cert_path.parent.mkdir(parents=True, exist_ok=True)
+        cert_path.write_bytes(cert_pem)
+        key_path.write_bytes(key_pem)
+        try:  # best-effort private-key lockdown (POSIX; no-op semantics on Windows)
+            key_path.chmod(0o600)
+        except OSError:
+            pass
+    except Exception:
+        # Never block startup on provisioning — the engine falls back to the AES seal.
+        return
 
 
 def finalize(agreement_id: int) -> bool:

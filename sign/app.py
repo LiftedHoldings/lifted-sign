@@ -24,7 +24,7 @@ import logging
 import mimetypes
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config
@@ -57,9 +57,14 @@ async def _esign_expiry_poller() -> None:
 
 @contextlib.asynccontextmanager
 async def _lifespan(app: FastAPI):
-    # Ensure every table exists before serving. The sign engine modules create their tables at
-    # import time, so importing them here is the schema bootstrap for a fresh SQLite/Postgres DB.
+    # Ensure every table exists before serving. The sign engine modules create their own tables at
+    # import time, but the shared INFRA tables (settings, auth_limits, auth_rate_limits) are owned by
+    # db.py and are NOT created by importing the engine modules — the very first auth request touches
+    # auth_rate_limits, so a fresh DB 500s without this. db.ensure_tables() creates the infra tables
+    # AND re-delegates to every sibling module's ensure_tables(), so it is the one complete, idempotent
+    # (PG-advisory-lock-safe) bootstrap for both SQLite and Postgres.
     from . import (  # noqa: F401
+        db,
         esign,
         esign_access,
         esign_disclosure,
@@ -68,6 +73,10 @@ async def _lifespan(app: FastAPI):
     )
 
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+    db.ensure_tables()
+    # Provision a self-signed PAdES cert on first boot (unless disabled / operator-supplied) so
+    # completed documents carry a real certification signature out of the box, not an AES-only seal.
+    esign.ensure_signing_material()
     task = asyncio.create_task(_esign_expiry_poller())
     try:
         yield
@@ -143,38 +152,54 @@ async def _gate(request: Request, call_next):
 
 
 # --- page shells ------------------------------------------------------------
-def _page(name: str) -> FileResponse:
-    return FileResponse(
-        WEB_DIR / name,
-        headers={
-            "Cache-Control": "no-store, must-revalidate",
-            "Content-Security-Policy": STRICT_CSP,
-            "X-Content-Type-Options": "nosniff",
-            "Referrer-Policy": "no-referrer",
-        },
-    )
+_PAGE_HEADERS = {
+    "Cache-Control": "no-store, must-revalidate",
+    "Content-Security-Policy": STRICT_CSP,
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+}
+
+
+def _page(name: str):
+    """Serve an HTML page shell with operator/base-URL token substitution.
+
+    The marketing landing (and any other shell) carries ``{{OPERATOR_NAME}}`` /
+    ``{{PUBLIC_BASE_URL}}`` / ``{{PUBLIC_HOST}}`` / ``{{OPERATOR_URL}}`` tokens instead of a
+    hardcoded ``example.com`` or ``[Operator Name]`` placeholder, so canonical/OG/Twitter URLs,
+    the footer, and the hero mockup resolve to THIS install. Substitution is a plain str.replace of
+    the fixed token set (never arbitrary ``{{...}}``), so a page with no tokens is served verbatim.
+    """
+    path = WEB_DIR / name
+    try:
+        html = path.read_text(encoding="utf-8")
+    except OSError:
+        return PlainTextResponse("Not found", status_code=404)
+    for token, value in config.page_tokens().items():
+        if token in html:
+            html = html.replace(token, value)
+    return HTMLResponse(html, headers=_PAGE_HEADERS)
 
 
 @app.get("/")
-async def landing() -> FileResponse:
+async def landing() -> HTMLResponse:
     """Marketing landing page."""
     return _page("signland.html")
 
 
 @app.get("/app")
 @app.get("/signapp")
-async def app_spa() -> FileResponse:
+async def app_spa() -> HTMLResponse:
     """The sender SPA (signup → dashboard → account). Public shell; the SPA drives its own auth."""
     return _page("signapp.html")
 
 
 @app.get("/privacy")
-async def privacy() -> FileResponse:
+async def privacy() -> HTMLResponse:
     return _page("sign-privacy.html")
 
 
 @app.get("/terms")
-async def terms() -> FileResponse:
+async def terms() -> HTMLResponse:
     return _page("sign-terms.html")
 
 

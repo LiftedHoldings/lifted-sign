@@ -5,34 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lifted Sign — Send documents for signature. Signed, sealed, delivered.</title>
 <meta name="description" content="Lifted Sign is legally-binding e-signature done right: drag-and-drop fields on any PDF, multi-signer routing, a glass signing experience, ESIGN/UETA consent capture, and a tamper-evident AES-256-sealed PDF with a Certificate of Completion. Free during beta — unlimited documents, no card required.">
-<meta name="keywords" content="e-signature, electronic signature, e-sign, ESIGN, UETA, digital signature, sign PDF online, signature request, audit trail, certificate of completion, tamper-evident, Lifted Sign, [Operator Name]">
-<meta name="author" content="Lifted">
+<meta name="keywords" content="e-signature, electronic signature, e-sign, ESIGN, UETA, digital signature, sign PDF online, signature request, audit trail, certificate of completion, tamper-evident, Lifted Sign, {{OPERATOR_NAME}}">
+<meta name="author" content="{{OPERATOR_NAME}}">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#04070b">
-<link rel="canonical" href="https://sign.example.com/">
+<link rel="canonical" href="{{PUBLIC_BASE_URL}}/">
 <link rel="icon" type="image/svg+xml" href="/static/ds/assets/favicon.svg">
 <link rel="apple-touch-icon" href="/static/ds/assets/favicon.svg">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Lifted Sign">
-<meta property="og:url" content="https://sign.example.com/">
+<meta property="og:url" content="{{PUBLIC_BASE_URL}}/">
 <meta property="og:title" content="Lifted Sign — Signed, sealed, delivered.">
 <meta property="og:description" content="Legally-binding e-signature: drag-and-drop fields on any PDF, multi-signer routing, ESIGN/UETA consent, and a tamper-evident sealed PDF + Certificate of Completion. Free during beta.">
-<meta property="og:image" content="https://sign.example.com/static/ds/assets/sign-og.png">
+<meta property="og:image" content="{{PUBLIC_BASE_URL}}/static/ds/assets/sign-og.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Lifted Sign — Signed, sealed, delivered.">
 <meta name="twitter:description" content="E-signature done right: PDF field placement, multi-signer routing, ESIGN/UETA consent, tamper-evident sealed PDF + Certificate of Completion. Free during beta.">
-<meta name="twitter:image" content="https://sign.example.com/static/ds/assets/sign-og.png">
+<meta name="twitter:image" content="{{PUBLIC_BASE_URL}}/static/ds/assets/sign-og.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"SoftwareApplication",
  "name":"Lifted Sign",
  "applicationCategory":"BusinessApplication",
  "operatingSystem":"Web",
- "url":"https://sign.example.com/",
+ "url":"{{PUBLIC_BASE_URL}}/",
  "description":"Legally-binding e-signature — drag-and-drop field placement on any PDF, multi-signer routing, a tokenized glass signing experience, ESIGN/UETA consent capture, and a tamper-evident AES-256-sealed executed PDF with a Certificate of Completion (full audit trail: identity, timestamps, IP).",
  "featureList":["Drag-and-drop signature/date/initials/text fields on any PDF","Multi-signer routing (sequential or parallel)","Glass tokenized signer experience — no account required","ESIGN/UETA consent capture","Tamper-evident AES-256-sealed executed PDF","Certificate of Completion with full audit trail","Per-envelope event history"],
  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD","description":"Free during beta — unlimited documents, no card required."},
- "publisher":{"@type":"Organization","name":"Lifted","url":"https://example.com/"}}
+ "publisher":{"@type":"Organization","name":"{{OPERATOR_NAME}}","url":"{{OPERATOR_URL}}"}}
 </script>
 <!-- No-flash theme resolve: saved choice -> prefers-color-scheme -> dark. Must run before the stylesheet links. -->
 <script>
@@ -345,7 +345,7 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
       <div class="sg-signer lds-hud" aria-label="Lifted Sign signer preview">
         <div class="sg-signer__bar">
           <span class="sg-signer__dot"></span><span class="sg-signer__dot"></span><span class="sg-signer__dot"></span>
-          <span class="sg-signer__title"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>sign.example.com</span>
+          <span class="sg-signer__title"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>{{PUBLIC_HOST}}</span>
         </div>
         <div class="sg-doc">
           <div class="sg-seal-badge" aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div>
@@ -508,7 +508,7 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
         <div class="term__bar"><span class="term__d"></span><span class="term__d"></span><span class="term__d"></span><span class="term__t">place a signature by anchor — no coordinates</span></div>
 <pre><span class="c"># create an envelope from a PDF, then drop a signature</span>
 <span class="c"># wherever the document already says "Signature:"</span>
-<span class="k">curl</span> https://sign.example.com/api/mysign/agreements/<span class="v">42</span>/fields \
+<span class="k">curl</span> {{PUBLIC_BASE_URL}}/api/mysign/agreements/<span class="v">42</span>/fields \
   -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> \
   -H <span class="s">"Content-Type: application/json"</span> \
   -d <span class="s">'{"fields":[{
@@ -575,7 +575,7 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
   <div class="fgrid">
     <div class="fcol">
       <span class="brand" style="font-size:18px"><span class="lds-globe" data-size="20" aria-hidden="true"></span><span>Lifted <b>Sign</b></span></span>
-      <p>Native e-signature for the Lifted estate. Signed, sealed, delivered.</p>
+      <p>Open, self-hostable e-signature — ESIGN/UETA compliant. Signed, sealed, delivered.</p>
     </div>
     <div class="fcol"><h4>Product</h4>
       <a href="#features">Features</a>
@@ -593,13 +593,13 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
       <a href="#trust">Tamper-evident seal</a>
       <a href="#trust">Audit trail</a></div>
     <div class="fcol"><h4>Company &amp; legal</h4>
-      <a href="https://example.com/" target="_blank" rel="noopener">[Operator Name]</a>
+      <a href="{{OPERATOR_URL}}" target="_blank" rel="noopener">{{OPERATOR_NAME}}</a>
       <a href="/privacy">Privacy Policy</a>
       <a href="/terms">Terms of Service</a></div>
   </div>
   <div class="fbar">
-    <span>© <span id="yr"></span> [Operator Name] · Signed, sealed, delivered.</span>
-    <span style="display:inline-flex;gap:18px;align-items:center"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><span>sign.example.com</span></span>
+    <span>© <span id="yr"></span> {{OPERATOR_NAME}} · Signed, sealed, delivered.</span>
+    <span style="display:inline-flex;gap:18px;align-items:center"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><span>{{PUBLIC_HOST}}</span></span>
   </div>
 </div></footer>
 

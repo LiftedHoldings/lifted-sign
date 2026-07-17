@@ -31,7 +31,6 @@ _FACTOR_FAIL_LIMIT = 5
 _FACTOR_LOCK_SECONDS = 15 * 60
 _SIGNUP_IP_LIMIT = 5  # accounts per IP
 _SIGNUP_IP_WINDOW = 24 * 3600
-_RESET_TTL = 900  # 15 min password-reset code lifetime
 
 
 # --- sessions --------------------------------------------------------------------
@@ -143,33 +142,6 @@ def phone_start_allowed(ip: str, phone: str) -> bool:
     return ok_ip and ok_num
 
 
-# --- password login --------------------------------------------------------------
-def _pw_lock_key(email: str, ip: str) -> str:
-    return f"signacct:pw:{(email or '').strip().lower()}:{(ip or 'noip').strip()}"
-
-
-def login_locked(email: str, ip: str) -> bool:
-    return db.auth_limit_locked(_pw_lock_key(email, ip))
-
-
-def check_password_login(email: str, password: str, ip: str = "") -> dict | None:
-    """Return the account dict on success, else None. Enumeration-safe: a full PBKDF2 always
-    runs (verify_password), and the caller returns a uniform error for both unknown-email and
-    wrong-password. Malformed input is NOT counted as a guess (mirrors webauth M-3)."""
-    email = (email or "").strip().lower()
-    if not email or not password:
-        return None
-    if login_locked(email, ip):
-        return None
-    acct = sign_accounts.account_by_email(email)
-    # Always run the KDF (dummy when no account) so timing is uniform.
-    ok = sign_accounts.verify_password(password, (acct or {}).get("pw_hash", ""))
-    db.auth_limit_record(_pw_lock_key(email, ip), ok, _FACTOR_FAIL_LIMIT, _FACTOR_LOCK_SECONDS)
-    if ok and acct and acct.get("status") == "active":
-        return acct
-    return None
-
-
 # --- signup rate-limit (T9) ------------------------------------------------------
 def signup_allowed(ip: str) -> bool:
     return db.auth_rate_allowed(
@@ -219,88 +191,13 @@ def verify_totp_for_account(account_id: int, code: str, window: int = 1) -> bool
     return True
 
 
-# --- self-issued email password-reset code ---------------------------------------
-# 6-digit code, HMAC(webauth._secret()) stored in settings with TTL, single-use, sent from the
-# configured MAIL_FROM alias (mirrors esign_access._send_email_otp). Never stores/echoes the raw code.
-def _reset_key(account_id: int) -> str:
-    return f"signacct_reset:{int(account_id)}"
-
-
+# --- transactional-email From address --------------------------------------------
+# The From alias for account emails (verification + magic-link). Prefers the esign otp_from,
+# falls back to MAIL_FROM; blank ⇒ the mailer runs in console mode (prints instead of sending).
 def _reset_from() -> str:
     from . import config
 
     return (config.local().get("esign", {}) or {}).get("otp_from") or config.MAIL_FROM
-
-
-def send_reset_code(email: str) -> dict:
-    """ENUMERATION-SAFE (T9): always returns {"ok": True}. Sends a code only if the account
-    exists; the caller must not reveal existence."""
-    import hashlib
-    import hmac
-
-    acct = sign_accounts.account_by_email(email)
-    if not acct:
-        return {"ok": True}
-    if not db.auth_rate_allowed(f"signacct:resetsend:{acct['id']}", 5, 3600):
-        return {"ok": True}
-    from . import integrations, mailer
-
-    code = "".join(secrets.choice("0123456789") for _ in range(6))
-    salt = secrets.token_hex(8)
-    h = hmac.new(webauth._secret(), (salt + code).encode("utf-8"), hashlib.sha256).hexdigest()
-    db.set_setting(_reset_key(acct["id"]), {"h": h, "salt": salt, "exp": time.time() + _RESET_TTL})
-    text = (
-        f"Your LiftedSign password reset code is {code}\n\n"
-        "It expires in 15 minutes. If you didn't request this, you can ignore this email."
-    )
-    try:
-        html = mailer.otp_html(code)
-    except Exception:
-        html = ""
-    try:
-        integrations.send_email(
-            acct["email"],
-            "Your LiftedSign password reset code",
-            text,
-            html=html,
-            from_addr=_reset_from(),
-        )
-    except Exception:
-        pass
-    return {"ok": True}
-
-
-def confirm_reset(email: str, code: str, new_password: str) -> bool:
-    import hashlib
-    import hmac
-
-    acct = sign_accounts.account_by_email(email)
-    code = (code or "").strip()
-    if not acct or not (code.isdigit() and len(code) == 6):
-        return False
-    if not sign_accounts.password_ok(new_password):
-        return False
-    # Brute-force guard: bound code guesses to _FACTOR_FAIL_LIMIT before a lockout, and
-    # burn the code once the lock trips (a 6-digit code must not be guessable at all).
-    lock_key = f"signacct:resetconfirm:{int(acct['id'])}"
-    if db.auth_limit_locked(lock_key):
-        return False
-    rec = db.get_setting(_reset_key(acct["id"]), None)
-    if not isinstance(rec, dict) or float(rec.get("exp", 0) or 0) < time.time():
-        db.auth_limit_record(lock_key, False, _FACTOR_FAIL_LIMIT, _FACTOR_LOCK_SECONDS)
-        return False
-    cand = hmac.new(
-        webauth._secret(), (str(rec.get("salt", "")) + code).encode("utf-8"), hashlib.sha256
-    ).hexdigest()
-    if not hmac.compare_digest(cand, str(rec.get("h", ""))):
-        db.auth_limit_record(lock_key, False, _FACTOR_FAIL_LIMIT, _FACTOR_LOCK_SECONDS)
-        if db.auth_limit_locked(lock_key):
-            db.set_setting(_reset_key(acct["id"]), 0)  # burn the code once brute-force lock trips
-        return False
-    db.auth_limit_record(lock_key, True, _FACTOR_FAIL_LIMIT, _FACTOR_LOCK_SECONDS)  # clear counter
-    db.set_setting(_reset_key(acct["id"]), 0)  # single-use
-    sign_accounts.set_password(acct["id"], new_password)  # also bumps session_ver (logout-all)
-    return True
 
 
 # --- email verification (password signups; Google accounts are pre-verified) -----
@@ -357,6 +254,103 @@ def send_verify_email(acct: dict) -> None:
         )
     except Exception:
         pass
+
+
+# --- email magic-link sign-in (the zero-config self-host default) ----------------
+# The passwordless, dependency-free way in: enter an email, receive a signed short-lived link,
+# click it to create-or-load the account and get a session. Needs nothing but SIGN_SECRET —
+# mailer.send_html console-prints the link when SMTP is unset, so it works out of the box.
+_MAGIC_TTL = 900  # 15 min to click the link
+_MAGIC_IP_LIMIT = 10  # magic-link requests per IP per hour
+_MAGIC_IP_WINDOW = 3600
+_MAGIC_EMAIL_LIMIT = 5  # magic-link sends per email per 15 min (mailbomb guard)
+_MAGIC_EMAIL_WINDOW = 900
+
+
+def make_magic_token(email: str, name: str = "") -> str:
+    """Signed, expiring (kind='signmagic') one-time sign-in token. Carries the target email
+    (+ optional name for a first-time signup) and a jti; the HMAC secret is the same one that
+    keys sessions, so a forged link can never validate."""
+    return webauth._sign(
+        {
+            "k": "signmagic",
+            "em": (email or "").strip().lower()[:120],
+            "nm": (name or "").strip()[:80],
+            "jti": secrets.token_urlsafe(12),
+            "exp": time.time() + _MAGIC_TTL,
+        }
+    )
+
+
+def read_magic_token(token: str) -> dict | None:
+    d = webauth._unsign(token)
+    if not (d and d.get("k") == "signmagic" and d.get("em")):
+        return None
+    return d
+
+
+def magic_start_allowed(ip: str, email: str) -> bool:
+    """Throttle magic-link requests per IP AND per target email (mailbomb / enumeration guard).
+    A dedicated login-appropriate limiter — NOT the 5/24h signup limiter, which would lock a
+    legitimate self-hoster out of repeat sign-ins."""
+    em = (email or "").strip().lower()
+    ok_ip = db.auth_rate_allowed(f"signmagic:ip:{ip or '?'}", _MAGIC_IP_LIMIT, _MAGIC_IP_WINDOW)
+    ok_em = db.auth_rate_allowed(
+        f"signmagic:em:{em or '?'}", _MAGIC_EMAIL_LIMIT, _MAGIC_EMAIL_WINDOW
+    )
+    return ok_ip and ok_em
+
+
+def send_magic_link(email: str, name: str = "") -> None:
+    """Email a one-click sign-in link. Best-effort; console-prints when SMTP is unset.
+
+    ENUMERATION-SAFE: the caller always returns a uniform ok:True, so this method decides
+    quietly whether to actually send. It sends when the account exists OR signups are open;
+    on a closed install it never emails a stranger (no account creation for them). It never
+    reveals account existence to the requester."""
+    from . import config, integrations
+
+    em = (email or "").strip().lower()
+    if "@" not in em or "." not in em.split("@")[-1]:
+        return
+    exists = sign_accounts.account_by_email(em) is not None
+    # Closed signups: only an EXISTING account may receive a link (verify would refuse to create
+    # a new one anyway — don't email a stranger a dead link).
+    if not exists and not config.SIGNUPS_OPEN:
+        return
+    tok = make_magic_token(em, name)
+    base = config.PUBLIC_BASE_URL
+    link = f"{base.rstrip('/')}/api/sign-portal/auth/magic/verify?token={tok}"
+    text = (
+        "Here's your LiftedSign sign-in link:\n\n"
+        f"{link}\n\nIt expires in 15 minutes and can only be used from this email. "
+        "If you didn't request it, you can ignore this message."
+    )
+    html = (
+        '<div style="font-family:system-ui,Segoe UI,sans-serif;max-width:480px;margin:0 auto">'
+        '<h2 style="color:#2E6BFF">Sign in to LiftedSign</h2>'
+        "<p>Tap below to sign in. No password needed.</p>"
+        f'<p><a href="{link}" style="display:inline-block;background:#2E6BFF;color:#fff;'
+        'padding:12px 22px;border-radius:9px;text-decoration:none;font-weight:600">Sign in</a></p>'
+        '<p style="color:#6b7280;font-size:12px">This link expires in 15 minutes. '
+        "If you didn't request it, ignore this email.</p></div>"
+    )
+    try:
+        integrations.send_email(
+            em, "Your LiftedSign sign-in link", text, html=html, from_addr=_reset_from()
+        )
+    except Exception:
+        pass
+
+
+# --- configured sign-in methods (drives the SPA's auth card) ---------------------
+def available_methods() -> dict:
+    """Which sign-in methods this install can actually offer. magic is always True (it needs
+    nothing but SIGN_SECRET); google/phone require their env groups. The SPA renders only the
+    usable ones so a self-hoster never sees a dead button."""
+    google = bool(google_login_url("_probe", "_probe"))
+    phone = webauth.phone_login_ready()
+    return {"magic": True, "google": google, "phone": phone}
 
 
 # --- Twilio SMS 2FA (login second factor + phone enrollment) ----------------------

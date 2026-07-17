@@ -28,10 +28,11 @@ cp .env.example .env
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `PUBLIC_BASE_URL` | `http://localhost:8080` | External URL of this install. Used to build signer links and email content — set it to your real HTTPS URL in production. |
+| `PUBLIC_BASE_URL` | `http://localhost:8080` | External URL of this install. Builds signer links + email content **and** fills the marketing landing's canonical/OpenGraph/Twitter URLs and hero mockup — set it to your real HTTPS URL in production. Session cookies use the `__Host-` prefix, which browsers accept only over HTTPS (localhost is exempt), so a non-localhost plain-`http` host cannot hold a login session — terminate TLS in front (see [§5](#5-behind-nginx-with-tls)). |
 | `PORT` | `8080` | HTTP port the server listens on. |
 | `SIGN_DATA_DIR` | `./data` | Directory for the SQLite database and sealed PDFs. Created on boot. Put this on a persistent volume. |
 | `DATABASE_URL` | *(blank ⇒ SQLite)* | Optional Postgres DSN. See [§3](#3-switching-to-postgres). |
+| `SIGN_TRUSTED_PROXIES` | *(blank)* | Comma-separated IPs of your reverse proxy. **Required for a correct audit trail behind a proxy:** signer IPs on the Certificate of Completion come from `X-Forwarded-For` only when the direct peer is a trusted proxy — otherwise the app records the proxy's own IP. Set this to your nginx/load-balancer IP. |
 
 ### Email
 
@@ -67,12 +68,27 @@ See [§4](#4-pades-signing-certificate).
 | `SIGN_PADES_KEY_PATH` / `SIGN_PADES_KEY_PEM` | Private key (path or inline PEM). |
 | `SIGN_PADES_KEY_PASSPHRASE` | Passphrase for the private key, if it is encrypted. |
 
-### Optional sign-in add-ons
+### Public-page identity
+
+Shown on the marketing landing (head metadata, footer, the "your-domain" hero pill). Both
+have sensible defaults so a fresh build never ships a placeholder.
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `OPERATOR_NAME` | `LEGAL_ENTITY` → `MAIL_FROM_NAME` (`Lifted Sign`) | Operator name in `<meta>`, footer, and copyright. |
+| `OPERATOR_URL` | `PUBLIC_BASE_URL` | Operator website linked from the footer + structured-data publisher. |
+
+### Sign-in methods
+
+Passwordless **email magic-link** sign-in is always available and needs no configuration —
+a self-hoster with only `SIGN_SECRET` set can create an account and log in (with SMTP unset,
+the link prints to the server console). Google and phone below are **optional** extra methods;
+the sign-in page shows only the methods that are actually configured.
 
 | Variable | Purpose |
 |----------|---------|
-| `GOOGLE_OAUTH_CLIENT_ID` / `_SECRET` / `_REDIRECT` | Enable Google login. |
-| `TWILIO_ACCOUNT_SID` / `_AUTH_TOKEN` / `_VERIFY_SERVICE_SID` | Enable phone OTP + SMS 2FA (Twilio Verify). |
+| `GOOGLE_OAUTH_CLIENT_ID` / `_SECRET` / `_REDIRECT` | Enable Google login (optional). |
+| `TWILIO_ACCOUNT_SID` / `_AUTH_TOKEN` / `_VERIFY_SERVICE_SID` | Enable phone OTP + SMS 2FA (Twilio Verify, optional). |
 
 Any add-on whose variables are unset is simply disabled.
 
@@ -208,7 +224,9 @@ certbot --nginx -d sign.yourdomain.com
 
 The `X-Forwarded-For` / `X-Forwarded-Proto` headers matter: signer IP addresses are
 recorded on the Certificate of Completion, so the app needs the real client IP and the
-correct scheme from your proxy.
+correct scheme from your proxy. **`X-Forwarded-For` is only trusted when the direct peer
+is listed in `SIGN_TRUSTED_PROXIES`** — set it to your nginx/proxy IP, or the audit trail
+will record the proxy's address instead of the signer's.
 
 ---
 
@@ -216,8 +234,9 @@ correct scheme from your proxy.
 
 - [ ] `SIGN_SECRET` set to a long random value (not a placeholder).
 - [ ] `PUBLIC_BASE_URL` is your real HTTPS URL.
-- [ ] SMTP configured and a test invite received.
+- [ ] SMTP configured and a test invite received (also makes magic-link sign-in deliver by email instead of the console).
 - [ ] `SIGN_DATA_DIR` (or Postgres) is on persistent, backed-up storage.
 - [ ] `LEGAL_ENTITY`, `LEGAL_ADDRESS`, `SUPPORT_EMAIL` filled in with your own details.
-- [ ] TLS terminating in front of the app; forwarded-IP headers passed through.
-- [ ] PAdES certificate installed if you need reader-validated signatures.
+- [ ] `OPERATOR_NAME` / `OPERATOR_URL` set (or left to their defaults) — no `example.com` on your public pages.
+- [ ] TLS terminating in front of the app; forwarded-IP headers passed through, `SIGN_TRUSTED_PROXIES` set to your proxy IP.
+- [ ] PAdES certificate installed if you need reader-validated (certified) signatures.

@@ -59,6 +59,10 @@ def send_gmail_new(
             body_html,
             attachments=attachments,
             reply_to=(reply_to or None),
+            # Forward the caller's plain-text body so the multipart/alternative carries a REAL text
+            # part (better inbox placement) AND, crucially, so console mode (SMTP unset) prints the
+            # actual text — including magic-link / verification URLs that _html_to_text would drop.
+            text=(body_text or None),
         )
     except Exception as e:  # map any mailer error to the {"ok": False} contract
         return {"ok": False, "status": "error", "error": str(e)[:160]}
