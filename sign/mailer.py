@@ -648,11 +648,22 @@ def reminder_html(
     return _wrap(body, preheader=pre, eyebrow="A gentle reminder", accent=_AMBER_BAR)
 
 
-def completed_html(doc_name: str, env_id: str, envelope_url: str = "") -> str:
+def completed_html(
+    doc_name: str, env_id: str, envelope_url: str = "", seal_method: str = "pades"
+) -> str:
     """All-parties-signed confirmation. The sealed, fully-executed PDF + the LiftedSign
     Certificate of Completion are attached by the caller; this message announces it and
     carries the envelope id for the audit trail. `envelope_url` (optional) adds a CTA to the
-    signer's secure verified-access envelope page to re-download / track anytime."""
+    signer's secure verified-access envelope page to re-download / track anytime.
+
+    `seal_method` selects the accurate seal wording ('pades' → a PKCS#7/PAdES certification
+    signature; anything else → the AES-256 integrity seal used when no signing cert is
+    configured), so the email never misstates how the document was sealed."""
+    seal_desc = (
+        "digitally signed with a PAdES certification signature"
+        if seal_method == "pades"
+        else "tamper-sealed (AES-256 integrity seal)"
+    )
     pre = f"Signed & completed: {doc_name}. Your sealed copy is attached."
     body = f"""
       {_headline("Signed &amp; completed")}
@@ -674,9 +685,9 @@ def completed_html(doc_name: str, env_id: str, envelope_url: str = "") -> str:
         <td style="padding:14px 18px 14px 6px;color:{
         _INK2
     };font-size:12.5px;line-height:1.7" class="ls-ink2">
-          <b style="color:{
-        _INK
-    }" class="ls-ink">Attached:</b> the tamper-sealed PDF (AES-256) plus a
+          <b style="color:{_INK}" class="ls-ink">Attached:</b> the fully-executed PDF, {
+        seal_desc
+    }, plus a
           Certificate of Completion listing each signer, authentication method, IP, and per-action
           UTC timestamps. Keep this copy &mdash; it is your accurate, reproducible record under
           ESIGN &sect;7001(d) / UETA &sect;12.</td></tr></table>

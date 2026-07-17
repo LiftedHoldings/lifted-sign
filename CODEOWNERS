@@ -1,0 +1,15 @@
+# Code owners for Lifted Sign.
+# These owners are requested for review on any pull request that touches matching paths.
+# See https://docs.github.com/articles/about-code-owners
+
+# Default owner for everything in the repository.
+*                       @LiftedHoldings
+
+# Security-critical surfaces — always route to the owner.
+/SECURITY.md            @LiftedHoldings
+/sign/webauth.py        @LiftedHoldings
+/sign/http_helpers.py   @LiftedHoldings
+/sign/esign_access.py   @LiftedHoldings
+/sign/sign_portal_auth.py @LiftedHoldings
+/sign/crypto.py         @LiftedHoldings
+/sign/pdf_sign.py       @LiftedHoldings

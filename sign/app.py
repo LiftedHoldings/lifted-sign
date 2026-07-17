@@ -34,7 +34,8 @@ from .http_helpers import (
     _apply_security_headers,
     _csrf_origin_ok,
 )
-from .routers import developers, envelope, mysign, ops, portal, signer
+from .routers import developers, envelope, meta, mysign, ops, portal, signer
+from .routers import webhooks as webhooks_router
 
 log = logging.getLogger("sign")
 
@@ -101,6 +102,8 @@ _PUBLIC_EXACT = frozenset(
         "/signapp",
         "/health",
         "/healthz",
+        "/readyz",
+        "/version",
         "/favicon.ico",
         "/privacy",
         "/terms",
@@ -204,8 +207,9 @@ async def terms() -> HTMLResponse:
 
 
 @app.get("/health")
-@app.get("/healthz")
 async def health() -> dict:
+    # Back-compat liveness alias. Canonical liveness/readiness/version probes live on the meta
+    # router (/healthz, /readyz, /version); /healthz is owned by meta.router, not this handler.
     return {"ok": True, "service": "lifted-sign"}
 
 
@@ -224,6 +228,9 @@ app.include_router(signer.router)
 app.include_router(envelope.router)
 app.include_router(developers.router)
 app.include_router(ops.router)
+app.include_router(webhooks_router.router)
+# Public operational probes (/healthz, /readyz, /version) — allowlisted in _PUBLIC_EXACT above.
+app.include_router(meta.router)
 
 
 # --- static mount -----------------------------------------------------------

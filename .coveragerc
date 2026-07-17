@@ -1,0 +1,21 @@
+# Coverage configuration for the Lifted Sign test suite.
+# Measured with pytest-cov: `pytest --cov=sign --cov-report=term-missing`.
+[run]
+source = sign
+branch = False
+# The Twilio/httpx SMS transport and the psycopg Postgres backend are exercised
+# only against live external services / a running Postgres, which the zero-config
+# SQLite test surface deliberately does not stand up. They are covered by their
+# own integration environment, not this unit/e2e suite.
+omit =
+    sign/__main__.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if TYPE_CHECKING:
+    raise NotImplementedError
+    def __repr__
+    if __name__ == .__main__.:
+show_missing = True
+skip_covered = False

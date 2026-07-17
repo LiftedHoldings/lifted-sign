@@ -9,4 +9,6 @@ Each module exposes a FastAPI ``router`` (an ``APIRouter``) that :mod:`sign.app`
 * :mod:`sign.routers.envelope`   — ``/api/envelope/*`` proven-identity signer-session API.
 * :mod:`sign.routers.developers` — ``/developers`` public API docs + OpenAPI spec.
 * :mod:`sign.routers.ops`        — ``/api/sign-ops/*`` operator console (gated by ADMIN_EMAILS).
+* :mod:`sign.routers.webhooks`   — ``/api/mysign/webhooks*`` owner-scoped outbound webhook subscriptions.
+* :mod:`sign.routers.meta`       — ``/healthz``, ``/readyz``, ``/version`` operational probes (public).
 """

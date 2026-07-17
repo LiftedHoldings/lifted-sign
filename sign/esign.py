@@ -2409,6 +2409,21 @@ def send(agreement_id: int, base_url: str = "") -> dict:
         conn.commit()
     finally:
         conn.close()
+    # Outbound webhook: envelope.sent. Lazy import + guarded so a webhook fault NEVER affects signing.
+    try:
+        from . import webhooks
+
+        webhooks.emit(
+            webhooks.EVENT_ENVELOPE_SENT,
+            {
+                "agreement_id": agreement_id,
+                "envelope_id": agr.get("envelope_id", ""),
+                "status": "out_for_signature",
+            },
+            agr.get("owner_account_id"),
+        )
+    except Exception:  # noqa: BLE001 — webhook isolation: never perturb the signing flow
+        log.exception("webhook emit (envelope.sent) failed for agreement %s", agreement_id)
     # Email each signer their link (network — outside the DB transaction).
     # L-19: in sequential mode, only the first order-group is notified now; later
     # signers are emailed by submit_signature as each prior group completes.
@@ -2832,6 +2847,18 @@ def submit_signature(
         ).fetchone()[0]
     finally:
         conn.close()
+    # Outbound webhook: signer.signed. Lazy import + guarded so a webhook fault NEVER affects signing.
+    try:
+        from . import webhooks
+
+        _owner = (get_agreement(s["agreement_id"]) or {}).get("owner_account_id")
+        webhooks.emit(
+            webhooks.EVENT_SIGNER_SIGNED,
+            {"agreement_id": s["agreement_id"], "signer_id": s["id"], "status": "signed"},
+            _owner,
+        )
+    except Exception:  # noqa: BLE001 — webhook isolation: never perturb the signing flow
+        log.exception("webhook emit (signer.signed) failed for signer %s", s["id"])
     completed = False
     if remaining == 0:
         completed = finalize(s["agreement_id"])
@@ -3131,6 +3158,22 @@ def decline(token: str, reason: str = "", ip: str = "", ua: str = "") -> dict:
             mailer.send_html(sender_email, f"Declined: {agr.get('name', '')}", html)
     except Exception:
         pass
+    # Outbound webhook: envelope.declined. Lazy import + guarded so a webhook fault NEVER affects signing.
+    try:
+        from . import webhooks
+
+        webhooks.emit(
+            webhooks.EVENT_ENVELOPE_DECLINED,
+            {
+                "agreement_id": s["agreement_id"],
+                "signer_id": s["id"],
+                "status": "declined",
+                "reason": reason,
+            },
+            (agr or {}).get("owner_account_id"),
+        )
+    except Exception:  # noqa: BLE001 — webhook isolation: never perturb the signing flow
+        log.exception("webhook emit (envelope.declined) failed for signer %s", s["id"])
     return {"ok": True}
 
 
@@ -3170,6 +3213,17 @@ def sweep_expired(now: float | None = None) -> int:
             agr = get_agreement(aid)
             if not agr:
                 continue
+            # Outbound webhook: envelope.expired (per-agreement owner; NULL-owner legacy rows emit 0).
+            try:
+                from . import webhooks
+
+                webhooks.emit(
+                    webhooks.EVENT_ENVELOPE_EXPIRED,
+                    {"agreement_id": aid, "status": "expired"},
+                    agr.get("owner_account_id"),
+                )
+            except Exception:  # noqa: BLE001 — webhook isolation: never perturb the sweep
+                log.exception("webhook emit (envelope.expired) failed for agreement %s", aid)
             if hasattr(mailer, "expired_html"):
                 html = mailer.expired_html(agr.get("name", ""), agr.get("envelope_id", ""))
             else:
@@ -3473,7 +3527,7 @@ def _seal_and_complete(agreement_id: int, agr: dict) -> bool:
             env_id_ = agr.get("envelope_id", "")
             _eb = (_cfg.local().get("esign", {}) or {}).get("public_base") or _cfg.PUBLIC_BASE_URL
             env_url = f"{_eb.rstrip('/')}/envelope/{env_id_}" if env_id_ else ""
-            html = mailer.completed_html(agr["name"], env_id_, env_url)
+            html = mailer.completed_html(agr["name"], env_id_, env_url, seal_method=seal_method)
             base = re.sub(r"\.pdf$", "", agr["name"], flags=re.I).strip() or "Document"
             att = [(f"{base}-SIGNED.pdf"[:90], executed)]
             c3 = db.connect()
@@ -3503,6 +3557,22 @@ def _seal_and_complete(agreement_id: int, agr: dict) -> bool:
                 c3.close()
     except Exception:
         pass
+    # Outbound webhook: envelope.completed. Fires exactly once at the single completion point (under
+    # the atomic seal claim). Lazy import + guarded so a webhook fault NEVER affects signing.
+    try:
+        from . import webhooks
+
+        webhooks.emit(
+            webhooks.EVENT_ENVELOPE_COMPLETED,
+            {
+                "agreement_id": agreement_id,
+                "envelope_id": agr.get("envelope_id", ""),
+                "status": "completed",
+            },
+            agr.get("owner_account_id"),
+        )
+    except Exception:  # noqa: BLE001 — webhook isolation: never perturb the signing flow
+        log.exception("webhook emit (envelope.completed) failed for agreement %s", agreement_id)
     return True
 
 
@@ -3589,6 +3659,19 @@ def void(agreement_id: int, reason: str = "") -> bool:
         )
         _event(conn, agreement_id, "voided", detail=reason)
         conn.commit()
+        # Outbound webhook: envelope.voided. Lazy import + guarded so a webhook fault NEVER affects
+        # signing. The row still resolves post-void with owner_account_id intact.
+        try:
+            from . import webhooks
+
+            _owner = (get_agreement(agreement_id) or {}).get("owner_account_id")
+            webhooks.emit(
+                webhooks.EVENT_ENVELOPE_VOIDED,
+                {"agreement_id": agreement_id, "status": "voided", "reason": reason},
+                _owner,
+            )
+        except Exception:  # noqa: BLE001 — webhook isolation: never perturb the signing flow
+            log.exception("webhook emit (envelope.voided) failed for agreement %s", agreement_id)
         return True
     finally:
         conn.close()
