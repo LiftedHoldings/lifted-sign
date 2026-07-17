@@ -186,11 +186,21 @@ section{padding:96px 0;position:relative;z-index:1}
 .b p{color:var(--text-muted);font-size:14.5px;line-height:1.56}
 .b.feat{border-color:color-mix(in srgb,var(--brand) 32%,var(--glass-border));background:radial-gradient(460px 220px at 100% 0,var(--brand-tint),transparent 60%),var(--glass-fill)}
 
-/* ---- stats ---- */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:18px}
-.st{border-radius:var(--radius-lg);padding:26px 22px;text-align:center}
-.st .n{font-family:var(--font-display);font-size:clamp(24px,3.2vw,38px);font-weight:800}
-.st .l{font-size:13px;color:var(--text-muted);margin-top:6px}
+/* ---- trust band (honest feature chips — NOT metrics) ---- */
+.trustband{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.tchip{display:flex;gap:13px;align-items:flex-start;border-radius:var(--radius-lg);padding:20px 18px;background:var(--glass-fill);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.3);backdrop-filter:blur(var(--glass-blur)) saturate(1.3);transition:transform var(--dur-base) var(--ease-out),border-color var(--dur-base) var(--ease-out)}
+.tchip:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--brand) 42%,var(--glass-border))}
+.tchip__ic{flex:none;width:34px;height:34px;border-radius:var(--radius-md);display:grid;place-items:center;background:var(--brand-tint);color:var(--brand)}
+.tchip__ic svg{width:18px;height:18px}
+.tchip__t{color:var(--text-strong);font-weight:650;font-size:14px;letter-spacing:-.01em}
+.tchip__d{color:var(--text-muted);font-size:12.5px;line-height:1.45;margin-top:3px}
+@media(max-width:1080px){.trustband{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.trustband{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:460px){.trustband{grid-template-columns:1fr}}
+/* pricing: license + fair-use fine print inside a card */
+.pcard .pnote{font-size:12.5px;color:var(--text-faint);margin-top:12px;text-align:center}
+.pcard .pnote a{color:var(--text-muted);text-decoration:underline;text-underline-offset:2px}
+.pcard .pnote a:hover{color:var(--brand)}
 
 /* ---- steps ---- */
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
@@ -325,17 +335,18 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
   <canvas class="lds-particles" data-density="0.7" data-links="0" aria-hidden="true"></canvas>
   <div class="wrap"><div class="hero-grid">
   <div>
-    <a class="pill reveal" href="/signapp"><span class="live"></span> <b style="color:var(--text-strong);font-weight:700">Free beta:</b>&nbsp;unlimited documents, no card required&nbsp;→</a>
-    <h1 class="reveal">Send it. Sign it.<br><span class="grad">Signed, sealed, delivered.</span></h1>
-    <p class="lead reveal">Lifted Sign turns your PDFs into legally-binding agreements. Drop signature, date, and initial fields anywhere, route it to every signer, and get back a tamper-evident sealed document with a full Certificate of Completion — identity, timestamps, and IP on the record. No third party, no redirect.</p>
+    <a class="pill reveal" href="#self-host"><span class="live"></span> <b style="color:var(--text-strong);font-weight:700">Open source · AGPL-3.0</b>&nbsp;— self-host it, or use the managed cloud&nbsp;→</a>
+    <h1 class="reveal">E-signatures that hold up.<br><span class="grad">On your own servers.</span></h1>
+    <p class="lead reveal">Lifted Sign turns any PDF into a legally-binding agreement — drag-and-drop fields, multi-signer routing, and ESIGN/UETA consent, sealed with a PAdES/PKCS#7 certification signature and a full Certificate of Completion. Open source under AGPL-3.0: run it on your own infrastructure, or let us host it for you. No third party, no redirect.</p>
     <div class="cta reveal">
-      <a class="btn primary lg" id="ctaPrimaryHero" href="/signapp"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-1 4-6 6-6s2 3 4 3 3-4 5-4"/><path d="M3 21h18"/></svg> Start free</a>
-      <a class="btn lg ghost" href="#how"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg> See how it works</a>
+      <a class="btn primary lg" id="ctaPrimaryHero" href="/signapp"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-1 4-6 6-6s2 3 4 3 3-4 5-4"/><path d="M3 21h18"/></svg> Start signing free</a>
+      <a class="btn lg ghost" href="#self-host"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg> Self-host it</a>
     </div>
     <div class="sg-pill-row reveal">
       <span class="sg-pill"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 7l7-4 7 4M4 9l4 8H0l4-8zM20 9l4 8h-8l4-8z"/></svg> ESIGN &amp; UETA</span>
-      <span class="sg-pill"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> AES-256 sealed</span>
-      <span class="sg-pill"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7l7-4z"/></svg> Certificate of Completion</span>
+      <span class="sg-pill"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7l7-4z"/></svg> PAdES-certified</span>
+      <span class="sg-pill"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg> Self-hostable</span>
+      <span class="sg-pill"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg> Certificate of Completion</span>
     </div>
   </div>
   <div class="reveal">
@@ -376,13 +387,29 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
   </div>
 </div></div></section>
 
-<!-- TRUST STRIP -->
-<section style="padding-top:64px;padding-bottom:64px"><div class="wrap">
-  <div class="stats">
-    <div class="st reveal"><div class="n gradem">AES-256</div><div class="l">Tamper-evident document seal</div></div>
-    <div class="st reveal"><div class="n gradem">ESIGN + UETA</div><div class="l">Consent captured on every envelope</div></div>
-    <div class="st reveal"><div class="n gradem">$0</div><div class="l">Billed during beta</div></div>
-    <div class="st reveal"><div class="n gradem">Every send</div><div class="l">On its own audit trail</div></div>
+<!-- TRUST BAND — honest, OSS-appropriate signals (labelled features, not metrics) -->
+<section aria-label="What Lifted Sign is built on" style="padding-top:60px;padding-bottom:60px"><div class="wrap">
+  <div class="trustband">
+    <div class="tchip reveal">
+      <span class="tchip__ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 7l7-4 7 4M4 9l4 8H0l4-8zM20 9l4 8h-8l4-8z"/></svg></span>
+      <div><div class="tchip__t">ESIGN &amp; UETA</div><div class="tchip__d">Consent &amp; intent captured before the first field — the legal basis of an enforceable e-signature.</div></div>
+    </div>
+    <div class="tchip reveal">
+      <span class="tchip__ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7l7-4z"/></svg></span>
+      <div><div class="tchip__t">PAdES / PKCS#7 seal</div><div class="tchip__d">A certification signature (DocMDP, no-changes) plus a SHA-256 fingerprint — tamper-evident in Adobe Acrobat.</div></div>
+    </div>
+    <div class="tchip reveal">
+      <span class="tchip__ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span>
+      <div><div class="tchip__t">Self-host, your data</div><div class="tchip__d">Runs on your own infrastructure — full data residency, no third-party egress, air-gap friendly.</div></div>
+    </div>
+    <div class="tchip reveal">
+      <span class="tchip__ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></span>
+      <div><div class="tchip__t">Open source · AGPL-3.0</div><div class="tchip__d">The whole server is auditable and yours to run — no black box, no vendor lock-in.</div></div>
+    </div>
+    <div class="tchip reveal">
+      <span class="tchip__ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 16l4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/></svg></span>
+      <div><div class="tchip__t">Developer-first API</div><div class="tchip__d">A clean REST API, OpenAPI 3.1 spec, Postman collection, and SDKs — signatures from your own stack.</div></div>
+    </div>
   </div>
 </div></section>
 
@@ -436,12 +463,12 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
     <div class="reveal">
       <span class="eyebrow">Tamper-evident by design</span>
       <h2 class="three-beat" style="font-size:clamp(30px,4.6vw,50px);line-height:1.05;margin:16px 0 16px">Alter one byte. <span class="grad">Everyone knows.</span></h2>
-      <p style="color:var(--text-body);font-size:17px;max-width:52ch">When the last field is signed, Lifted Sign freezes the document, AES-256 encrypts it, and records a SHA-256 fingerprint on the Certificate of Completion. Alter one byte and the fingerprint no longer matches the certificate — proof, on its face, that the record is exactly what every party agreed to.</p>
+      <p style="color:var(--text-body);font-size:17px;max-width:52ch">When the last field is signed, Lifted Sign freezes the document and applies a PAdES/PKCS#7 <em>certification</em> signature at the "no changes permitted" level, with the executed SHA-256 fingerprint recorded on the Certificate of Completion. Alter a single byte — or append a revision after the fact — and every compliant PDF viewer, Adobe Acrobat included, flags the certification as broken. Proof, on its face, that the record is exactly what every party agreed to.</p>
       <div class="sg-compliance">
         <div class="sg-comp"><span class="sg-comp__ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 7l7-4 7 4M4 9l4 8H0l4-8zM20 9l4 8h-8l4-8z"/></svg></span><div><div class="sg-comp__t">ESIGN Act &amp; UETA</div><div class="sg-comp__d">Consent and intent recorded before the first field is signed.</div></div></div>
         <div class="sg-comp"><span class="sg-comp__ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7l7-4z"/></svg></span><div><div class="sg-comp__t">Certificate of Completion</div><div class="sg-comp__d">A standalone audit record travels with the signed document.</div></div></div>
-        <div class="sg-comp"><span class="sg-comp__ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><div><div class="sg-comp__t">AES-256 document seal</div><div class="sg-comp__d">Encrypted at rest; a SHA-256 fingerprint on the certificate makes any change detectable.</div></div></div>
-        <div class="sg-comp"><span class="sg-comp__ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V8a5 5 0 0 1 10 0v3"/></svg></span><div><div class="sg-comp__t">Encrypted at rest</div><div class="sg-comp__d">Documents and signatures encrypted in storage and in transit.</div></div></div>
+        <div class="sg-comp"><span class="sg-comp__ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7l7-4z"/></svg></span><div><div class="sg-comp__t">PAdES / PKCS#7 certification</div><div class="sg-comp__d">A DocMDP "no changes" signature; any later edit invalidates it in every compliant PDF viewer.</div></div></div>
+        <div class="sg-comp"><span class="sg-comp__ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V8a5 5 0 0 1 10 0v3"/></svg></span><div><div class="sg-comp__t">Self-hosted &amp; encrypted</div><div class="sg-comp__d">Runs on your infrastructure — AES-256 at rest, TLS in transit, no third-party egress.</div></div></div>
       </div>
       <span class="sg-seal"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Seal verified</span>
     </div>
@@ -457,7 +484,8 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
         <div class="sg-cert__row"><span class="sg-cert__k">Signers</span><span class="sg-cert__v">3 of 3</span></div>
         <div class="sg-cert__row"><span class="sg-cert__k">Sealed at</span><span class="sg-cert__v">2026-06-19 14:22:07 UTC</span></div>
         <div class="sg-cert__row"><span class="sg-cert__k">Consent</span><span class="sg-cert__v">ESIGN / UETA · recorded</span></div>
-        <div class="sg-cert__row"><span class="sg-cert__k">Encryption</span><span class="sg-cert__v is-brand">AES-256</span></div>
+        <div class="sg-cert__row"><span class="sg-cert__k">Seal</span><span class="sg-cert__v is-brand">PAdES · PKCS#7</span></div>
+        <div class="sg-cert__row"><span class="sg-cert__k">Doc SHA-256</span><span class="sg-cert__v">3f9a4b…c2e1</span></div>
       </div>
       <p style="font-family:var(--font-mono);font-size:12px;color:var(--text-faint);margin-top:16px">Every envelope keeps its own history.</p>
     </div>
@@ -527,36 +555,38 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
 
 <!-- PRICING -->
 <section id="pricing"><div class="wrap">
-  <div class="sec-head reveal" style="text-align:center;margin-inline:auto"><span class="eyebrow" style="justify-content:center">Pricing</span><h2>Free while we're <span class="gradem">in beta.</span></h2><p style="margin-inline:auto;max-width:52ch">Unlimited documents. Unlimited signers. Full audit trail and sealed PDFs. No credit card, ever, during beta.</p></div>
+  <div class="sec-head reveal" style="text-align:center;margin-inline:auto"><span class="eyebrow" style="justify-content:center">Pricing</span><h2>One product. <span class="gradem">Two ways to run it.</span></h2><p style="margin-inline:auto;max-width:54ch">Self-host the whole server for free under AGPL-3.0, or let us run a fully-managed instance for you. Same fields, same PAdES seal, same Certificate of Completion either way.</p></div>
   <div class="price-grid">
-    <div class="pcard feat reveal">
-      <span class="ptag">Beta — available now</span>
+    <div class="pcard reveal" id="self-host">
+      <span class="ptag">Self-hosted</span>
       <div class="price gradem">$0</div>
-      <div class="per">unlimited documents</div>
-      <p class="pdesc">Everything Lifted Sign does, free. Unlimited documents and signers, full audit trail, sealed PDFs, and a Certificate of Completion on every envelope. No credit card required.</p>
+      <div class="per">open source · AGPL-3.0, forever</div>
+      <p class="pdesc">The complete Lifted Sign server, source-available and yours to run. Deploy on your own infrastructure with full data residency — no seats, no per-envelope fees, no vendor lock-in.</p>
       <ul>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Runs on your own servers &amp; storage</li>
         <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Unlimited documents &amp; signers</li>
-        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Drag-and-drop field placement</li>
-        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> ESIGN / UETA consent capture</li>
-        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> AES-256 sealed PDF + certificate</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> PAdES certification + Certificate of Completion</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Full REST API, SDKs &amp; webhooks</li>
       </ul>
-      <div class="pfoot"><a class="btn primary lg" href="/signapp" style="width:100%;justify-content:center"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-1 4-6 6-6s2 3 4 3 3-4 5-4"/><path d="M3 21h18"/></svg> Start free</a></div>
+      <div class="pfoot"><a class="btn lg ghost" href="/developers" style="width:100%;justify-content:center"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg> Developer &amp; API docs</a>
+        <p class="pnote">AGPL-3.0 · your servers, your data.</p></div>
     </div>
-    <div class="pcard reveal">
-      <span class="ptag" style="color:var(--text-faint)">Later — after beta</span>
+    <div class="pcard feat reveal">
+      <span class="ptag">Fully managed</span>
       <div class="price">$29.99<span style="font-size:.4em;font-weight:600;color:var(--text-faint)"> /mo</span></div>
-      <div class="per">our planned flat rate</div>
-      <p class="pdesc">Our planned flat rate when Lifted Sign leaves beta. Everyone signing today keeps signing free until then — currently $0 billed. We'll give clear notice before anything is ever charged.</p>
+      <div class="per">hosted &amp; maintained for you</div>
+      <p class="pdesc">We run Lifted Sign so you don't have to — provisioning, the signing certificate, upgrades, backups, and email delivery. You send and sign; we keep the lights on.</p>
       <ul>
-        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Everything in the beta plan</li>
-        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> One flat monthly rate</li>
-        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> No per-envelope fees</li>
-        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> No card on file today</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Everything in self-host, zero ops</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Managed PAdES signing certificate</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Email delivery, reminders &amp; tracking</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Automatic upgrades &amp; backups</li>
       </ul>
-      <div class="pfoot"><a class="btn lg ghost" href="/signapp" style="width:100%;justify-content:center">Start free now</a></div>
+      <div class="pfoot"><a class="btn primary lg" href="/signapp" style="width:100%;justify-content:center"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-1 4-6 6-6s2 3 4 3 3-4 5-4"/><path d="M3 21h18"/></svg> Get started</a>
+        <p class="pnote">Free while in beta — no card required.</p></div>
     </div>
   </div>
-  <p class="price-fine reveal">No card on file. No per-envelope fees. We'll give every beta user clear notice before anything is ever charged.</p>
+  <p class="price-fine reveal">Self-host is free under AGPL-3.0, forever. The managed plan is subject to a reasonable <a href="/terms" style="color:var(--text-muted);text-decoration:underline;text-underline-offset:2px">fair-use policy</a> — and we'll always give clear notice before any change to billing.</p>
 </div></section>
 
 <!-- CTA BAND -->
@@ -575,12 +605,13 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
   <div class="fgrid">
     <div class="fcol">
       <span class="brand" style="font-size:18px"><span class="lds-globe" data-size="20" aria-hidden="true"></span><span>Lifted <b>Sign</b></span></span>
-      <p>Open, self-hostable e-signature — ESIGN/UETA compliant. Signed, sealed, delivered.</p>
+      <p>Open-source, self-hostable e-signature — ESIGN/UETA consent and a PAdES-certified, tamper-evident seal. Signed, sealed, delivered.</p>
     </div>
     <div class="fcol"><h4>Product</h4>
       <a href="#features">Features</a>
       <a href="#how">How it works</a>
       <a href="#trust">Security</a>
+      <a href="#self-host">Self-host</a>
       <a href="#pricing">Pricing</a></div>
     <div class="fcol"><h4>Developers</h4>
       <a href="/developers">API reference</a>
@@ -598,7 +629,7 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
       <a href="/terms">Terms of Service</a></div>
   </div>
   <div class="fbar">
-    <span>© <span id="yr"></span> {{OPERATOR_NAME}} · Signed, sealed, delivered.</span>
+    <span>© <span id="yr"></span> {{OPERATOR_NAME}} · Open source under AGPL-3.0.</span>
     <span style="display:inline-flex;gap:18px;align-items:center"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><span>{{PUBLIC_HOST}}</span></span>
   </div>
 </div></footer>

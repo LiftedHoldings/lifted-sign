@@ -331,10 +331,10 @@ curl -sS https://sign.example.com/api/mysign/agreements/42/certificate \
   -H "Authorization: Bearer $LIFTED_SIGN_KEY" -o certificate.pdf
 ```
 
-> **No webhooks yet.** Lifted Sign doesn't push events to your endpoint. Until
-> it does, poll the envelope (`GET /api/mysign/agreements/{aid}`) and watch
-> `status` move to `completed`. See [Webhooks](./12-webhooks-and-polling.md) for the
-> roadmap and a polling pattern.
+> **Prefer webhooks over polling.** Instead of this loop, register an endpoint and
+> Lifted Sign will POST a signed `envelope.completed` (and more) the moment it happens.
+> See [Webhooks](./12-webhooks-and-polling.md). Polling `GET /api/mysign/agreements/{aid}`
+> and watching `status` move to `completed` remains a fine fallback.
 
 ---
 

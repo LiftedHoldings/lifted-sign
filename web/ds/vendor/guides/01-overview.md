@@ -117,7 +117,7 @@ Two rules that catch integrators off guard:
 - **Draft immutability.** Signers, fields, page edits, and order-mode can only change while the envelope is a `draft`. Once sent, those calls return `{"ok": false, "error": "locked — already sent"}` with **HTTP 200** — a soft, in-body rejection, not a 4xx. Check the `ok` field, not just the status code. (The vendored SDKs raise on `ok: false` for you.)
 - **Sent envelopes are legal records.** A sent or completed envelope cannot be edited or deleted — only `void`ed. `DELETE` on a sent envelope is the one hard rejection: **HTTP 409**.
 
-The `status` field on the [`Envelope`](../openapi.yaml) object tells you exactly where an envelope sits; poll `GET /agreements/{aid}` (or list with `GET /agreements`) to track it. There are **no webhooks yet** — event push is on the roadmap, so today you poll. See [Tracking status](./08-sending-and-tracking.md) and the [Webhooks (roadmap)](./12-webhooks-and-polling.md) guide.
+The `status` field on the [`Envelope`](../openapi.yaml) object tells you exactly where an envelope sits. Track it two ways: **register a webhook** and receive a signed POST the moment it changes, or **poll** `GET /agreements/{aid}` (or list with `GET /agreements`). See [Tracking status](./08-sending-and-tracking.md) and the [Webhooks](./12-webhooks-and-polling.md) guide.
 
 ## Your first call
 

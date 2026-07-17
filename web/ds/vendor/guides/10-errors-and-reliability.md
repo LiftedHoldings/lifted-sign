@@ -314,14 +314,17 @@ except LiftedSignError as e:
 
 ## Staying in sync
 
-**There are no webhooks yet.** Lifted Sign does not push `signed` / `completed` / `declined`
-events to your endpoint today — the Webhooks tag in the spec is a roadmap placeholder. Until
-then, **poll**: `GET /api/mysign/agreements/{aid}` returns the current `status`, per-signer
-`status`, and the ordered `events` audit trail; `GET /api/mysign/agreements` pages the whole
-account. Poll on a sane interval (seconds-to-minutes, not a hot loop — the 120 req/min limit
-applies), and stop once `status` reaches a terminal value (`completed`, `declined`, `voided`,
-`cancelled`). See [12 — Webhooks & polling](./12-webhooks-and-polling.md) for the polling
-pattern and the webhook roadmap.
+**Two ways to stay in sync — webhooks (preferred) or polling.** Register an endpoint with
+`POST /api/mysign/webhooks` and Lifted Sign delivers a signed POST (`envelope.sent`,
+`signer.signed`, `envelope.completed`, `envelope.declined`, `envelope.voided`,
+`envelope.expired`) as each transition happens — verify the `X-Lifted-Signature` HMAC and
+respond `2xx`. Failed deliveries retry a few times over seconds but are **not** redelivered
+later, so reconcile gaps by **polling**: `GET /api/mysign/agreements/{aid}` returns the current
+`status`, per-signer `status`, and the ordered `events` audit trail; `GET /api/mysign/agreements`
+pages the whole account. Poll on a sane interval (seconds-to-minutes, not a hot loop — the
+120 req/min limit applies), and stop once `status` reaches a terminal value (`completed`,
+`declined`, `voided`, `cancelled`). See [12 — Webhooks](./12-webhooks-and-polling.md) for the
+delivery contract, signature verification, and the polling fallback.
 
 ---
 
@@ -334,7 +337,7 @@ pattern and the webhook roadmap.
 - [ ] Retry only `429` and transient `5xx`/network — with exponential backoff **and jitter**.
 - [ ] Never blind-retry `POST /agreements` or `/templates/{tid}/use`; reconcile by listing.
 - [ ] Keep uploads under 60 MB.
-- [ ] Poll for status — there are no webhooks yet.
+- [ ] Stay in sync via webhooks (verify the `X-Lifted-Signature` HMAC), and poll to reconcile.
 
 **Related:** [03 — Authentication](./03-authentication.md) ·
 [06 — Placing fields](./06-placing-fields.md) ·

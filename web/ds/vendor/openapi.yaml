@@ -220,10 +220,13 @@ tags:
       account is currently cleared to send. Never returns secrets.
   - name: Webhooks
     description: >-
-      Coming soon: push delivery of `signed`, `completed`, and `declined` events to an
-      endpoint you register, so you can react to signing progress without polling. No
-      webhook endpoints are live yet — until they ship, poll an envelope's status via
-      the **Status** tag. This entry is a placeholder for the forthcoming surface.
+      Register HTTPS endpoints that receive **signed, retried** POSTs as envelopes change —
+      `envelope.sent`, `signer.signed`, `envelope.completed`, `envelope.declined`,
+      `envelope.voided`, `envelope.expired` — so you can react to signing progress without
+      polling. Each delivery is HMAC-SHA256 signed with the subscription's `whsec_` secret
+      (`X-Lifted-Signature: sha256=<hex>` over the exact raw body) and every attempt is
+      written to a per-subscription delivery log. Subscriptions are owner-scoped: a webhook
+      id that isn't yours returns `404`, never `403`.
 
 paths:
   /api/mysign/agreements:
@@ -1101,6 +1104,195 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/mysign/webhooks:
+    get:
+      operationId: listWebhooks
+      tags: [Webhooks]
+      summary: List webhook subscriptions
+      description: >-
+        Return every webhook subscription owned by the calling account (newest first). Each
+        subscription includes its signing `secret` (the endpoint is owner-scoped and you need
+        the secret to verify deliveries). The response also lists every selectable `events`
+        value so a UI can offer the full set.
+      responses:
+        '200':
+          description: Your subscriptions plus the selectable-event list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  webhooks:
+                    type: array
+                    items: { $ref: '#/components/schemas/Webhook' }
+                  events:
+                    type: array
+                    description: >-
+                      Every event name a subscription may select. `envelope.viewed` is
+                      accepted but not currently emitted by the signing engine.
+                    items: { type: string }
+                    example: [envelope.sent, envelope.viewed, signer.signed, envelope.completed, envelope.declined, envelope.voided, envelope.expired]
+                required: [webhooks, events]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createWebhook
+      tags: [Webhooks]
+      summary: Register a webhook
+      description: >-
+        Create a subscription for an absolute `http(s)` `url`. `events` is a list of event
+        names (or a comma-separated string); omit it or pass `["*"]` to receive every event.
+        A fresh `whsec_` signing secret is generated and returned — store it to verify
+        deliveries. An unknown event name is rejected with `400`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WebhookInput' }
+            example:
+              url: https://api.acme.com/hooks/lifted-sign
+              events: [envelope.completed, envelope.declined, signer.signed]
+      responses:
+        '200':
+          description: Subscription created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+                  webhook: { $ref: '#/components/schemas/Webhook' }
+                required: [ok, webhook]
+        '400':
+          description: >-
+            Missing/invalid input — `error` is one of `url required`,
+            `url must be an absolute http(s) URL`, or `unknown event: <name>`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OkError' }
+              example: { ok: false, error: 'unknown event: envelope.done' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/mysign/webhooks/{wid}:
+    parameters:
+      - $ref: '#/components/parameters/WebhookId'
+    delete:
+      operationId: deleteWebhook
+      tags: [Webhooks]
+      summary: Delete a webhook
+      description: >-
+        Delete a subscription you own. Idempotent — a subscription that isn't yours (or was
+        already deleted) returns `404`, never `403` (existence is not leaked).
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+                required: [ok]
+              example: { ok: true }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFoundWebhook'
+
+  /api/mysign/webhooks/{wid}/rotate:
+    parameters:
+      - $ref: '#/components/parameters/WebhookId'
+    post:
+      operationId: rotateWebhookSecret
+      tags: [Webhooks]
+      summary: Rotate a webhook's signing secret
+      description: >-
+        Mint a new `whsec_` signing secret for a subscription you own; the old secret stops
+        signing immediately. Returns the refreshed subscription (with the new secret). `404`
+        if the id isn't yours.
+      responses:
+        '200':
+          description: Secret rotated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+                  webhook: { $ref: '#/components/schemas/Webhook' }
+                required: [ok, webhook]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFoundWebhook'
+
+  /api/mysign/webhooks/{wid}/deliveries:
+    parameters:
+      - $ref: '#/components/parameters/WebhookId'
+    get:
+      operationId: listWebhookDeliveries
+      tags: [Webhooks]
+      summary: Read a webhook's delivery log
+      description: >-
+        Return the recent delivery/audit log for a subscription you own, newest first. One row
+        is written **per attempt**, so a retried delivery appears as multiple rows
+        (`attempt` 1, 2, …). `404` if the id isn't yours.
+      parameters:
+        - name: limit
+          in: query
+          description: Max rows to return, clamped to 1..200 (default 50).
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        '200':
+          description: The delivery log.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deliveries:
+                    type: array
+                    items: { $ref: '#/components/schemas/WebhookDelivery' }
+                required: [deliveries]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFoundWebhook'
+
+  /api/mysign/webhooks/{wid}/test:
+    parameters:
+      - $ref: '#/components/parameters/WebhookId'
+    post:
+      operationId: testWebhook
+      tags: [Webhooks]
+      summary: Send a test delivery
+      description: >-
+        Send a sample `envelope.sent` ping (payload
+        `{ "agreement_id": null, "status": "test", "ping": true }`) to a subscription you own,
+        so you can confirm your receiver and signature check before relying on live events.
+        The ping is signed, retried, and logged exactly like a live delivery; its outcome
+        appears in the delivery log. `404` if the id isn't yours.
+      responses:
+        '200':
+          description: >-
+            The ping was scheduled in the background. `scheduled` is the number of deliveries
+            queued (1 for the pinged subscription).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+                  scheduled: { type: integer, description: Deliveries scheduled., example: 1 }
+                required: [ok, scheduled]
+              example: { ok: true, scheduled: 1 }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFoundWebhook'
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -1124,6 +1316,12 @@ components:
       required: true
       description: The template id.
       schema: { type: integer, example: 5 }
+    WebhookId:
+      name: wid
+      in: path
+      required: true
+      description: The webhook subscription id.
+      schema: { type: integer, example: 3 }
 
   responses:
     Unauthorized:
@@ -1140,6 +1338,12 @@ components:
           example: { error: not found }
     NotFoundTemplate:
       description: No such template owned by this account (existence is not leaked).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: not found }
+    NotFoundWebhook:
+      description: No such webhook subscription owned by this account (existence is not leaked).
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
@@ -1552,3 +1756,105 @@ components:
             positional index. `field_key` wins when both match.
           additionalProperties: { type: string }
           example: { company: Acme Corp, effective_date: '2026-08-01' }
+
+    WebhookInput:
+      type: object
+      description: The body for `POST /api/mysign/webhooks`.
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Absolute `http(s)` endpoint to POST deliveries to. Redirects are not followed.
+          example: https://api.acme.com/hooks/lifted-sign
+        events:
+          description: >-
+            Events to subscribe to — a list of names, or a comma-separated string. Omit, or
+            pass `["*"]`, to receive every event.
+          oneOf:
+            - type: array
+              items:
+                type: string
+                enum: [envelope.sent, envelope.viewed, signer.signed, envelope.completed, envelope.declined, envelope.voided, envelope.expired, '*']
+            - type: string
+          example: [envelope.completed, envelope.declined, signer.signed]
+
+    Webhook:
+      type: object
+      description: >-
+        A webhook subscription. Owner-scoped. The `secret` is returned deliberately — you need
+        it to verify the `X-Lifted-Signature` HMAC on each delivery.
+      properties:
+        id: { type: integer, example: 3 }
+        url: { type: string, format: uri, example: https://api.acme.com/hooks/lifted-sign }
+        secret:
+          type: string
+          description: The `whsec_` signing secret (HMAC-SHA256 key for `X-Lifted-Signature`).
+          example: whsec_Vx9kQ2…redacted
+        events:
+          type: array
+          description: Subscribed events. `["*"]` means every event.
+          items: { type: string }
+          example: [envelope.completed, envelope.declined, signer.signed]
+        active:
+          type: boolean
+          description: >-
+            Whether the subscription is delivering. Auto-set to `false` after 15 consecutive
+            failed deliveries.
+          example: true
+        created_at: { type: number, description: Unix epoch seconds when created., example: 1752624000.0 }
+        last_status:
+          type: [integer, 'null']
+          description: HTTP status of the most recent delivery attempt (null until the first).
+          example: 200
+        last_delivery_at:
+          type: [number, 'null']
+          description: Unix epoch seconds of the most recent delivery attempt (null until the first).
+        failure_count:
+          type: integer
+          description: Consecutive failed deliveries (reset to 0 on any success).
+          example: 0
+      required: [id, url, secret, events, active]
+      example:
+        id: 3
+        url: https://api.acme.com/hooks/lifted-sign
+        secret: whsec_Vx9kQ2…redacted
+        events: [envelope.completed, envelope.declined, signer.signed]
+        active: true
+        created_at: 1752624000.0
+        last_status: 200
+        last_delivery_at: 1752624300.4
+        failure_count: 0
+
+    WebhookDelivery:
+      type: object
+      description: >-
+        One delivery attempt in a subscription's audit log. A retried delivery produces one row
+        per attempt.
+      properties:
+        id: { type: integer, example: 512 }
+        webhook_id: { type: integer, example: 3 }
+        event: { type: string, description: The delivered event name., example: envelope.completed }
+        status_code:
+          type: [integer, 'null']
+          description: HTTP status returned by your endpoint (null on a transport error/timeout).
+          example: 200
+        ok: { type: boolean, description: True when the attempt got a 2xx., example: true }
+        attempt: { type: integer, description: 1-based attempt number within the delivery., example: 1 }
+        created_at: { type: number, description: Unix epoch seconds of the attempt., example: 1752624300.4 }
+        response_ms: { type: [integer, 'null'], description: Round-trip time in milliseconds., example: 84 }
+        error:
+          type: string
+          description: Failure detail (`HTTP 503`, an exception name, …); empty on success.
+          example: ''
+      required: [id, webhook_id, ok, attempt]
+      example:
+        id: 512
+        webhook_id: 3
+        event: envelope.completed
+        status_code: 200
+        ok: true
+        attempt: 1
+        created_at: 1752624300.4
+        response_ms: 84
+        error: ''

@@ -192,7 +192,7 @@ await ls.void(42, "Superseded by a revised contract");
 
 ## Tracking an envelope
 
-There are no webhooks yet — see [below](#no-webhooks-yet-poll-for-completion). Tracking is a read of the envelope object, which carries everything: envelope status, per-signer status, and the ordered audit trail.
+You can track an envelope two ways: subscribe to [webhooks](./12-webhooks-and-polling.md) for signed event pushes, or poll it — see [below](#tracking-via-polling). Either way, tracking is grounded in a read of the envelope object, which carries everything: envelope status, per-signer status, and the ordered audit trail.
 
 ### Get the full envelope
 
@@ -326,9 +326,9 @@ curl "https://sign.example.com/api/mysign/agreements?limit=50&offset=0" \
 
 ---
 
-## No webhooks yet — poll for completion
+## Tracking via polling
 
-Event delivery to your endpoint (`signed` / `completed` / `declined`) is on the roadmap but **not yet available**. Until it ships, **poll** `GET /api/mysign/agreements/{aid}` and watch the top-level `status`. When it flips to `completed` (and `completed_at` is set), the executed PDF and Certificate of Completion are ready to download.
+If you'd rather pull than receive [webhook](./12-webhooks-and-polling.md) pushes — or want to reconcile a missed delivery — **poll** `GET /api/mysign/agreements/{aid}` and watch the top-level `status`. When it flips to `completed` (and `completed_at` is set), the executed PDF and Certificate of Completion are ready to download.
 
 ```python
 import time

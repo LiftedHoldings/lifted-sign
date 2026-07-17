@@ -384,9 +384,9 @@ await ls.send(draft.id);
 
 Template calls count against the standard **120 requests/minute** per account. Bursts above it get `429 Too Many Requests` — back off and retry with jitter. PDF uploads (the `create_agreement` step) are capped at **60 MB**.
 
-## Webhooks?
+## Webhooks
 
-Not yet. There's no push notification when a signer opens or completes a document generated from a template. Poll the envelope's status (see [Status](./08-sending-and-tracking.md)) until webhooks ship — the roadmap is in the [Webhooks guide](./12-webhooks-and-polling.md).
+Yes. A draft minted from a template is an ordinary envelope, so it fires the same events — `envelope.sent`, `signer.signed`, `envelope.completed`, and the rest. [Register a webhook](./12-webhooks-and-polling.md) to get a signed push as each one changes, or poll the envelope's status (see [Status](./08-sending-and-tracking.md)).
 
 ---
 

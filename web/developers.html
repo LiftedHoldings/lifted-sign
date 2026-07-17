@@ -1,157 +1,185 @@
 <!doctype html>
-<html lang="en" data-brand="sign" data-theme="dark">
+<html lang="en" data-brand="sign">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lifted Sign API — Developer Reference</title>
 <meta name="description" content="Lifted Sign API reference: turn any PDF into a legally-binding, sealed, certificate-backed signed document from your own backend. REST, Bearer-authed, OpenAPI 3.1.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://sign.example.com/developers">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='%232E6BFF' stroke-width='2.4' stroke-linecap='round'><circle cx='20' cy='20' r='16.5'/><line x1='3.5' y1='20' x2='36.5' y2='20'/><ellipse cx='20' cy='20' rx='16.5' ry='7.4'/><ellipse cx='20' cy='20' rx='8' ry='16.5'/></svg>">
+<meta name="theme-color" content="#05080E">
+<link rel="canonical" href="{{PUBLIC_BASE_URL}}/developers">
+<link rel="icon" type="image/svg+xml" href="/static/ds/assets/favicon.svg">
+<link rel="apple-touch-icon" href="/static/ds/assets/favicon.svg">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Lifted Sign API — Developer Reference">
 <meta property="og:description" content="Turn any PDF into a legally-binding, sealed, certificate-backed signed document — from your own backend.">
-<meta property="og:url" content="https://sign.example.com/developers">
-<!-- Fonts are self-hosted from the vendored DS typefaces (Sora / Inter / JetBrains
-     Mono). Zero external origins — the page makes no requests off 'self'. -->
-<link rel="stylesheet" href="/static/ds/tokens/fonts.css">
+<meta property="og:url" content="{{PUBLIC_BASE_URL}}/developers">
+<!-- No-flash theme resolve: saved choice -> prefers-color-scheme -> dark. Must run
+     before the stylesheet link so the first paint already carries the right theme. -->
+<script>
+(function(){
+  try{
+    var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+    document.documentElement.setAttribute('data-theme',t);
+  }catch(e){document.documentElement.setAttribute('data-theme','dark');}
+})();
+</script>
+<!-- Lifted Design System: one global entry. Self-hosted Sora / Inter / JetBrains
+     Mono ship inside it — zero external origins, so the strict sign-host CSP
+     (default-src 'self') needs no relaxation. -->
+<link rel="stylesheet" href="/static/ds/styles.css">
 <style>
   /* ============================================================
      LIFTED SIGN — DEVELOPER API REFERENCE (/developers)
-     Self-contained, self-styled. Dark developer-docs look matched
-     to the Lifted Sign landing (brand blue #2E6BFF, Sora display,
-     Inter body, JetBrains Mono for code). No external scripts —
-     Scalar is vendored at /static/ds/vendor/scalar/ and renders a
-     full-dark reference. Fonts are self-hosted, so the strict
-     sign-host CSP can lock everything to 'self'.
+     Page-local composition layer ON the served DS. data-brand="sign"
+     => --brand lift-blue. Every color / space / radius / motion below
+     resolves from DS tokens, so light + dark inherit from the spine
+     and honour prefers-color-scheme + the shared header toggle.
+
+     Two components are DELIBERATELY dark in both themes, by docs
+     convention (Stripe / Dropbox Sign do the same): the code shells
+     (a terminal reads as dark) and the vendored Scalar reference
+     inset. They use theme-invariant raw DS ink tokens so the page
+     frame stays light in light mode while the code stays legible.
+     Icons are inlined SVG — the sign-host CSP blocks external icon CDNs.
      ============================================================ */
-  :root{
-    --brand:#2E6BFF; --brand-bright:#5A8CFF; --brand-deep:#1B4CD6;
-    --brand-contrast:#ffffff; --brand-tint:rgba(46,107,255,.12);
-    --bg:#070b14; --bg-2:#0b1020; --card:#0e1526; --card-2:#111a30;
-    --border:#1e2a44; --border-strong:#2b3a5c;
-    --text:#e8eefb; --text-body:#c3cfe4; --text-muted:#93a3c0; --text-faint:#6c7d9c;
-    --ring:rgba(46,107,255,.35);
-    --radius:14px; --radius-sm:9px;
-    --font-display:'Sora',system-ui,sans-serif;
-    --font-sans:'Inter',system-ui,sans-serif;
-    --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-    --container:1120px;
-  }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
   html,body{overflow-x:hidden}
-  body{margin:0;font-family:var(--font-sans);background:var(--bg);color:var(--text-body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+  body{margin:0;font-family:var(--font-sans);background:var(--bg-base);color:var(--text-body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
   a{color:var(--brand-bright);text-decoration:none}
   a:hover{text-decoration:underline}
-  h1,h2,h3{font-family:var(--font-display);letter-spacing:-.02em;color:var(--text);margin:0}
-  .wrap{max-width:var(--container);margin:0 auto;padding:0 24px}
-  ::selection{background:rgba(46,107,255,.3)}
+  h1,h2,h3{font-family:var(--font-display);letter-spacing:-.02em;color:var(--text-strong);margin:0}
+  code{font-family:var(--font-mono)}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  ::selection{background:var(--brand-tint-strong)}
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
 
   /* ---- top bar ---- */
-  header{position:sticky;top:0;z-index:50;-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);background:color-mix(in srgb,var(--bg) 82%,transparent);border-bottom:1px solid var(--border)}
-  header .wrap{display:flex;align-items:center;gap:16px;height:64px}
-  .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:18px;letter-spacing:-.02em;color:var(--text)}
+  header{position:sticky;top:0;z-index:50;-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);background:color-mix(in srgb,var(--bg-base) 82%,transparent);border-bottom:1px solid var(--border-default)}
+  header .wrap{display:flex;align-items:center;gap:14px;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:18px;letter-spacing:-.02em;color:var(--text-strong)}
   .brand svg{width:24px;height:24px;color:var(--brand)}
   .brand b{color:var(--brand);font-weight:800}
   .brand .tag{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);border:1px solid var(--border-strong);border-radius:999px;padding:3px 9px;margin-left:4px}
   header .sp{flex:1}
   header .hlink{font-size:14px;color:var(--text-muted);font-weight:500}
-  header .hlink:hover{color:var(--text);text-decoration:none}
-  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;padding:9px 16px;border-radius:10px;border:1px solid var(--border-strong);background:transparent;color:var(--text);cursor:pointer;transition:border-color .18s,background .18s,color .18s;white-space:nowrap}
+  header .hlink:hover{color:var(--text-strong);text-decoration:none}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;padding:9px 16px;border-radius:var(--radius-md);border:1px solid var(--border-strong);background:transparent;color:var(--text-strong);cursor:pointer;transition:border-color var(--dur-base) var(--ease-out),background var(--dur-base) var(--ease-out),color var(--dur-base) var(--ease-out);white-space:nowrap}
   .btn:hover{border-color:var(--brand);color:var(--brand);text-decoration:none}
   .btn.primary{background:var(--brand);border-color:transparent;color:var(--brand-contrast)}
   .btn.primary:hover{background:var(--brand-bright);color:var(--brand-contrast)}
   .btn svg{width:16px;height:16px;flex:none}
+  /* theme toggle — mirrors the landing chrome so the whole product shares one control */
+  .themetog{display:inline-grid;place-items:center;width:38px;height:38px;flex:none;border-radius:var(--radius-md);border:1px solid var(--border-strong);background:transparent;color:var(--text-muted);cursor:pointer;transition:border-color var(--dur-base) var(--ease-out),color var(--dur-base) var(--ease-out)}
+  .themetog:hover{border-color:var(--brand);color:var(--brand)}
+  .themetog svg{width:18px;height:18px}
+  .themetog .sun{display:none} .themetog .moon{display:block}
+  [data-theme="light"] .themetog .sun{display:block} [data-theme="light"] .themetog .moon{display:none}
 
   /* ---- hero ---- */
-  .hero{position:relative;padding:64px 0 46px;overflow:hidden;border-bottom:1px solid var(--border)}
-  .hero::before{content:"";position:absolute;inset:0;z-index:0;background:
-     radial-gradient(680px 420px at 78% -8%,rgba(46,107,255,.18),transparent 62%),
-     radial-gradient(560px 380px at 8% 8%,rgba(46,107,255,.09),transparent 60%);pointer-events:none}
+  .hero{position:relative;padding:64px 0 46px;overflow:hidden;border-bottom:1px solid var(--border-default)}
+  .hero::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:
+     radial-gradient(680px 420px at 78% -8%,color-mix(in srgb,var(--brand) 18%,transparent),transparent 62%),
+     radial-gradient(560px 380px at 8% 8%,color-mix(in srgb,var(--brand) 9%,transparent),transparent 60%)}
   .hero::after{content:"";position:absolute;inset:0;z-index:0;opacity:.5;pointer-events:none;
-     background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+     background-image:linear-gradient(var(--border-default) 1px,transparent 1px),linear-gradient(90deg,var(--border-default) 1px,transparent 1px);
      background-size:44px 44px;-webkit-mask-image:radial-gradient(120% 90% at 70% 0%,#000 30%,transparent 78%);mask-image:radial-gradient(120% 90% at 70% 0%,#000 30%,transparent 78%)}
   .hero .wrap{position:relative;z-index:1}
   .eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-mono);font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--brand);font-weight:600;margin-bottom:18px}
   .eyebrow::before{content:"";width:22px;height:1px;background:var(--brand);opacity:.75}
+  [data-theme="light"] .eyebrow{color:var(--brand-deep)}
   .hero h1{font-size:clamp(34px,5vw,54px);font-weight:800;line-height:1.04;margin-bottom:16px}
-  .hero h1 .grad{background:linear-gradient(100deg,#fff 8%,var(--brand-bright) 60%,var(--brand) 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero h1 .grad{background:linear-gradient(100deg,var(--text-strong) 8%,var(--brand-bright) 60%,var(--brand) 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  [data-theme="light"] .hero h1 .grad{background-image:linear-gradient(100deg,var(--text-strong) 4%,var(--brand) 52%,var(--brand-deep) 94%)}
   .hero .lede{font-size:clamp(16px,2vw,19px);color:var(--text-muted);max-width:640px;margin:0 0 30px;line-height:1.55}
   .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,4vw,56px);align-items:start}
   .hero-grid>*{min-width:0}
 
   /* ---- quick links ---- */
   .qlinks{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px}
-  .qlink{display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--card) 70%,transparent);flex:1;min-width:210px;transition:border-color .18s,transform .18s,background .18s}
-  .qlink:hover{border-color:var(--brand);transform:translateY(-1px);background:var(--card);text-decoration:none}
+  .qlink{display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid var(--border-default);border-radius:var(--radius-lg);background:var(--glass-fill);flex:1;min-width:210px;transition:border-color var(--dur-base) var(--ease-out),transform var(--dur-base) var(--ease-out)}
+  .qlink:hover{border-color:var(--brand);transform:translateY(-1px);text-decoration:none}
   .qlink .ic{display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:9px;background:var(--brand-tint);color:var(--brand)}
+  [data-theme="light"] .qlink .ic{color:var(--brand-deep)}
   .qlink .ic svg{width:17px;height:17px}
   .qlink .tx{min-width:0}
-  .qlink .tx b{display:block;font-family:var(--font-sans);font-size:14px;font-weight:600;color:var(--text)}
+  .qlink .tx b{display:block;font-family:var(--font-sans);font-size:14px;font-weight:600;color:var(--text-strong)}
   .qlink .tx span{display:block;font-size:12px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-  /* ---- code / quickstart ---- */
-  .codecard{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-2);overflow:hidden;box-shadow:0 24px 60px -30px rgba(0,0,0,.8)}
-  .codecard__bar{display:flex;align-items:center;gap:8px;padding:12px 15px;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--card) 60%,transparent)}
-  .codecard__dot{width:11px;height:11px;border-radius:50%;background:var(--border-strong)}
+  /* ---- code shells (quickstart + SDK) — deliberately dark in both themes ----
+     Raw DS ink tokens (--void/--ink-*/--slate-*) are theme-invariant, so a code
+     shell stays legibly dark while the page frame flips with the user's theme. */
+  .codecard{--code-str:#5FE0B0;--code-num:#E8B06B;border:1px solid var(--ink-700);border-radius:var(--radius-lg);background:var(--ink-900);overflow:hidden;box-shadow:0 24px 60px -30px rgba(0,0,0,.7)}
+  .codecard__bar{display:flex;align-items:center;gap:8px;padding:12px 15px;border-bottom:1px solid var(--ink-700);background:var(--ink-800)}
+  .codecard__dot{width:11px;height:11px;border-radius:50%}
+  /* macOS traffic-light accents — a universally-read terminal cue, scoped to the code shell */
   .codecard__dot:nth-child(1){background:#ff5f56}.codecard__dot:nth-child(2){background:#ffbd2e}.codecard__dot:nth-child(3){background:#27c93f}
-  .codecard__title{margin-left:6px;font-family:var(--font-mono);font-size:11.5px;color:var(--text-faint);letter-spacing:.5px}
-  .codecard__copy{margin-left:auto;font-family:var(--font-sans);font-size:12px;font-weight:600;color:var(--text-muted);background:transparent;border:1px solid var(--border-strong);border-radius:8px;padding:5px 11px;cursor:pointer;transition:color .18s,border-color .18s}
-  .codecard__copy:hover{color:var(--brand);border-color:var(--brand)}
-  pre{margin:0;padding:16px 18px;overflow-x:auto;font-family:var(--font-mono);font-size:12.5px;line-height:1.75;color:#cdd8ef;tab-size:2}
-  pre .c{color:#6c7d9c;font-style:italic}
-  pre .k{color:#5A8CFF}
-  pre .s{color:#7ee0b8}
-  pre .v{color:#e8b06b}
+  .codecard__title{margin-left:6px;font-family:var(--font-mono);font-size:11.5px;color:var(--slate-400);letter-spacing:.5px}
+  .codecard__copy{margin-left:auto;font-family:var(--font-sans);font-size:12px;font-weight:600;color:var(--mist-300);background:transparent;border:1px solid var(--slate-600);border-radius:8px;padding:5px 11px;cursor:pointer;transition:color var(--dur-base) var(--ease-out),border-color var(--dur-base) var(--ease-out)}
+  .codecard__copy:hover{color:var(--brand-bright);border-color:var(--brand)}
+  pre{margin:0;padding:16px 18px;overflow-x:auto;font-family:var(--font-mono);font-size:12.5px;line-height:1.75;color:var(--mist-200);tab-size:2}
+  pre .c{color:var(--slate-400);font-style:italic}
+  pre .k{color:var(--blue-bright)}
+  pre .s{color:var(--code-str)}
+  pre .v{color:var(--code-num)}
   .codenote{font-size:12.5px;color:var(--text-faint);margin:12px 2px 0;line-height:1.5}
+  .codenote code{color:var(--text-muted);background:var(--surface-raised);border:1px solid var(--border-subtle);border-radius:5px;padding:1px 5px;font-size:11.5px}
+  [data-theme="light"] .codenote a{color:var(--brand-deep)}
 
   /* ---- plug and play (SDKs) ---- */
   .sdksection{padding:44px 0 8px}
   .sdk-grid{display:grid;grid-template-columns:1.5fr .5fr;gap:24px;align-items:start;margin-top:10px}
   .sdk-grid>*{min-width:0}
   .tabbar{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
-  .tabbar button{font-family:var(--font-sans);font-size:13px;font-weight:600;color:var(--text-muted);background:transparent;border:1px solid var(--border);border-radius:9px;padding:7px 15px;cursor:pointer;transition:color .16s,border-color .16s,background .16s}
-  .tabbar button:hover{color:var(--text);border-color:var(--border-strong)}
+  .tabbar button{font-family:var(--font-sans);font-size:13px;font-weight:600;color:var(--text-muted);background:transparent;border:1px solid var(--border-default);border-radius:9px;padding:7px 15px;cursor:pointer;transition:color var(--dur-base) var(--ease-out),border-color var(--dur-base) var(--ease-out),background var(--dur-base) var(--ease-out)}
+  .tabbar button:hover{color:var(--text-strong);border-color:var(--border-strong)}
   .tabbar button[aria-selected="true"]{color:var(--brand-contrast);background:var(--brand);border-color:transparent}
   .tab-pane{display:none}
   .tab-pane.on{display:block}
   .sdk-dl{display:flex;flex-direction:column;gap:10px}
   .sdk-dl h3{font-size:11px;font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin:0 0 2px}
-  .dlcard{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--border);border-radius:11px;background:color-mix(in srgb,var(--card) 70%,transparent);transition:border-color .16s,transform .16s,background .16s}
-  .dlcard:hover{border-color:var(--brand);transform:translateY(-1px);background:var(--card);text-decoration:none}
+  .dlcard{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--border-default);border-radius:11px;background:var(--glass-fill);transition:border-color var(--dur-base) var(--ease-out),transform var(--dur-base) var(--ease-out)}
+  .dlcard:hover{border-color:var(--brand);transform:translateY(-1px);text-decoration:none}
   .dlcard .ic{flex:none;width:34px;height:34px;border-radius:8px;display:grid;place-items:center;background:var(--brand-tint);color:var(--brand)}
+  [data-theme="light"] .dlcard .ic{color:var(--brand-deep)}
   .dlcard .ic svg{width:17px;height:17px}
   .dlcard .tx{min-width:0}
-  .dlcard .tx b{display:block;font-family:var(--font-mono);font-size:12.5px;color:var(--text);font-weight:600}
+  .dlcard .tx b{display:block;font-family:var(--font-mono);font-size:12.5px;color:var(--text-strong);font-weight:600}
   .dlcard .tx span{display:block;font-size:11.5px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   @media (max-width:860px){.sdk-grid{grid-template-columns:1fr}}
 
-  /* ---- reference frame (Scalar, full-dark) ---- */
+  /* ---- reference frame (Scalar, deliberately full-dark in both themes) ---- */
   .refsection{padding:40px 0 8px}
   .refhead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:8px}
   .refhead h2{font-size:22px;font-weight:800}
   .refhead .sub{font-size:13.5px;color:var(--text-faint)}
   /* The reference viewer is Scalar (vendored, full-dark) — the whole panel is dark, unlike Redoc's
-     light content pane. Framed to sit flush with this page's palette. */
-  .ref-frame{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg);box-shadow:0 30px 80px -40px rgba(0,0,0,.9);margin-bottom:48px;min-height:640px}
+     light content pane. It stays dark in both page themes on purpose; framed to sit flush. */
+  .ref-frame{border:1px solid var(--ink-700);border-radius:var(--radius-lg);overflow:hidden;background:var(--void);box-shadow:0 30px 80px -40px rgba(0,0,0,.8);margin-bottom:48px;min-height:640px}
   #scalar-ref{display:block}
-  #ref-loading{display:flex;align-items:center;justify-content:center;gap:12px;min-height:420px;color:var(--text-muted);font-size:14px;background:var(--bg-2)}
-  .spin{width:22px;height:22px;border:2.5px solid var(--border-strong);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite}
+  #ref-loading{display:flex;align-items:center;justify-content:center;gap:12px;min-height:420px;color:var(--mist-300);font-size:14px;background:var(--ink-900)}
+  .spin{width:22px;height:22px;border:2.5px solid var(--slate-600);border-top-color:var(--brand-bright);border-radius:50%;animation:sp .8s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
-  #ref-error{display:none;padding:30px;text-align:center;color:var(--text-body);background:var(--bg-2);font-size:14px}
-  #ref-error a{font-weight:600}
+  #ref-error{display:none;padding:30px;text-align:center;color:var(--mist-200);background:var(--ink-900);font-size:14px}
+  #ref-error a{font-weight:600;color:var(--blue-bright)}
 
   /* ---- footer ---- */
-  footer{border-top:1px solid var(--border);padding:28px 0 40px}
+  footer{border-top:1px solid var(--border-default);padding:28px 0 40px}
   footer .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--text-faint)}
   footer a{color:var(--text-muted)}
   footer a:hover{color:var(--brand)}
+  [data-theme="light"] footer a:hover{color:var(--brand-deep)}
   footer .sp{flex:1}
 
   @media (max-width:860px){
     .hero-grid{grid-template-columns:1fr}
     header .hlink{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .spin{animation:none}
+    *{transition-duration:.01ms !important}
   }
 </style>
 </head>
@@ -165,6 +193,10 @@
     </a>
     <span class="sp"></span>
     <a class="hlink" href="/developers/openapi.json">OpenAPI spec</a>
+    <button class="themetog" id="themeTog" type="button" aria-label="Toggle light or dark theme">
+      <svg aria-hidden="true" class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg aria-hidden="true" class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
     <a class="btn primary" href="/signapp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V8a5 5 0 0 1 10 0v3"/></svg> Get an API key</a>
   </div>
 </header>
@@ -200,25 +232,25 @@
             <button class="codecard__copy" id="copy-curl" type="button">Copy</button>
           </div>
 <pre id="curl-snippet"><span class="c"># 1. Create an envelope from a PDF (returns {"ok":true,"id":42})</span>
-<span class="k">curl</span> https://sign.example.com/api/mysign/agreements \
+<span class="k">curl</span> {{PUBLIC_BASE_URL}}/api/mysign/agreements \
   -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> \
   -F file=@contract.pdf \
   -F name=<span class="s">"Master Services Agreement"</span>
 
 <span class="c"># 2. Add a signer (JSON, replaces the signer set)</span>
-<span class="k">curl</span> https://sign.example.com/api/mysign/agreements/<span class="v">42</span>/signers \
+<span class="k">curl</span> {{PUBLIC_BASE_URL}}/api/mysign/agreements/<span class="v">42</span>/signers \
   -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> \
   -H <span class="s">"Content-Type: application/json"</span> \
   -d <span class="s">'{"signers":[{"name":"Dana Client","email":"dana@example.com"}]}'</span>
 
 <span class="c"># 3. Drop a signature wherever the doc says "Signature:" — no coordinates</span>
-<span class="k">curl</span> https://sign.example.com/api/mysign/agreements/<span class="v">42</span>/fields \
+<span class="k">curl</span> {{PUBLIC_BASE_URL}}/api/mysign/agreements/<span class="v">42</span>/fields \
   -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> \
   -H <span class="s">"Content-Type: application/json"</span> \
   -d <span class="s">'{"fields":[{"signer":"dana@example.com","type":"signature","anchor":"Signature:"}]}'</span>
 
 <span class="c"># 4. Send it — freezes the PDF, emails each signer a single-use link</span>
-<span class="k">curl</span> https://sign.example.com/api/mysign/agreements/<span class="v">42</span>/send \
+<span class="k">curl</span> {{PUBLIC_BASE_URL}}/api/mysign/agreements/<span class="v">42</span>/send \
   -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> \
   -X POST</pre>
         </div>
@@ -273,18 +305,18 @@ ls.send(env[<span class="s">"id"</span>])   <span class="c"># each signer gets a
 <span class="k">export</span> LIFTED_SIGN_KEY=<span class="v">sk_live_xxx</span>
 <span class="k">AID</span>=$(curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> \
   -F file=@contract.pdf -F name=<span class="s">"MSA"</span> \
-  https://sign.example.com/api/mysign/agreements | jq -r .id)
+  {{PUBLIC_BASE_URL}}/api/mysign/agreements | jq -r .id)
 
 curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> -H <span class="s">"Content-Type: application/json"</span> \
   -d <span class="s">'{"signers":[{"name":"Dana Client","email":"dana@example.com"}]}'</span> \
-  https://sign.example.com/api/mysign/agreements/<span class="v">$AID</span>/signers
+  {{PUBLIC_BASE_URL}}/api/mysign/agreements/<span class="v">$AID</span>/signers
 
 curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> -H <span class="s">"Content-Type: application/json"</span> \
   -d <span class="s">'{"fields":[{"signer":"dana@example.com","type":"signature","anchor":"Signature:"}]}'</span> \
-  https://sign.example.com/api/mysign/agreements/<span class="v">$AID</span>/fields
+  {{PUBLIC_BASE_URL}}/api/mysign/agreements/<span class="v">$AID</span>/fields
 
 curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> -X POST \
-  https://sign.example.com/api/mysign/agreements/<span class="v">$AID</span>/send</pre></div>
+  {{PUBLIC_BASE_URL}}/api/mysign/agreements/<span class="v">$AID</span>/send</pre></div>
         </div>
         <p class="codenote">Same four steps in every language: create an envelope, add a signer, place a signature <b>by anchor</b>, send. Get the runnable file on the right — it doubles as a CLI: <code>python lifted_sign.py contract.pdf dana@example.com</code>.</p>
       </div>
@@ -338,7 +370,7 @@ curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN
 
 <footer>
   <div class="wrap">
-    <span>© [Operator Name] · Lifted Sign API</span>
+    <span>© {{OPERATOR_NAME}} · Lifted Sign API</span>
     <span class="sp"></span>
     <a href="/sign-privacy">Privacy</a>
     <a href="/sign-terms">Terms</a>
@@ -348,10 +380,10 @@ curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN
 
 <!-- Vendored Scalar standalone bundle — served from 'self' (/static/ds/vendor/scalar/),
      CSP-allowed. NO external script CDN. Full-dark reference (Scalar themes the ENTIRE panel dark,
-     unlike Redoc's light content pane). Default web-fonts are disabled (withDefaultFonts:false) so
-     it never reaches fonts.scalar.com — our Google-font stack (CSP-allowed) carries the type. The
-     external request proxy is nulled (proxyUrl:'') — the API is same-origin, so no proxy is needed
-     and connect-src 'self' would block it anyway. -->
+     unlike Redoc's light content pane) — kept dark in both page themes on purpose. Default
+     web-fonts are disabled (withDefaultFonts:false) so it never reaches fonts.scalar.com — our
+     self-hosted DS type stack carries it. The external request proxy is nulled (proxyUrl:'') — the
+     API is same-origin, so no proxy is needed and connect-src 'self' would block it anyway. -->
 <script>
   // Scalar's standalone bundle unconditionally probes its hosted API registry
   // (api.scalar.com/vector/registry/*) on mount + search. We vendor everything and never want
@@ -378,6 +410,20 @@ curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN
 <script src="/static/ds/vendor/scalar/scalar.standalone.js"></script>
 <script>
   (function () {
+    // ---- theme toggle — persisted, wins over prefers-color-scheme in both directions.
+    // Set up first so the control works even if the Scalar bundle below fails to mount.
+    var themeColor = document.querySelector('meta[name="theme-color"]');
+    function applyMeta() { if (themeColor) themeColor.setAttribute("content", document.documentElement.getAttribute("data-theme") === "light" ? "#ffffff" : "#05080E"); }
+    var tog = document.getElementById("themeTog");
+    function syncPressed() { if (tog) tog.setAttribute("aria-pressed", String(document.documentElement.getAttribute("data-theme") === "light")); }
+    applyMeta(); syncPressed();
+    if (tog) tog.addEventListener("click", function () {
+      var next = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("theme", next); } catch (e) {}
+      applyMeta(); syncPressed();
+    });
+
     // Copy the curl quickstart (plain text, no HTML markup).
     var copyBtn = document.getElementById("copy-curl");
     if (copyBtn) copyBtn.addEventListener("click", function () {
@@ -431,27 +477,27 @@ curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN
       if (e) e.style.display = "block";
     }
 
-    // Brand the whole Scalar reference to this page's dark palette (#070b14 ground, #2E6BFF accent,
+    // Brand the whole Scalar reference to the Sign dark palette (#05080E ground, #2E6BFF accent,
     // Sora/Inter/JetBrains-Mono type). Scalar exposes design tokens as CSS custom properties; we
     // pin them for both the app chrome and the dark-mode scope so nothing renders light.
     var brandCss = [
       ":root, .dark-mode, .light-mode {",
-      "  --scalar-color-1:#e8eefb; --scalar-color-2:#c3cfe4; --scalar-color-3:#93a3c0;",
-      "  --scalar-color-accent:#5A8CFF; --scalar-background-accent:rgba(46,107,255,.14);",
-      "  --scalar-background-1:#070b14; --scalar-background-2:#0b1020; --scalar-background-3:#111a30;",
-      "  --scalar-border-color:#1e2a44;",
-      "  --scalar-button-1:#2E6BFF; --scalar-button-1-color:#fff; --scalar-button-1-hover:#5A8CFF;",
+      "  --scalar-color-1:#EFF3F9; --scalar-color-2:#CDD5E4; --scalar-color-3:#AEB8D0;",
+      "  --scalar-color-accent:#5AA6FF; --scalar-background-accent:rgba(46,107,255,.14);",
+      "  --scalar-background-1:#05080E; --scalar-background-2:#0B1020; --scalar-background-3:#141D31;",
+      "  --scalar-border-color:#202C46;",
+      "  --scalar-button-1:#2E6BFF; --scalar-button-1-color:#fff; --scalar-button-1-hover:#5AA6FF;",
       "  --scalar-color-green:#1f9d6b; --scalar-color-red:#d64545; --scalar-color-yellow:#c98a12;",
       "  --scalar-color-blue:#2E6BFF; --scalar-color-orange:#e0762b; --scalar-color-purple:#7a5af5;",
       "  --scalar-font:'Inter',system-ui,sans-serif;",
       "  --scalar-font-code:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;",
       "}",
       ".dark-mode {",
-      "  --scalar-sidebar-background-1:#0b1020; --scalar-sidebar-color-1:#c3cfe4;",
-      "  --scalar-sidebar-color-2:#93a3c0; --scalar-sidebar-border-color:#1e2a44;",
-      "  --scalar-sidebar-item-hover-background:#111a30; --scalar-sidebar-item-hover-color:#e8eefb;",
-      "  --scalar-sidebar-item-active-background:rgba(46,107,255,.14); --scalar-sidebar-color-active:#5A8CFF;",
-      "  --scalar-sidebar-search-background:#0e1526; --scalar-sidebar-search-border-color:#1e2a44;",
+      "  --scalar-sidebar-background-1:#0B1020; --scalar-sidebar-color-1:#CDD5E4;",
+      "  --scalar-sidebar-color-2:#AEB8D0; --scalar-sidebar-border-color:#202C46;",
+      "  --scalar-sidebar-item-hover-background:#141D31; --scalar-sidebar-item-hover-color:#EFF3F9;",
+      "  --scalar-sidebar-item-active-background:rgba(46,107,255,.14); --scalar-sidebar-color-active:#5AA6FF;",
+      "  --scalar-sidebar-search-background:#0B1020; --scalar-sidebar-search-border-color:#202C46;",
       "}",
       ".scalar-api-reference{ --scalar-header-height:0px; }",
       ".scalar-app h1,.scalar-app h2,.scalar-app h3{font-family:'Sora',system-ui,sans-serif;letter-spacing:-.02em}"

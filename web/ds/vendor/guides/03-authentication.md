@@ -149,5 +149,5 @@ If you're seeing `401`, check that the header is literally `Authorization: Beare
 
 - [Placing fields](./06-placing-fields.md) — anchor-based field placement on a draft envelope.
 - [Errors & status codes](./10-errors-and-reliability.md) — the full error vocabulary beyond `401`/`404`.
-- [Webhooks](./12-webhooks-and-polling.md) — **roadmap.** There are no webhooks yet; poll `GET /api/mysign/agreements/{id}` for status changes in the meantime.
+- [Webhooks](./12-webhooks-and-polling.md) — register an endpoint and receive signed event deliveries as envelopes change (or poll `GET /api/mysign/agreements/{id}` as a fallback).
 - [OpenAPI reference](../openapi.yaml) — the machine-readable source of truth for every endpoint, field, and status code.

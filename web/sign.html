@@ -210,8 +210,9 @@
   .typed-input{width:100%;padding:11px 13px;border-radius:var(--radius-md);border:1px solid var(--border-default);background:var(--ink-900);color:var(--text-strong);font-size:15px;margin-bottom:12px;font-family:inherit;transition:border-color var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out)}
   .typed-input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--ring)}
   .fonts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-  .font-opt{background:#fff;color:#0b0d12;border:2px solid transparent;border-radius:var(--radius-md);height:64px;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;overflow:hidden;padding:0 8px;transition:border-color var(--dur-base) var(--ease-out)}
-  .font-opt.on{border-color:var(--brand)}
+  .font-opt{position:relative;background:#fff;color:#0b0d12;border:2px solid #e3e8ef;border-radius:var(--radius-md);height:64px;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;overflow:hidden;padding:0 8px;transition:border-color var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out)}
+  .font-opt:hover{border-color:color-mix(in srgb,var(--brand) 55%,#e3e8ef)}
+  .font-opt.on{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 20%,transparent)}
   .f0{font-family:'Brush Script MT','Segoe Script',cursive;font-style:italic}
   .f1{font-family:'Snell Roundhand','Apple Chancery','URW Chancery L',cursive}
   .f2{font-family:'Segoe Script','Bradley Hand',cursive}

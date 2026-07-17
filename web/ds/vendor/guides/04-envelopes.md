@@ -391,4 +391,4 @@ Required in every serialization: `id`, `name`, `status`, `created_at`, `signers`
 - [Placing fields](./06-placing-fields.md) — drop signature, date, and text fields by anchor, points, or normalized coordinates.
 - [Sending & lifecycle](./08-sending-and-tracking.md) — dispatch, remind, void, and download the sealed document.
 - [Templates](./07-templates-and-prefill.md) — build a document once and spin up prefilled envelopes from it.
-- [Webhooks](./12-webhooks-and-polling.md) — *(roadmap — there are no webhooks yet; poll `GET /api/mysign/agreements/{aid}` until `status` is `completed`).*
+- [Webhooks](./12-webhooks-and-polling.md) — subscribe to signed event deliveries as an envelope changes (or poll `GET /api/mysign/agreements/{aid}` until `status` is `completed`).

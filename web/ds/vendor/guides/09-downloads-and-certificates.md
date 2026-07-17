@@ -30,9 +30,9 @@ All three return raw `application/pdf` bytes on success. On failure they return 
 bare JSON error envelope — `{"error": "..."}` — not the `{"ok": false}` shape
 the JSON endpoints use. A missing or invalid key is `401 {"error":"unauthorized"}`.
 
-To know *when* to fetch these, poll the envelope and watch `status` reach
-`completed` — there are no webhooks yet. See [Webhooks](./12-webhooks-and-polling.md) for the
-roadmap and the recommended polling loop.
+To know *when* to fetch these, subscribe to the `envelope.completed`
+[webhook](./12-webhooks-and-polling.md) — or poll the envelope and watch `status` reach
+`completed`. See [Webhooks](./12-webhooks-and-polling.md) for both.
 
 ---
 
@@ -314,5 +314,5 @@ with `curl` or a raw request; `/pages` returns JSON, the others return binary.
   current state, signers, fields, and audit events.
 - [Signers & signing order](./05-signers-and-routing.md) — authentication methods
   (`email`, `email_otp`, `access_code`) that show up on the certificate.
-- [Webhooks](./12-webhooks-and-polling.md) — the roadmap, plus the polling pattern for
-  detecting `completed` so you know when to download.
+- [Webhooks](./12-webhooks-and-polling.md) — subscribe to `envelope.completed` (or poll)
+  so you know exactly when to download.

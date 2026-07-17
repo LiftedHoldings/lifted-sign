@@ -186,4 +186,4 @@ All the single-file clients are MIT-licensed — copy, vendor, and modify them f
 
 ## A note on webhooks
 
-There is **no webhook delivery yet** — the API can't POST `signed` / `completed` / `declined` events to your endpoint today (the `Webhooks` tag in the spec is a roadmap placeholder). Until it ships, poll `GET /api/mysign/agreements/{aid}` (or `ls.get(aid)`) and watch the envelope `status` move to `completed`. See [Webhooks (roadmap)](./12-webhooks-and-polling.md) for the polling pattern.
+Webhooks are live: register an HTTPS endpoint with `POST /api/mysign/webhooks` and the API will POST a signed event (`envelope.sent`, `signer.signed`, `envelope.completed`, `envelope.declined`, `envelope.voided`, `envelope.expired`) as each transition happens. Each delivery carries an `X-Lifted-Signature: sha256=<hmac>` header you verify with your `whsec_` secret. Prefer this to polling; when you do poll, `GET /api/mysign/agreements/{aid}` (or `ls.get(aid)`) and watch `status` reach `completed`. See [Webhooks](./12-webhooks-and-polling.md) for the delivery shape, signature verification, and the delivery log.

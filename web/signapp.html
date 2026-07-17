@@ -268,6 +268,13 @@
   .dash-chip:hover{color:var(--text-strong);border-color:var(--border-strong)}
   .dash-chip.is-active{color:var(--brand);background:var(--brand-tint);border-color:color-mix(in srgb,var(--brand) 40%,transparent)}
   .dash-nomatch{padding:26px 20px;text-align:center;color:var(--text-muted);font-size:13.5px}
+  /* ---- first-run empty state — an inviting "send your first document" CTA (only when 0 docs) ---- */
+  .firstrun .ap-empty__body{max-width:48ch}
+  .firstrun__steps{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:18px 0 2px}
+  .firstrun__step{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--text-body);padding:7px 14px 7px 8px;border:1px solid var(--border-subtle);border-radius:999px;background:var(--ink-800,rgba(255,255,255,.02))}
+  .firstrun__n{width:20px;height:20px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--brand-tint);color:var(--brand);font-family:var(--font-mono);font-size:11px;font-weight:700}
+  .firstrun .ap-empty__acts{margin-top:16px}
+  .firstrun #empty-upload{height:46px;padding:0 22px;font-size:14.5px;cursor:pointer;box-shadow:0 10px 26px -12px color-mix(in srgb,var(--brand) 75%,transparent)}
 
   /* ==================== ACCOUNT ==================== */
   .acct-grid{display:grid;grid-template-columns:1fr;gap:0;max-width:580px;padding:4px 20px}
@@ -1371,14 +1378,25 @@
         // KPI summary + search/filter only when there ARE documents (empty accounts get the rich CTA).
         (docs.length
           ? dashKpisHtml(docs) + dashToolbarHtml() + '<div id="dash-list">' + dashListHtml() + "</div>"
-          : '<div class="ap-card ap-empty ap-empty--rich">' +
+          : '<div class="ap-card ap-empty ap-empty--rich firstrun">' +
               '<div class="ap-empty__ic">' + icDoc() + "</div>" +
-              '<h2 class="ap-empty__h">No documents yet</h2>' +
-              '<p class="ap-empty__body">Upload a PDF, drop in signature fields, add your signers, and send it off — legally binding and audit-trailed. Free during beta, no card required.</p></div>') +
+              '<h2 class="ap-empty__h">Send your first document for signature</h2>' +
+              '<p class="ap-empty__body">Upload a PDF, drop in signature fields, add your signers, and send it off — legally binding and audit-trailed. Free during beta, no card required.</p>' +
+              '<div class="firstrun__steps" aria-hidden="true">' +
+                '<span class="firstrun__step"><span class="firstrun__n">1</span> Upload a PDF</span>' +
+                '<span class="firstrun__step"><span class="firstrun__n">2</span> Place signature fields</span>' +
+                '<span class="firstrun__step"><span class="firstrun__n">3</span> Send for signature</span>' +
+              "</div>" +
+              '<div class="ap-empty__acts">' +
+                '<button type="button" class="ap-btn ap-btn--primary" id="empty-upload">' + icPlus() + " Upload a PDF</button>" +
+              "</div>" +
+            "</div>") +
       "</div>"
     );
     wireTopbar();
     el("up-file").onchange = uploadDoc;
+    // First-run empty-state CTA re-uses the single hidden #up-file picker (same upload flow).
+    if (el("empty-upload")) el("empty-upload").onclick = function () { if (_uploading) return; el("up-file").click(); };
     // Keyboard-operable upload: the file input is display:none (out of tab order), so the styled
     // label carries role=button/tabindex and Enter/Space triggers the hidden input's picker.
     var nd = el("newdoc-btn");
