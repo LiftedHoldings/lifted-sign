@@ -156,6 +156,28 @@ DATABASE_URL=postgresql://sign:sign@postgres:5432/liftedsign
 > There is no automatic data migration from SQLite to Postgres. Choose your backend
 > before you take real signatures, or export/re-import deliberately.
 
+### Running from the published image
+
+CI builds a multi-arch (`linux/amd64` + `linux/arm64`) image and pushes it to the GitHub
+Container Registry on every push to `main` (tagged `:latest`) and on each tagged release
+(`:vX.Y.Z`, `:X.Y`, `:X`). Pull and run it directly — no clone, no build:
+
+```bash
+docker run --rm \
+  -e SIGN_SECRET=$(openssl rand -base64 48) \
+  -p 8080:8080 \
+  ghcr.io/liftedholdings/lifted-sign
+```
+
+> **After the first CI publish, make the package Public.** GHCR packages default to
+> private, so anonymous `docker pull` fails with `denied`/`not found` until you flip it.
+> In the repository on GitHub open **Packages → `lifted-sign` → Package settings →
+> Change visibility → Public**. This is a one-time step per package.
+
+For a persistent database and sealed PDFs, mount a volume onto `SIGN_DATA_DIR`
+(`-v lifted-sign-data:/app/data`) and set the production env vars from
+[§1](#1-environment-reference) rather than relying on the ephemeral defaults.
+
 ---
 
 ## 4. PAdES signing certificate

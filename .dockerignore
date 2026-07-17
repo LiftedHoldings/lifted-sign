@@ -1,0 +1,51 @@
+# Keep the build context lean and fast — exclude everything the image doesn't need.
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# Virtualenvs and Python caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Runtime data (SQLite db, sealed PDFs, uploads)
+data/
+
+# Tests and coverage artifacts
+tests/
+.coverage
+htmlcov/
+.coveragerc
+
+# Node / Playwright tooling
+node_modules/
+playwright-report/
+test-results/
+
+# Local secrets and env
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# CI / editor / OS
+.github/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

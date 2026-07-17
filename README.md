@@ -23,6 +23,10 @@ consent records that ESIGN and UETA call for. Run it on your own hardware in one
 or let us host it.
 
 <div align="center">
+<img src="docs/images/demo.gif" alt="Lifted Sign — upload a PDF, place fields, send, sign, and download the sealed PDF + Certificate of Completion" width="100%" />
+</div>
+
+<div align="center">
 <img src="docs/images/dashboard.png" alt="Your documents — the Lifted Sign dashboard" width="100%" />
 </div>
 
@@ -57,6 +61,21 @@ See the [full comparison vs DocuSign, Dropbox Sign, and Documenso →](./docs/co
    and a Certificate of Completion. Download both, or pull them via the API.
 
 ## Quickstart
+
+**One command — pull the published image and go:**
+
+```bash
+docker run --rm -e SIGN_SECRET=$(openssl rand -base64 48) -p 8080:8080 ghcr.io/liftedholdings/lifted-sign
+```
+
+Then open **http://localhost:8080**. The image is built and published to GHCR by CI on
+every push to `main` (as `:latest`) and on each tagged release.
+
+> First run after the initial CI publish: the GHCR package must be set **Public** in the
+> repository's package settings for anonymous `docker pull` to work — see
+> [docs/self-hosting.md](./docs/self-hosting.md#running-from-the-published-image).
+
+**Or build from source:**
 
 ```bash
 git clone https://github.com/LiftedHoldings/lifted-sign.git

@@ -400,6 +400,25 @@ design system are all vendored and served first-party, which is what makes the
 `default-src 'self'` CSP viable. The payoff is an install that works air-gapped and
 has no third-party asset host in its trust boundary.
 
+**Two font directories, on purpose.** Fonts live in two places because there are
+two consumers with different delivery mechanisms. `sign/assets/fonts/` (77 TTFs)
+is read from the *filesystem* by the PDF engine (`sign/fontmap.py`) to embed
+glyphs when stamping/editing PDFs; it is packaged with the `sign` module and is
+never HTTP-served. `web/ds/fonts/` (30 TTFs) is *HTTP-served* under `/static` and
+loaded by the browser via `@font-face` — the design-system faces (Inter, Sora,
+JetBrains Mono) plus the six metric-compatible substitute families (Arimo, Tinos,
+Cousine, Carlito, Caladea, Gelasio) so the in-browser PDF editor previews text in
+the same substitute the backend will embed. The web set is a strict, byte-identical
+(sha256-verified) subset of the backend set; the backend also carries document
+families the browser never needs (Roboto, Lato, Open Sans, Montserrat, Source
+Sans 3, Poppins, Merriweather, Nunito Sans, Raleway, PT Sans/Serif,
+DroidSansFallback). They are **not** deduplicated to one copy: the consumers need
+them at different paths (a Python-package-relative filesystem path vs a `/static`
+URL), symlinks aren't portable across the Windows-dev / Linux-prod split, and the
+~1.0 MB overlap doesn't justify coupling the web static layer to the Python
+package's asset dir. Per-directory rationale: [`sign/assets/fonts/README.md`](../sign/assets/fonts/README.md),
+[`web/ds/fonts/README.md`](../web/ds/fonts/README.md).
+
 ---
 
 ## 7. Operational surface
