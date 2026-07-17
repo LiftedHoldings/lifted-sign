@@ -89,6 +89,13 @@ async def _lifespan(app: FastAPI):
 
 app = FastAPI(title="Lifted Sign", docs_url=None, redoc_url=None, lifespan=_lifespan)
 
+# gzip responses (>1 KB) — most impactful on the vendored API-reference bundle on /developers
+# (multi-MB of JS) and the SDK/guide assets. Added before the @app.middleware gate below so gzip
+# runs OUTERMOST (compresses the already-hardened response); it never alters the security headers.
+from starlette.middleware.gzip import GZipMiddleware  # noqa: E402
+
+app.add_middleware(GZipMiddleware, minimum_size=1024)
+
 
 # --- security / CSRF / session-allowlist middleware -------------------------
 # Public routes need no sign session (the signer/envelope/portal-auth/developers surfaces plus the
