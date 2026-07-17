@@ -22,6 +22,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
+from .. import config
 from ..http_helpers import (
     OAUTH_STATE_TTL,
     _client_ip,
@@ -56,7 +57,7 @@ async def signp_phone_start(req: Request) -> Any:
         sign_portal_auth.make_phone_pending(phone, b.get("email"), b.get("name")),
         max_age=sign_portal_auth.PENDING_PHONE_TTL,
         httponly=True,
-        secure=True,
+        secure=config.cookie_secure(),
         samesite="lax",
     )
     return resp
@@ -108,17 +109,22 @@ async def signp_phone_verify(req: Request) -> Any:
             sign_portal_auth.make_2fa_pending(acct["id"]),
             max_age=sign_portal_auth.PENDING_2FA_TTL,
             httponly=True,
-            secure=True,
+            secure=config.cookie_secure(),
             samesite="lax",
         )
         resp.delete_cookie(
-            sign_portal_auth.COOKIE_PHONE, httponly=True, secure=True, samesite="lax"
+            sign_portal_auth.COOKIE_PHONE,
+            httponly=True,
+            secure=config.cookie_secure(),
+            samesite="lax",
         )
         return resp
     await asyncio.to_thread(sign_accounts.touch_login, acct["id"])
     resp = JSONResponse({"ok": True, "account": sign_accounts.public_view(acct)})
     _set_sign_cookie(resp, sign_portal_auth.make_session(acct["id"]))
-    resp.delete_cookie(sign_portal_auth.COOKIE_PHONE, httponly=True, secure=True, samesite="lax")
+    resp.delete_cookie(
+        sign_portal_auth.COOKIE_PHONE, httponly=True, secure=config.cookie_secure(), samesite="lax"
+    )
     return resp
 
 
@@ -144,7 +150,9 @@ async def signp_2fa(req: Request) -> Any:
     await asyncio.to_thread(sign_accounts.touch_login, aid)
     resp = JSONResponse({"ok": True, "account": sign_accounts.public_view(acct)})
     _set_sign_cookie(resp, sign_portal_auth.make_session(aid))
-    resp.delete_cookie(sign_portal_auth.COOKIE_2FA, httponly=True, secure=True, samesite="lax")
+    resp.delete_cookie(
+        sign_portal_auth.COOKIE_2FA, httponly=True, secure=config.cookie_secure(), samesite="lax"
+    )
     return resp
 
 
@@ -243,7 +251,7 @@ async def signp_magic_verify(req: Request, token: str = ""):
             sign_portal_auth.make_2fa_pending(acct["id"]),
             max_age=sign_portal_auth.PENDING_2FA_TTL,
             httponly=True,
-            secure=True,
+            secure=config.cookie_secure(),
             samesite="lax",
         )
         return resp
@@ -272,8 +280,12 @@ async def signp_logout(req: Request) -> Any:
     if acct:
         await asyncio.to_thread(sign_accounts.bump_session_version, acct["id"])
     resp = JSONResponse({"ok": True})
-    resp.delete_cookie(sign_portal_auth.COOKIE, httponly=True, secure=True, samesite="lax")
-    resp.delete_cookie(sign_portal_auth.COOKIE_2FA, httponly=True, secure=True, samesite="lax")
+    resp.delete_cookie(
+        sign_portal_auth.COOKIE, httponly=True, secure=config.cookie_secure(), samesite="lax"
+    )
+    resp.delete_cookie(
+        sign_portal_auth.COOKIE_2FA, httponly=True, secure=config.cookie_secure(), samesite="lax"
+    )
     return resp
 
 
@@ -305,7 +317,7 @@ async def signp_google(req: Request):
         state,
         max_age=OAUTH_STATE_TTL,
         httponly=True,
-        secure=True,
+        secure=config.cookie_secure(),
         samesite="lax",
     )
     resp.set_cookie(
@@ -313,7 +325,7 @@ async def signp_google(req: Request):
         nonce,
         max_age=OAUTH_STATE_TTL,
         httponly=True,
-        secure=True,
+        secure=config.cookie_secure(),
         samesite="lax",
     )
     return resp
@@ -362,28 +374,38 @@ async def signp_google_cb(req: Request, code: str = "", state: str = ""):
             sign_portal_auth.make_2fa_pending(acct["id"]),
             max_age=sign_portal_auth.PENDING_2FA_TTL,
             httponly=True,
-            secure=True,
+            secure=config.cookie_secure(),
             samesite="lax",
         )
         resp.delete_cookie(
-            sign_portal_auth.STATE_COOKIE, httponly=True, secure=True, samesite="lax"
+            sign_portal_auth.STATE_COOKIE,
+            httponly=True,
+            secure=config.cookie_secure(),
+            samesite="lax",
         )
         resp.delete_cookie(
-            sign_portal_auth.NONCE_COOKIE, httponly=True, secure=True, samesite="lax"
+            sign_portal_auth.NONCE_COOKIE,
+            httponly=True,
+            secure=config.cookie_secure(),
+            samesite="lax",
         )
         return resp
     await asyncio.to_thread(sign_accounts.touch_login, acct["id"])
     resp = RedirectResponse("/app")  # "/" is the marketing landing; the app lives at /app
     _set_sign_cookie(resp, sign_portal_auth.make_session(acct["id"]))
-    resp.delete_cookie(sign_portal_auth.STATE_COOKIE, httponly=True, secure=True, samesite="lax")
-    resp.delete_cookie(sign_portal_auth.NONCE_COOKIE, httponly=True, secure=True, samesite="lax")
+    resp.delete_cookie(
+        sign_portal_auth.STATE_COOKIE, httponly=True, secure=config.cookie_secure(), samesite="lax"
+    )
+    resp.delete_cookie(
+        sign_portal_auth.NONCE_COOKIE, httponly=True, secure=config.cookie_secure(), samesite="lax"
+    )
     return resp
 
 
 # --- TOTP (Google Authenticator) enroll / confirm / disable -----------------
 @router.post("/api/sign-portal/auth/totp/enroll")
 async def signp_totp_enroll(req: Request) -> Any:
-    from .. import webauth
+    from .. import sign_portal_auth, webauth
 
     acct = _sign_acct(req)
     if not acct:
@@ -394,11 +416,11 @@ async def signp_totp_enroll(req: Request) -> Any:
     # persisting (never persist an unconfirmed secret).
     resp = JSONResponse({"secret": secret, "uri": uri, "qr": webauth.totp_qr(uri)})
     resp.set_cookie(
-        "__Host-ls_sign_totp",
+        sign_portal_auth.COOKIE_TOTP,
         webauth._sign({"k": "signtotp", "aid": acct["id"], "s": secret, "exp": time.time() + 600}),
         max_age=600,
         httponly=True,
-        secure=True,
+        secure=config.cookie_secure(),
         samesite="lax",
     )
     return resp
@@ -412,7 +434,7 @@ async def signp_totp_confirm(req: Request) -> Any:
     if not acct:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     b = await req.json()
-    pend = webauth._unsign(req.cookies.get("__Host-ls_sign_totp"))
+    pend = webauth._unsign(req.cookies.get(sign_portal_auth.COOKIE_TOTP))
     if not (pend and pend.get("k") == "signtotp" and int(pend.get("aid", 0)) == acct["id"]):
         return JSONResponse({"ok": False, "error": "expired"}, status_code=400)
     secret = pend.get("s") or ""
@@ -424,7 +446,9 @@ async def signp_totp_confirm(req: Request) -> Any:
         return JSONResponse({"ok": False, "error": "invalid_code"}, status_code=400)
     await asyncio.to_thread(sign_accounts.set_totp, acct["id"], crypto.encrypt(secret))
     resp = JSONResponse({"ok": True})
-    resp.delete_cookie("__Host-ls_sign_totp", httponly=True, secure=True, samesite="lax")
+    resp.delete_cookie(
+        sign_portal_auth.COOKIE_TOTP, httponly=True, secure=config.cookie_secure(), samesite="lax"
+    )
     return resp
 
 

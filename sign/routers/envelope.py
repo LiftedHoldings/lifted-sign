@@ -29,8 +29,8 @@ from ..http_helpers import (
 
 router = APIRouter()
 
-ENV_STATE_COOKIE = "__Host-ls_env_state"
-ENV_NONCE_COOKIE = "__Host-ls_env_nonce"
+ENV_STATE_COOKIE = config.cookie_name("ls_env_state")
+ENV_NONCE_COOKIE = config.cookie_name("ls_env_nonce")
 _ENV_TIMELINE_LABELS = {
     "created": "Created",
     "sent": "Sent for signature",
@@ -84,7 +84,7 @@ def _set_env_cookie(resp, tok: str) -> None:
         tok,
         max_age=esign_access.ENV_SESSION_TTL,
         httponly=True,
-        secure=True,
+        secure=config.cookie_secure(),
         samesite="strict",
     )
 
@@ -154,7 +154,7 @@ async def envelope_auth_start(env_id: str, req: Request):
             state_nonce,
             max_age=OAUTH_STATE_TTL,
             httponly=True,
-            secure=True,
+            secure=config.cookie_secure(),
             samesite="lax",
         )
         resp.set_cookie(
@@ -162,7 +162,7 @@ async def envelope_auth_start(env_id: str, req: Request):
             nonce,
             max_age=OAUTH_STATE_TTL,
             httponly=True,
-            secure=True,
+            secure=config.cookie_secure(),
             samesite="lax",
         )
         return resp

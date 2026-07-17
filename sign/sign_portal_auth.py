@@ -18,12 +18,18 @@ import re
 import secrets
 import time
 
-from . import db, sign_accounts, webauth
+from . import config, db, sign_accounts, webauth
 
-COOKIE = "__Host-ls_sign"
-COOKIE_2FA = "__Host-ls_sign_2fa"  # short-lived "password/Google ok, TOTP still required"
-STATE_COOKIE = "__Host-ls_sign_state"
-NONCE_COOKIE = "__Host-ls_sign_nonce"
+# Cookie names carry the __Host- prefix by default (requires HTTPS); config.cookie_name drops it
+# under SIGN_INSECURE_COOKIES for plain-http local/LAN use. secure= moves in lockstep via
+# config.cookie_secure().
+COOKIE = config.cookie_name("ls_sign")
+COOKIE_2FA = config.cookie_name(
+    "ls_sign_2fa"
+)  # short-lived "password/Google ok, TOTP still required"
+STATE_COOKIE = config.cookie_name("ls_sign_state")
+NONCE_COOKIE = config.cookie_name("ls_sign_nonce")
+COOKIE_TOTP = config.cookie_name("ls_sign_totp")  # pending TOTP secret during enrollment confirm
 SESSION_TTL = 7 * 24 * 3600  # 7 days — senders, not admins
 PENDING_2FA_TTL = 300  # 5 min to finish the authenticator step
 
@@ -100,7 +106,9 @@ def redeem_2fa_pending(cookie: str | None) -> dict | None:
 
 
 # --- phone-OTP signup/login (Twilio Verify) --------------------------------------
-COOKIE_PHONE = "__Host-ls_sign_phone"  # carries the phone the OTP was sent to (signed, short-lived)
+COOKIE_PHONE = config.cookie_name(
+    "ls_sign_phone"
+)  # carries the phone the OTP was sent to (signed, short-lived)
 PENDING_PHONE_TTL = 600  # 10 min to enter the SMS code
 _PHONE_IP_LIMIT = 8  # OTP-start requests per IP per hour (SMS-bomb / enumeration guard)
 _PHONE_IP_WINDOW = 3600

@@ -115,6 +115,27 @@ def _require_secret() -> str:
 
 # --- resolved configuration -------------------------------------------------
 
+# Session cookies use the __Host- prefix, which browsers accept ONLY over HTTPS (localhost is
+# exempt). That is the right default. But a self-hoster evaluating over a plain-http LAN IP or bare
+# domain would find the login cookie silently dropped — login "does nothing". Setting
+# SIGN_INSECURE_COOKIES=true drops the __Host- prefix and the Secure attribute so cookies work over
+# http on a trusted network. This is a DEV / trusted-LAN convenience ONLY — it disables the
+# clickjacking/secure-transport protections the prefix provides; production must run behind TLS.
+INSECURE_COOKIES: bool = _bool("SIGN_INSECURE_COOKIES", False)
+
+
+def cookie_name(base: str) -> str:
+    """Cookie name for ``base`` — ``__Host-<base>`` in the secure default (requires HTTPS), or the
+    bare ``<base>`` when SIGN_INSECURE_COOKIES is set for plain-http local/LAN use."""
+    return base if INSECURE_COOKIES else "__Host-" + base
+
+
+def cookie_secure() -> bool:
+    """Whether session cookies carry the Secure attribute — True by default, False only under
+    SIGN_INSECURE_COOKIES (must move in lockstep with the __Host- prefix, which requires Secure)."""
+    return not INSECURE_COOKIES
+
+
 # REPO_ROOT anchors any relative path a config value points at (e.g. a signing
 # key given as a repo-relative path). It is the install root, not a source repo.
 REPO_ROOT: Path = Path(_env("SIGN_HOME", str(Path(__file__).resolve().parent.parent)))

@@ -228,6 +228,22 @@ correct scheme from your proxy. **`X-Forwarded-For` is only trusted when the dir
 is listed in `SIGN_TRUSTED_PROXIES`** — set it to your nginx/proxy IP, or the audit trail
 will record the proxy's address instead of the signer's.
 
+### Evaluating over plain HTTP (no TLS yet)
+
+Session cookies use the `__Host-` prefix, which browsers accept only over HTTPS (`localhost`
+is exempt). So on a plain-`http://` LAN IP — e.g. kicking the tyres at
+`http://192.168.1.50:8080` — the login cookie is silently dropped and sign-in appears to do
+nothing. For that **trusted-network / development** case only, set:
+
+```bash
+SIGN_INSECURE_COOKIES=true
+```
+
+This drops the `__Host-` prefix and the `Secure` attribute so cookies work over HTTP. It
+disables secure-transport protection, so **never** use it in production — put the app behind
+TLS (above) instead. It exists purely so a first-run evaluation on a LAN isn't blocked by a
+cookie you can't see.
+
 ---
 
 ## 6. Checklist before taking real signatures

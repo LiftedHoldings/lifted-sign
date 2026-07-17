@@ -32,7 +32,7 @@ import secrets
 import time
 
 
-from . import db, esign, webauth, crypto
+from . import config, crypto, db, esign, webauth
 
 # --- challenge hashing (CHAL-1 / CHAL-2 / PII-3) ---------------------------------
 PBKDF2_ITERS = 200_000
@@ -49,7 +49,9 @@ _DUMMY_SALT = b"\x00" * 16  # keep timing uniform when no challenge record exist
 
 # --- envelope session (ENV-1 / ENV-2 / ENV-3) ------------------------------------
 ENV_SESSION_TTL = 1800  # 30 min absolute (ENV-3)
-COOKIE = "__Host-ls_env"  # __Host- => Secure + Path=/ + no Domain (ENV-3)
+COOKIE = config.cookie_name(
+    "ls_env"
+)  # __Host- (Secure+Path=/+no Domain) unless SIGN_INSECURE_COOKIES
 
 
 def _to_iso_date(v: str) -> str:

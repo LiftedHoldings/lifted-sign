@@ -114,9 +114,10 @@ def _oauth_state_ok(cookie_state: str | None, param_state: str | None) -> bool:
 
 # --- sign-session cookie ----------------------------------------------------
 def _set_sign_cookie(resp, tok: str) -> None:
-    """Set the SPA session cookie. samesite=lax (not strict) so the Google top-level
-    redirect returns the cookie. secure=True is mandatory — the cookie name carries the
-    __Host- prefix, which browsers only accept over HTTPS (self-host behind TLS)."""
+    """Set the SPA session cookie. samesite=lax (not strict) so the Google top-level redirect
+    returns the cookie. secure + the __Host- prefix (config.cookie_secure()/config.cookie_name) are
+    the default — browsers accept them only over HTTPS, so run behind TLS; SIGN_INSECURE_COOKIES
+    drops both for plain-http local/LAN dev only."""
     from . import sign_portal_auth
 
     resp.set_cookie(
@@ -124,7 +125,7 @@ def _set_sign_cookie(resp, tok: str) -> None:
         tok,
         max_age=sign_portal_auth.SESSION_TTL,
         httponly=True,
-        secure=True,
+        secure=config.cookie_secure(),
         samesite="lax",
     )
 
