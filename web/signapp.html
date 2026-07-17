@@ -40,7 +40,7 @@
   @font-face{font-family:'Gelasio';font-weight:400;font-style:italic;src:url('/static/ds/fonts/Gelasio-400i.ttf');font-display:swap}
   @font-face{font-family:'Gelasio';font-weight:700;font-style:italic;src:url('/static/ds/fonts/Gelasio-700i.ttf');font-display:swap}
   /* ============================================================
-     LIFTED SIGN — SENDER SPA (sign.example.com/signapp)
+     LIFTED SIGN — SENDER SPA
      Built ON the DS: tokens (styles.css) + app kit (_appkit.css).
      data-brand="sign" => --brand blue; data-theme pinned dark.
      Premium composition layer — glass, HUD, blue→cyan gradients,
@@ -712,7 +712,7 @@
         '<div class="au-signer lds-hud" aria-label="Lifted Sign signer preview">' +
           '<div class="au-signer__bar">' +
             '<span class="au-signer__dot"></span><span class="au-signer__dot"></span><span class="au-signer__dot"></span>' +
-            '<span class="au-signer__title">' + icShield() + "sign.example.com</span>" +
+            '<span class="au-signer__title">' + icShield() + "{{PUBLIC_HOST}}</span>" +
           "</div>" +
           '<div class="au-doc">' +
             '<div class="au-seal" aria-hidden="true">' + icCheck() + "</div>" +
@@ -925,7 +925,7 @@
           "</div>" +
           authInstrument() +
           '<div class="auth__chips">' +
-            '<span class="auth__chip">' + icShield() + " AES-256 sealed</span>" +
+            '<span class="auth__chip">' + icShield() + " PAdES-certified seal</span>" +
             '<span class="auth__chip">' + icScale() + " ESIGN &amp; UETA</span>" +
             '<span class="auth__chip">' + icCert() + " Certificate of Completion</span>" +
           "</div>" +
@@ -963,7 +963,7 @@
         '<p class="authcard__sub">' + sub + "</p>" +
         blocks.join("") +
         (msg ? '<p class="ok" style="margin-top:14px">' + esc(msg) + "</p>" : "") +
-        '<div class="auth-trust">' + icLock() + " AES-256 encryption · tamper-evident seal</div>" +
+        '<div class="auth-trust">' + icLock() + " PAdES/PKCS#7 certification · tamper-evident seal</div>" +
       "</div>"
     );
   }

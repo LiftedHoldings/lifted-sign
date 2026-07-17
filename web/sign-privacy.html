@@ -8,12 +8,12 @@
 <meta name="author" content="Lifted">
 <meta name="robots" content="index, follow">
 <meta name="theme-color" content="#04070b">
-<link rel="canonical" href="https://sign.example.com/privacy">
+<link rel="canonical" href="{{PUBLIC_BASE_URL}}/privacy">
 <link rel="icon" type="image/svg+xml" href="/static/ds/assets/favicon.svg">
 <link rel="apple-touch-icon" href="/static/ds/assets/favicon.svg">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Lifted Sign">
-<meta property="og:url" content="https://sign.example.com/privacy">
+<meta property="og:url" content="{{PUBLIC_BASE_URL}}/privacy">
 <meta property="og:title" content="Privacy Policy — Lifted Sign">
 <meta property="og:description" content="How Lifted Sign collects, uses, and protects your information.">
 <!-- No-flash theme resolve: saved choice -> prefers-color-scheme -> dark. Must run before the stylesheet links. -->
@@ -158,12 +158,12 @@ a:focus-visible,button:focus-visible,.btn:focus-visible{outline:2px solid var(--
     <span class="eyebrow">Legal</span>
     <h1>Privacy <span class="grad">Policy</span></h1>
     <div class="updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg> Last updated: <span>July 15, 2026</span></div>
-    <p class="lead">This policy explains what Lifted Sign collects, why, how we protect it, and the choices you have. Lifted Sign is an electronic-signature service operated by [Operator Name]. We keep this plain because a signature is a serious thing — and so is your data.</p>
+    <p class="lead">This policy explains what Lifted Sign collects, why, how we protect it, and the choices you have. Lifted Sign is an electronic-signature service operated by {{LEGAL_ENTITY}}. We keep this plain because a signature is a serious thing — and so is your data.</p>
   </div>
 
   <!-- SELF-HOSTER TEMPLATE NOTE — delete this block on your published copy. -->
   <div style="max-width:820px;margin:0 auto 10px;padding:12px 16px;border:1px dashed var(--border-strong,#33415a);border-radius:10px;background:rgba(46,107,255,.06);font-size:13.5px;line-height:1.55;color:var(--text-muted,#8b97ab)">
-    <b style="color:var(--text,#eef3fb)">Self-hosters:</b> replace the bracketed placeholders (<code>[Operator Name]</code>) with your own legal entity before publishing. Only the operator identity is parameterized — the ESIGN/UETA substance below is ready to use as-is.
+    <b style="color:var(--text,#eef3fb)">Self-hosters:</b> replace the bracketed placeholders (<code>{{LEGAL_ENTITY}}</code>) with your own legal entity before publishing. Only the operator identity is parameterized — the ESIGN/UETA substance below is ready to use as-is.
   </div>
 
   <div class="doc-grid">
@@ -282,7 +282,7 @@ a:focus-visible,button:focus-visible,.btn:focus-visible{outline:2px solid var(--
 
       <section id="contact">
         <h2><span class="num">10</span> Contact</h2>
-        <p>Lifted Sign is operated by <b>[Operator Name]</b>. If you have a question about this policy or your data, reach us through the support option inside the app. You can also review our <a class="inline" href="/terms">Terms of Service</a>.</p>
+        <p>Lifted Sign is operated by <b>{{LEGAL_ENTITY}}</b>. If you have a question about this policy or your data, reach us through the support option inside the app. You can also review our <a class="inline" href="/terms">Terms of Service</a>.</p>
       </section>
 
     </div>
@@ -290,14 +290,14 @@ a:focus-visible,button:focus-visible,.btn:focus-visible{outline:2px solid var(--
 </div>
 
 <footer><div class="wrap"><div class="fbar">
-  <span>© <span id="yr"></span> [Operator Name] · Signed, sealed, delivered.</span>
+  <span>© <span id="yr"></span> {{LEGAL_ENTITY}} · Signed, sealed, delivered.</span>
   <span class="flinks">
     <a href="/">Lifted Sign</a>
     <a href="/terms">Terms</a>
     <a href="/privacy">Privacy</a>
-    <a href="https://example.com/" target="_blank" rel="noopener">[Operator Name]</a>
+    <a href="https://example.com/" target="_blank" rel="noopener">{{LEGAL_ENTITY}}</a>
   </span>
-  <span>sign.example.com</span>
+  <span>{{PUBLIC_HOST}}</span>
 </div></div></footer>
 
 <script>

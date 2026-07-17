@@ -163,6 +163,11 @@ def page_tokens() -> dict[str, str]:
         "{{PUBLIC_HOST}}": public_host(),
         "{{OPERATOR_NAME}}": OPERATOR_NAME,
         "{{OPERATOR_URL}}": OPERATOR_URL,
+        # Legal operator entity for the binding ToS/Privacy pages. Resolves to the configured
+        # LEGAL_ENTITY when set (so the hosted deploy reads as a finished document), and falls
+        # back to the visible "[Operator Name]" placeholder otherwise — an honest signal that a
+        # self-hoster must set LEGAL_ENTITY to their own entity before publishing.
+        "{{LEGAL_ENTITY}}": LEGAL_ENTITY or "[Operator Name]",
     }
 
 

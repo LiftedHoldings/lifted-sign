@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lifted Sign — Send documents for signature. Signed, sealed, delivered.</title>
-<meta name="description" content="Lifted Sign is legally-binding e-signature done right: drag-and-drop fields on any PDF, multi-signer routing, a glass signing experience, ESIGN/UETA consent capture, and a tamper-evident AES-256-sealed PDF with a Certificate of Completion. Free during beta — unlimited documents, no card required.">
+<meta name="description" content="Lifted Sign is legally-binding e-signature done right: drag-and-drop fields on any PDF, multi-signer routing, a glass signing experience, ESIGN/UETA consent capture, and a tamper-evident, PAdES-certified PDF with a Certificate of Completion. Free during beta — unlimited documents, no card required.">
 <meta name="keywords" content="e-signature, electronic signature, e-sign, ESIGN, UETA, digital signature, sign PDF online, signature request, audit trail, certificate of completion, tamper-evident, Lifted Sign, {{OPERATOR_NAME}}">
 <meta name="author" content="{{OPERATOR_NAME}}">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -29,8 +29,8 @@
  "applicationCategory":"BusinessApplication",
  "operatingSystem":"Web",
  "url":"{{PUBLIC_BASE_URL}}/",
- "description":"Legally-binding e-signature — drag-and-drop field placement on any PDF, multi-signer routing, a tokenized glass signing experience, ESIGN/UETA consent capture, and a tamper-evident AES-256-sealed executed PDF with a Certificate of Completion (full audit trail: identity, timestamps, IP).",
- "featureList":["Drag-and-drop signature/date/initials/text fields on any PDF","Multi-signer routing (sequential or parallel)","Glass tokenized signer experience — no account required","ESIGN/UETA consent capture","Tamper-evident AES-256-sealed executed PDF","Certificate of Completion with full audit trail","Per-envelope event history"],
+ "description":"Legally-binding e-signature — drag-and-drop field placement on any PDF, multi-signer routing, a tokenized glass signing experience, ESIGN/UETA consent capture, and a tamper-evident, PAdES-certified executed PDF with a Certificate of Completion (full audit trail: identity, timestamps, IP).",
+ "featureList":["Drag-and-drop signature/date/initials/text fields on any PDF","Multi-signer routing (sequential or parallel)","Glass tokenized signer experience — no account required","ESIGN/UETA consent capture","Tamper-evident, PAdES-certified executed PDF","Certificate of Completion with full audit trail","Per-envelope event history"],
  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD","description":"Free during beta — unlimited documents, no card required."},
  "publisher":{"@type":"Organization","name":"{{OPERATOR_NAME}}","url":"{{OPERATOR_URL}}"}}
 </script>
@@ -425,7 +425,7 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
     <div class="b reveal"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M16 4a3 3 0 0 1 0 6M21 20a6 6 0 0 0-4-5.6"/></svg></div><h3>Multi-signer routing</h3><p>Route one envelope to every party in sequence or in parallel. Each signer gets a clean, branded page — no account, no app to install.</p></div>
     <div class="b reveal"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-1 4-6 6-6s2 3 4 3 3-4 5-4"/><path d="M3 21h18"/></svg></div><h3>Glass signing experience</h3><p>A tokenized, distraction-free signer page. Draw, type, or adopt a saved signature — no account, no app to install.</p></div>
     <div class="b span2 reveal"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 7l7-4 7 4M4 9l4 8H0l4-8zM20 9l4 8h-8l4-8z"/></svg></div><h3>ESIGN / UETA consent</h3><p>Consent and intent are captured before the first field is signed, then bound into the record — the legal foundation of an enforceable electronic signature.</p></div>
-    <div class="b reveal"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div><h3>Tamper-evident seal</h3><p>The moment the last field is signed, the document is frozen, AES-256 encrypted, and fingerprinted with a SHA-256 hash on the certificate — so any later change is provable at a glance.</p></div>
+    <div class="b reveal"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div><h3>Tamper-evident seal</h3><p>The moment the last field is signed, the document is frozen, sealed with a PAdES/PKCS#7 certification signature, and fingerprinted with a SHA-256 hash on the certificate — so any later change is provable at a glance.</p></div>
     <div class="b reveal"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div><h3>Certificate + event history</h3><p>Every envelope carries a downloadable Certificate of Completion and its own time-ordered history: who, when, and from where.</p></div>
   </div>
 </div></section>
@@ -453,7 +453,7 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
   <div class="steps">
     <div class="step reveal"><span class="no">STEP 01</span><h3>Send</h3><p>Upload a PDF or pick a template, drop the fields, add your signers, and send. The envelope is logged the moment it leaves.</p></div>
     <div class="step reveal"><span class="no">STEP 02</span><h3>Sign</h3><p>Signers open a clean, branded page — no account required. They consent, complete every required field, and sign.</p></div>
-    <div class="step reveal"><span class="no">STEP 03</span><h3>Seal</h3><p>Lifted Sign freezes the record, applies the AES-256 seal, attaches the Certificate of Completion, and delivers the finished document to every party — filed and final.</p></div>
+    <div class="step reveal"><span class="no">STEP 03</span><h3>Seal</h3><p>Lifted Sign freezes the record, applies the PAdES certification seal, attaches the Certificate of Completion, and delivers the finished document to every party — filed and final.</p></div>
   </div>
 </div></section>
 

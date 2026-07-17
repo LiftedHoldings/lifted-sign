@@ -172,8 +172,10 @@ info:
     source of truth — import it into Postman, Insomnia, or your codegen of choice.
 
 servers:
-  - url: https://sign.example.com
-    description: Production
+  - url: https://sign.liftedholdings.com
+    description: Lifted Sign managed cloud
+  - url: http://localhost:8080
+    description: Local self-hosted instance
 
 security:
   - ApiKeyAuth: []
