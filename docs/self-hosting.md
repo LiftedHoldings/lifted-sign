@@ -124,6 +124,13 @@ Send yourself a test envelope after configuring, and confirm the link resolves a
 your `PUBLIC_BASE_URL`.
 
 ---
+### Provider quickstart
+
+(Add Gmail example)
+
+(Add Amazon SES example)
+
+(Add Postmark example)
 
 ## 3. Switching to Postgres
 
