@@ -75,6 +75,7 @@ import json
 import mimetypes
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 import uuid
@@ -294,6 +295,46 @@ class LiftedSign:
             The agreement as a dict.
         """
         return self._request("GET", f"/api/mysign/agreements/{aid}")
+
+    def wait_for_completion(self, aid, *, timeout: float = 600, interval: float = 5) -> Dict[str, Any]:
+        """Poll :meth:`get` until the agreement reaches a terminal status.
+
+        Blocks the calling thread, sleeping ``interval`` seconds between polls,
+        until the agreement is ``completed``/``signed`` (returned) or
+        ``voided``/``declined`` (raises), or until ``timeout`` seconds elapse.
+
+        Args:
+            aid: The integer envelope id returned by :meth:`create_agreement`.
+            timeout: Maximum seconds to wait before giving up.
+            interval: Seconds to sleep between polls.
+
+        Returns:
+            The final agreement dict once it is completed or signed.
+
+        Raises:
+            LiftedSignError: If the agreement is voided or declined. The final
+                agreement dict is attached as ``body``.
+            TimeoutError: If ``timeout`` elapses before a terminal status.
+        """
+        deadline = time.monotonic() + timeout
+        agreement = self.get(aid)
+        status = str(agreement.get("status", "")).lower()
+        while True:
+            if status in ("completed", "signed"):
+                return agreement
+            if status in ("voided", "declined"):
+                raise LiftedSignError(
+                    f"Agreement {aid} reached terminal status '{status}'", status=None, body=agreement
+                )
+            now = time.monotonic()
+            if now >= deadline:
+                raise TimeoutError(
+                    f"Agreement {aid} did not reach a terminal status within {timeout}s "
+                    f"(last observed status: '{status}')"
+                )
+            time.sleep(min(interval, deadline - now))
+            agreement = self.get(aid)
+            status = str(agreement.get("status", "")).lower()
 
     def delete(self, aid: int) -> Dict[str, Any]:
         """Permanently delete a draft agreement.
