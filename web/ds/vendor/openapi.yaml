@@ -1,0 +1,1554 @@
+openapi: 3.1.0
+
+info:
+  title: Lifted Sign API
+  version: 1.0.0
+  termsOfService: https://sign.example.com/terms
+  contact:
+    name: Lifted Sign Developer Support
+    url: https://sign.example.com
+    email: support@example.com
+  license:
+    name: Proprietary — © [Operator Name]
+    url: https://sign.example.com/terms
+  description: |
+    # Lifted Sign API
+
+    Turn a PDF into a **legally binding, tamper-sealed, certificate-backed** signed
+    document — programmatically. Lifted Sign is a hosted e-signature service built on
+    the ESIGN Act and UETA: you upload a PDF, add signers and fields, and send. Each
+    signer receives a single-use tokenized link, authenticates, consents, and signs.
+    When the last signer completes, Lifted Sign freezes the document, applies a
+    cryptographic seal, and generates a **Certificate of Completion** with the full
+    audit trail (IPs, timestamps, consent, authentication events).
+
+    Everything the hosted dashboard can do, this API can do — the dashboard is simply
+    the first client of these endpoints. If you can send a `multipart/form-data` upload
+    and a JSON `POST`, you can integrate signing in an afternoon.
+
+    ## Quickstart
+
+    A complete send is five calls: create a draft from a PDF, add a signer, drop a
+    signature field, dispatch it, and — once signed — download the sealed document.
+
+    ```bash
+    # 1. Create a draft from a PDF (multipart upload)
+    curl -X POST https://sign.example.com/api/mysign/agreements \
+      -H "Authorization: Bearer sk_live_…" \
+      -F file=@msa.pdf
+    # → { "ok": true, "id": 42 }
+
+    # 2. Add a signer (replaces the whole signer set)
+    curl -X POST https://sign.example.com/api/mysign/agreements/42/signers \
+      -H "Authorization: Bearer sk_live_…" -H "Content-Type: application/json" \
+      -d '{"signers":[{"name":"Dana Client","email":"dana@example.com"}]}'
+
+    # 3. Place a signature field by anchoring it to text already in the PDF
+    curl -X POST https://sign.example.com/api/mysign/agreements/42/fields \
+      -H "Authorization: Bearer sk_live_…" -H "Content-Type: application/json" \
+      -d '{"fields":[{"signer":"dana@example.com","type":"signature","anchor":"Signature:"}]}'
+
+    # 4. Send — freezes the presented PDF and emails Dana a single-use link
+    curl -X POST https://sign.example.com/api/mysign/agreements/42/send \
+      -H "Authorization: Bearer sk_live_…" -H "Content-Type: application/json" \
+      -d '{"message":"Please countersign by Friday."}'
+
+    # 5. Poll until completed, then download the executed, sealed PDF
+    curl https://sign.example.com/api/mysign/agreements/42 \
+      -H "Authorization: Bearer sk_live_…"          # status → completed
+    curl -OJ https://sign.example.com/api/mysign/agreements/42/download \
+      -H "Authorization: Bearer sk_live_…"
+    ```
+
+    That is the whole golden path — **create → signers → fields → send → download**.
+    Everything else in this reference refines those five steps: signing order, signer
+    authentication, templates for documents you send often, and the audit artifacts you
+    can pull once an envelope is `completed`.
+
+    ## Authentication
+
+    Every request is authenticated with a **developer API key** presented as a Bearer
+    token:
+
+    ```http
+    Authorization: Bearer sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    ```
+
+    - Keys come in two modes: **`sk_live_…`** (production) and **`sk_test_…`** (sandbox).
+    - Mint and revoke keys in the **Developers** tab of your Lifted Sign dashboard. The
+      full key is shown **once** at creation and never again — store it in your secret
+      manager.
+    - A key resolves to exactly one account and grants no more authority than a
+      logged-in user of that account: every object is scoped to the owning account, so
+      one tenant can never read or mutate another's envelopes.
+    - **Keys are server-side secrets.** Never embed a key in a browser, mobile app, or
+      any client you don't control. If a key leaks, revoke it in the Developers tab —
+      revocation is instant.
+
+    A missing or invalid key returns `401 {"error":"unauthorized"}`. Requesting an
+    envelope your account does not own returns `404 {"error":"not found"}` (existence is
+    never leaked to non-owners).
+
+    ## Envelope lifecycle
+
+    An **envelope** (called an *agreement* in the API path) moves through a simple state
+    machine: you **create** it from a PDF (`draft`), **add signers** and **place fields**
+    while it is a draft, then **send** it — which freezes the presented bytes, emails
+    each signer a single-use link, and moves it to `out_for_signature`. As signers act it
+    accrues audit events; when all have signed it becomes `completed` and the executed
+    PDF plus Certificate of Completion become downloadable. You can `remind` pending
+    signers, `void` an in-flight envelope, or `delete` a draft that never went out.
+
+    ## Status vocabulary
+
+    **Envelope status:** `draft` · `out_for_signature` · `completed` · `declined` ·
+    `voided` · `cancelled`.
+
+    **Signer status:** `pending` · `sent` · `viewed` · `signed` · `declined`.
+
+    ## Draft immutability (important)
+
+    Signers, fields, page edits, and order-mode can only be changed while the envelope is
+    a **draft**. Once sent, the presented bytes are frozen and these calls return
+    `{"ok": false, "error": "locked — already sent"}` with HTTP **200** (a soft, in-body
+    rejection — not a 4xx). `DELETE` is the one exception: deleting a sent envelope
+    returns HTTP **409**. A sent/completed envelope can only be `void`ed, never edited or
+    deleted — it is a legal record.
+
+    ## Errors & response conventions
+
+    Lifted Sign uses two deliberate rejection styles, and knowing which is which will
+    save you a debugging session:
+
+    - **Transport, auth, and permission errors use HTTP status codes.** A missing or
+      invalid key is `401`; an object your account doesn't own is `404` (existence is
+      never leaked); a billing or sender-verification block on send is `403`; an
+      unacceptable upload or a fail-closed field batch is `400`; deleting an
+      already-sent envelope is `409`. These carry either a bare `{"error": "…"}` body
+      (on auth and binary/download routes) or the `{"ok": false, "error": "…"}` shape.
+    - **Business-rule rejections on mutating calls come back in-body with HTTP `200`** as
+      `{"ok": false, "error": "<machine code>"}`. Editing an already-sent envelope
+      (`locked — already sent`), sending one with no signers, or setting an invalid
+      order mode are *soft* rejections: the HTTP request itself succeeded, but the
+      operation was declined. **Always check the `ok` field on a `200` from a `POST`** —
+      don't infer success from the status code alone.
+
+    Every `error` value is a stable, lowercase machine string that is safe to branch on;
+    the exact codes each call can return are listed on its responses below. Successful
+    reads return the resource directly, and successful mutations return
+    `{"ok": true, …}`.
+
+    ## Templates & prefill
+
+    For a document you send often, build it **once** and reuse it. Prepare an envelope
+    (upload a PDF, place fields, add signer roles), then save it as a **template** with
+    `POST /api/mysign/templates` (`{"agreement_id": <id>, "name": "..."}`). Fields you
+    mark as **prefill** — set `prefill: true`, a `field_key`, and a `prompt` when you
+    place them — become the template's fill-ins.
+
+    Later, mint a fresh draft from the template with
+    `POST /api/mysign/templates/{tid}/use`, passing `answers` keyed by `field_key`:
+
+    ```json
+    { "answers": { "company": "Acme Corp", "effective_date": "2026-08-01" },
+      "recipients": [ { "name": "Dana Client", "email": "dana@example.com" } ] }
+    ```
+
+    The new draft comes back prefilled and ready to `send`. Read a template's prefill
+    fields (their `field_key` + `prompt`) with `GET /api/mysign/templates/{tid}` so you
+    know which answers to supply. `POST /api/mysign/agreements/{aid}/detect` will even
+    auto-place prefill fields it finds from `{{tokens}}` and labels like `Company Name:`.
+
+    ## Rate limits
+
+    The API permits a sustained **120 requests/minute** per account. Bursts above the
+    limit receive `429 Too Many Requests`; back off and retry with jitter. File uploads
+    are capped at **60 MB** per PDF.
+
+    ## Hosted documentation
+
+    Interactive docs, key management, and quickstarts live at
+    <https://sign.example.com>. This OpenAPI document is the machine-readable
+    source of truth — import it into Postman, Insomnia, or your codegen of choice.
+
+servers:
+  - url: https://sign.example.com
+    description: Production
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Envelopes
+    description: >-
+      Create, list, read, and delete envelopes (agreements). The envelope is the
+      top-level object: a PDF plus its signers, fields, and audit trail.
+  - name: Signers
+    description: >-
+      Define who signs — their role, signing order, and how each one authenticates
+      (single-use link, email OTP, or access code). The signer set is written as a whole
+      (each `POST` replaces it) and can only change while the envelope is a draft.
+  - name: Fields
+    description: >-
+      Place signature, initials, text, date, and checkbox fields on the document.
+      Coordinates are normalized 0..1 fractions of the page, origin top-left.
+  - name: Sending
+    description: >-
+      Dispatch an envelope for signature and re-notify pending signers. Sending
+      freezes the document and emails single-use signing links.
+  - name: Status
+    description: >-
+      Read-only introspection of an envelope in flight: its lifecycle state, each
+      signer's progress, the placed fields, per-page geometry, and the ordered audit
+      trail. Reach for these to render a dashboard or to poll an envelope through to
+      `completed`.
+  - name: Downloads
+    description: >-
+      Retrieve the source PDF, the executed (signed & sealed) PDF, and the
+      Certificate of Completion.
+  - name: Templates
+    description: >-
+      Build a document once, then spin up ready-to-send envelopes from it later. A
+      template snapshots a PDF plus its signer roles and field layout — including
+      **prefill fields** you fill in per use via `answers`. Owner-scoped: you only ever
+      see and use your own templates.
+  - name: Account
+    description: >-
+      Read the profile of the account your API key belongs to — plan, subscription
+      status, verification flags, and total envelope count. Useful for confirming which
+      account (and whether a live or test key) a request will act as, and whether the
+      account is currently cleared to send. Never returns secrets.
+  - name: Webhooks
+    description: >-
+      Coming soon: push delivery of `signed`, `completed`, and `declined` events to an
+      endpoint you register, so you can react to signing progress without polling. No
+      webhook endpoints are live yet — until they ship, poll an envelope's status via
+      the **Status** tag. This entry is a placeholder for the forthcoming surface.
+
+paths:
+  /api/mysign/agreements:
+    get:
+      operationId: listEnvelopes
+      tags: [Envelopes]
+      summary: List envelopes
+      description: >-
+        Return the account's envelopes, newest first, with pagination. Each item is
+        enriched with derived counts (`signed_n`, `signer_n`, `field_n`, `page_n`) and a
+        lightweight `signers` array so a dashboard can render a list without a second
+        call per row.
+      parameters:
+        - name: limit
+          in: query
+          description: Page size, clamped to 1..200 (default 50).
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - name: offset
+          in: query
+          description: Number of rows to skip (default 0).
+          required: false
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: A page of envelopes.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeList' }
+              example:
+                agreements:
+                  - id: 42
+                    name: Master Services Agreement.pdf
+                    status: out_for_signature
+                    message: Please countersign by Friday.
+                    order_mode: sequential
+                    created_at: 1752624000.0
+                    sent_at: 1752624120.0
+                    completed_at: null
+                    signers:
+                      - name: Dana Client
+                        email: dana@example.com
+                        status: viewed
+                        color: '#2F6FED'
+                        viewed_at: 1752624300.0
+                        signed_at: null
+                    signed_n: 0
+                    signer_n: 1
+                    field_n: 3
+                    page_n: 4
+                total: 1
+                offset: 0
+                limit: 50
+                has_more: false
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createEnvelope
+      tags: [Envelopes]
+      summary: Create an envelope from a PDF
+      description: >-
+        Upload a PDF to create a new `draft` envelope. The request is
+        `multipart/form-data` with a `file` part (the PDF, max 60 MB) and an optional
+        `name` (defaults to the uploaded filename). Encrypted, zero-page, non-PDF, and
+        corrupt files are rejected at upload with a `400` before any envelope is created.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The source PDF (max 60 MB).
+                name:
+                  type: string
+                  description: Human-friendly envelope name. Defaults to the filename.
+                  example: Master Services Agreement.pdf
+      responses:
+        '200':
+          description: Envelope created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+                  id: { type: integer, description: The new envelope id., example: 42 }
+              example: { ok: true, id: 42 }
+        '400':
+          description: >-
+            Missing or unacceptable file. `error` is one of `file required`,
+            `file too large (max 60 MB)`, `not a PDF`, or an engine validation message.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OkError' }
+              example: { ok: false, error: 'file too large (max 60 MB)' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/mysign/agreements/{aid}:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    get:
+      operationId: getEnvelope
+      tags: [Envelopes]
+      summary: Get one envelope
+      description: >-
+        Return the full envelope: metadata, `signers`, placed `fields`, and the ordered
+        `events` audit trail.
+      responses:
+        '200':
+          description: The envelope.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Envelope' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteEnvelope
+      tags: [Envelopes]
+      summary: Delete a draft envelope
+      description: >-
+        Permanently delete a **draft** envelope and its child rows and stored PDF. A
+        sent or completed envelope is a legal record and cannot be deleted — void it
+        instead (returns `409`).
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OkError' }
+              example: { ok: true }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No such envelope owned by this account.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OkError' }
+              example: { ok: false, error: not_found }
+        '409':
+          description: Envelope already sent — void it, don't delete it.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OkError' }
+              example: { ok: false, error: locked }
+
+  /api/mysign/agreements/{aid}/pages:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    get:
+      operationId: getEnvelopePages
+      tags: [Status]
+      summary: Get page geometry
+      description: >-
+        Return per-page dimensions in PDF points (rotation applied), taken from the same
+        bytes signers see. Use these to convert normalized field coordinates (0..1) to
+        absolute points when rendering a preview.
+      responses:
+        '200':
+          description: Page dimensions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        w: { type: number, description: Page width in points. }
+                        h: { type: number, description: Page height in points. }
+                  count: { type: integer, description: Page count. }
+              example:
+                pages:
+                  - { w: 612.0, h: 792.0 }
+                  - { w: 612.0, h: 792.0 }
+                count: 2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/mysign/agreements/{aid}/pdf:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    get:
+      operationId: getEnvelopeSourcePdf
+      tags: [Downloads]
+      summary: Download the presented PDF
+      description: >-
+        Return the exact PDF bytes presented to signers — the frozen snapshot once sent,
+        or the live draft source otherwise. For the fully executed, sealed document use
+        `/download`.
+      responses:
+        '200':
+          description: PDF bytes.
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No document on file.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: no document }
+
+  /api/mysign/agreements/{aid}/signers:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    post:
+      operationId: setSigners
+      tags: [Signers]
+      summary: Set signers (replace all)
+      description: >-
+        Replace the envelope's entire signer set. Draft-only. Each signer needs a `name`
+        and `email`; `role`, `order`, and `auth` are optional. `auth` selects the
+        signer's authentication method and defaults to `email` (the single-use link).
+        On a sent envelope this returns `{"ok": false, "error": "locked — already sent"}`
+        with HTTP 200.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                signers:
+                  type: array
+                  items: { $ref: '#/components/schemas/SignerInput' }
+            example:
+              signers:
+                - name: Dana Client
+                  email: dana@example.com
+                  role: Client
+                  order: 1
+                  auth: email
+                - name: Sam Counsel
+                  email: sam@example.com
+                  role: Counsel
+                  order: 2
+                  auth: access_code
+      responses:
+        '200':
+          description: >-
+            Signers replaced (`ok: true` with the stored signer rows), or a soft
+            draft-lock rejection (`ok: false`).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  signers:
+                    type: array
+                    items: { $ref: '#/components/schemas/Signer' }
+                  error: { type: string }
+              example:
+                ok: true
+                signers:
+                  - id: 101
+                    name: Dana Client
+                    email: dana@example.com
+                    role: Client
+                    sign_order: 1
+                    status: pending
+                    auth_method: email
+                    color: '#2F6FED'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/mysign/agreements/{aid}/order-mode:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    post:
+      operationId: setOrderMode
+      tags: [Signers]
+      summary: Set signing order mode
+      description: >-
+        Choose whether signers are routed one-at-a-time (`sequential`) or all at once
+        (`parallel`, the default). Draft-only. Send() reads this to decide who is
+        notified first. Errors (`bad_mode`, `not_found`, `locked`) are returned in-body
+        with HTTP 200.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mode]
+              properties:
+                mode:
+                  type: string
+                  enum: [sequential, parallel]
+            example: { mode: sequential }
+      responses:
+        '200':
+          description: Order mode set, or an in-body rejection.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  order_mode: { type: string, enum: [sequential, parallel] }
+                  error: { type: string, enum: [bad_mode, not_found, locked] }
+              example: { ok: true, order_mode: sequential }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/mysign/agreements/{aid}/fields:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    post:
+      operationId: setFields
+      tags: [Fields]
+      summary: Place fields (anchor, points, or normalized)
+      x-recommended-mode: anchor
+      description: >-
+        Place the signing fields on a **draft** envelope, replacing the entire field layout
+        in one fail-closed batch. Each field is bound to a signer (by email or id) and a
+        `type`, and you choose **one of three ways** to say *where* it goes:
+
+
+        **1. Anchor — recommended, the easiest way (no coordinate math).**
+        Name text that already exists in the document and the field snaps to it:
+        `{ "signer": "dana@example.com", "type": "signature", "anchor": "Signature:" }`.
+        The match is case-insensitive and spans word boundaries. Tune with `place`
+        (`right`/`left`/`below`/`above`/`over`, default `right`), `dx`/`dy` point offsets,
+        and `anchor_index` when a label repeats (e.g. two "Signature:" lines → 1 and 2).
+        This is the recommended integration method — you never have to render the PDF or do
+        coordinate math.
+
+
+        **2. Absolute points** — give `page` (0-based), `x`/`y` in PDF points from the
+        top-left, `unit: "pt"`, and optional `width`/`height`.
+
+
+        **3. Normalized 0..1** — give `page`, `x`/`y`/`w`/`h` as fractions of the page
+        (origin top-left, y increasing downward). Advanced; use when you have rendered the
+        page yourself.
+
+
+        The signer is resolved from `signer` (an email) or `signer_id` (an integer), and
+        defaults to the sole signer when the envelope has exactly one. `type` is one of
+        signature, initials, date, text, name, email, title, company, checkbox; each type
+        has a sensible default size you can override with `width`/`height`.
+
+
+        **Fail-closed:** if *any* field can't be resolved (anchor text not found, unknown
+        signer, missing signer with multiple on the envelope) the **whole batch is rejected
+        and nothing is written** — a `400` with an `error` code and the offending `field`
+        index. On an already-sent envelope this returns `{"ok": false, "error": "locked —
+        already sent"}` with HTTP 200.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fields]
+              properties:
+                fields:
+                  type: array
+                  description: The fields to place. Each uses one of the three placement modes.
+                  items: { $ref: '#/components/schemas/FieldInput' }
+            example:
+              fields:
+                - signer: dana@example.com
+                  type: signature
+                  anchor: 'Signature:'
+                - signer: dana@example.com
+                  type: date
+                  anchor: 'Date:'
+                  place: right
+                  dx: 6
+      responses:
+        '200':
+          description: >-
+            Fields placed (`ok: true`, with `count` and the resolved `fields`), or a soft
+            draft-lock rejection (`ok: false`, `error: "locked — already sent"`).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  count: { type: integer, description: Number of fields placed. }
+                  fields:
+                    type: array
+                    description: The resolved fields, each reporting where it landed.
+                    items: { $ref: '#/components/schemas/Field' }
+                  error: { type: string, description: Present on a soft (HTTP 200) rejection, e.g. `locked — already sent`. }
+              examples:
+                placed:
+                  summary: Two fields placed by anchor
+                  value:
+                    ok: true
+                    count: 2
+                    fields:
+                      - { type: signature, anchor: 'Signature:', signer_id: 101, page: 0, x: 0.217, y: 0.347, w: 0.294, h: 0.056, placed: true }
+                      - { type: date, anchor: 'Date:', signer_id: 101, page: 0, x: 0.612, y: 0.347, w: 0.180, h: 0.043, placed: true }
+                locked:
+                  summary: Envelope already sent (soft lock)
+                  value: { ok: false, error: 'locked — already sent' }
+        '400':
+          description: >-
+            The batch was rejected and **nothing was written** (fail-closed). `error` is a
+            machine code and `field` is the 0-based index of the offending field.
+            Codes: `anchor_not_found` (anchor text not present — `detail` echoes the text),
+            `signer_not_found` (unknown signer email — `detail` echoes it),
+            `signer_required` (a field omitted the signer and the envelope has more than
+            one), `no fields` (empty `fields`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FieldError' }
+              examples:
+                anchor_not_found:
+                  value: { ok: false, error: anchor_not_found, field: 0, detail: 'Signature:' }
+                signer_not_found:
+                  value: { ok: false, error: signer_not_found, field: 0, detail: ghost@x.com }
+                signer_required:
+                  value: { ok: false, error: signer_required, field: 1 }
+                no_fields:
+                  value: { ok: false, error: 'no fields' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/mysign/agreements/{aid}/send:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    post:
+      operationId: sendEnvelope
+      tags: [Sending]
+      summary: Send for signature
+      description: >-
+        Dispatch a draft envelope. This freezes the presented PDF, generates a single-use
+        token per signer, emails each their signing link, and moves the envelope to
+        `out_for_signature`. An optional `message` is stored and included in the invite.
+        Business rejections (no signers, already sent) come back in-body with HTTP 200;
+        an inactive subscription or an unverified sender email are hard `403`s and send
+        nothing.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Optional note included in the signing invitation email.
+            example: { message: Please countersign by Friday. Thanks! }
+      responses:
+        '200':
+          description: >-
+            Dispatched (`ok: true` with per-signer `links` and `emailed` count), or an
+            in-body business rejection (`ok: false`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SendResult' }
+              example:
+                ok: true
+                emailed: 2
+                email_errors: []
+                links:
+                  - signer_id: 101
+                    name: Dana Client
+                    email: dana@example.com
+                    token: EXAMPLE-signer-token-xxxx
+                    url: https://sign.example.com/sign/EXAMPLE-signer-token-xxxx
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: >-
+            Subscription inactive (`subscription_inactive`) or the sending account's
+            email is unverified (`email_unverified`). Nothing is sent.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OkError' }
+              example: { ok: false, error: subscription_inactive, billing: true }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/mysign/agreements/{aid}/remind:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    post:
+      operationId: remindSigners
+      tags: [Sending]
+      summary: Remind pending signers
+      description: >-
+        Re-email every pending (not-yet-signed) signer of an `out_for_signature`
+        envelope. Signed signers and terminal envelopes are left untouched. Subject to
+        the same subscription / email-verification `403` gates as send.
+      responses:
+        '200':
+          description: >-
+            Reminder run result. `ok` is true when at least one reminder was emailed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  emailed: { type: integer, description: Reminders successfully sent. }
+                  pending: { type: integer, description: Pending signers considered. }
+                  errors: { type: array, items: { type: string } }
+                  error: { type: string, description: Present on an in-body rejection. }
+              example: { ok: true, emailed: 1, pending: 1, errors: [] }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Subscription inactive or sender email unverified.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OkError' }
+              example: { ok: false, error: email_unverified }
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/mysign/agreements/{aid}/void:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    post:
+      operationId: voidEnvelope
+      tags: [Sending]
+      summary: Void an envelope
+      description: >-
+        Void an in-flight envelope. All live signing sessions are immediately revoked and
+        outstanding links stop working. Voiding is terminal — the envelope becomes a
+        `voided` legal record. An optional `reason` is recorded on the voided audit event.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Optional note recorded on the `voided` audit event.
+            example: { reason: Superseded by a revised agreement. }
+      responses:
+        '200':
+          description: Voided.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+              example: { ok: true }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/mysign/agreements/{aid}/download:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    get:
+      operationId: downloadExecutedPdf
+      tags: [Downloads]
+      summary: Download the executed PDF
+      description: >-
+        Return the executed (signed & sealed) PDF. Available once the envelope has
+        signatures applied; a completed envelope's file is named `<name>-SIGNED.pdf`. If
+        no executed document exists yet, returns `404`.
+      responses:
+        '200':
+          description: Executed PDF bytes.
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No executed document yet.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: no document }
+
+  /api/mysign/agreements/{aid}/certificate:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    get:
+      operationId: downloadCertificate
+      tags: [Downloads]
+      summary: Download the Certificate of Completion
+      description: >-
+        Return the Certificate of Completion PDF — the audit record of every signer's
+        identity, IP, timestamps, consent, and authentication events. Available only once
+        the envelope is `completed`; otherwise returns `404`.
+      responses:
+        '200':
+          description: Certificate PDF bytes.
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Envelope not completed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: not completed }
+
+  /api/mysign/account:
+    get:
+      operationId: getAccount
+      tags: [Account]
+      summary: Get the authenticated account
+      description: >-
+        Return the client-safe profile of the account the API key belongs to, including
+        plan, subscription status, verification flags, and the total number of envelopes
+        it owns. Secrets (password hash, TOTP secret, Google subject) are never returned.
+      responses:
+        '200':
+          description: The account profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  account: { $ref: '#/components/schemas/Account' }
+              example:
+                account:
+                  id: 7
+                  email: dev@acme.com
+                  name: Acme Corp
+                  plan: pro
+                  plan_price: 29.99
+                  sub_status: active
+                  status: active
+                  totp_enabled: true
+                  email_verified: true
+                  is_google: false
+                  sms_2fa: false
+                  phone_masked: '•••••1234'
+                  agreement_count: 42
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/mysign/templates:
+    get:
+      operationId: listTemplates
+      tags: [Templates]
+      summary: List your templates
+      description: >-
+        Return the account's saved templates, newest first. Each includes its signer
+        roles and its full field layout, so you can read the `prefill` fields
+        (`field_key` + `prompt`) to know what `answers` a `use` call needs.
+      responses:
+        '200':
+          description: Your templates.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items: { $ref: '#/components/schemas/Template' }
+                required: [templates]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createTemplate
+      tags: [Templates]
+      summary: Save an envelope as a template
+      description: >-
+        Snapshot an envelope you own — its source PDF, signer roles, and field layout
+        (including any `prefill` fields) — into a reusable template. Any of your envelopes
+        works (draft, sent, or completed); only its layout is copied, never its signatures.
+        Pass the envelope id as `agreement_id` and an optional `name`. The source envelope
+        must belong to your account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agreement_id]
+              properties:
+                agreement_id: { type: integer, description: The draft envelope to snapshot., example: 42 }
+                name: { type: string, description: Template name (defaults to the envelope name)., example: MSA template }
+            example: { agreement_id: 42, name: MSA template }
+      responses:
+        '200':
+          description: Template created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+                  id: { type: integer, description: The new template id., example: 5 }
+              example: { ok: true, id: 5 }
+        '400':
+          description: >-
+            The source envelope could not be snapshotted — `error` is e.g.
+            `agreement not found` (not owned by you) or `source document not allowed`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OkError' }
+              example: { ok: false, error: agreement not found }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/mysign/templates/{tid}:
+    parameters:
+      - $ref: '#/components/parameters/TemplateId'
+    get:
+      operationId: getTemplate
+      tags: [Templates]
+      summary: Get one template
+      description: >-
+        Return a single template you own, including its signer roles and field layout.
+        Read the `prefill` fields' `field_key` and `prompt` here to build the `answers`
+        for a `use` call.
+      responses:
+        '200':
+          description: The template.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  template: { $ref: '#/components/schemas/Template' }
+                required: [template]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFoundTemplate'
+
+  /api/mysign/templates/{tid}/use:
+    parameters:
+      - $ref: '#/components/parameters/TemplateId'
+    post:
+      operationId: useTemplate
+      tags: [Templates]
+      summary: Create a draft from a template
+      description: >-
+        Instantiate a fresh **draft** envelope from a template you own. Supply
+        `recipients` to fill the template's signer roles by position, and `answers` to
+        prefill the template's prefill fields — keyed by each field's `field_key` (the
+        recommended way) or its positional index. The new draft is returned prefilled and
+        ready to `send`.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UseTemplateInput' }
+            example:
+              name: MSA — Acme Corp
+              recipients:
+                - name: Dana Client
+                  email: dana@example.com
+              answers:
+                company: Acme Corp
+                effective_date: '2026-08-01'
+      responses:
+        '200':
+          description: A new draft envelope was created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+                  id: { type: integer, description: The new draft envelope id., example: 43 }
+                  template_id: { type: integer, example: 5 }
+              example: { ok: true, id: 43, template_id: 5 }
+        '400':
+          description: >-
+            The template exists but couldn't be instantiated — `error` is
+            `template has no source document` (its stored PDF is missing).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OkError' }
+              example: { ok: false, error: template has no source document }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFoundTemplate'
+
+  /api/mysign/templates/{tid}/archive:
+    parameters:
+      - $ref: '#/components/parameters/TemplateId'
+    post:
+      operationId: archiveTemplate
+      tags: [Templates]
+      summary: Archive a template
+      description: >-
+        Soft-archive a template you own so it no longer appears in the list. Returns `404`
+        if the template isn't yours **or is already archived** (a second archive of the
+        same template returns `404`, not `200` — existence is never leaked).
+      responses:
+        '200':
+          description: Archived.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+              example: { ok: true }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFoundTemplate'
+
+  /api/mysign/agreements/{aid}/detect:
+    parameters:
+      - $ref: '#/components/parameters/AgreementId'
+    post:
+      operationId: detectPrefillFields
+      tags: [Fields]
+      summary: Auto-detect prefill fields
+      description: >-
+        Scan a **draft** envelope's PDF for merge tokens (`{{company}}`, `[amount]`,
+        `<<x>>`) and common labels (`Company Name:`, `Effective Date:`) and add a
+        `prefill` field for each one it finds — with a sensible `field_key`, `prompt`, and
+        type. Deterministic and local (no AI). Idempotent: fields already present (by
+        `field_key`) are not duplicated. Returns the count added.
+      responses:
+        '200':
+          description: >-
+            Detection ran (`ok: true` with `added`/`detected` and the new `fields`), or a
+            soft in-body rejection (`ok: false`) when the envelope is already sent
+            (`locked — already sent`) or has no source PDF (`no_source`).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+                  added: { type: integer, description: New prefill fields added., example: 3 }
+                  detected: { type: integer, description: Total candidates found., example: 3 }
+                  fields:
+                    type: array
+                    description: The newly added prefill fields.
+                    items: { $ref: '#/components/schemas/DetectedField' }
+                  error: { type: string, description: Present on a soft (HTTP 200) rejection. }
+              examples:
+                detected:
+                  value:
+                    ok: true
+                    added: 1
+                    detected: 1
+                    fields:
+                      - { type: company, page: 0, x: 0.30, y: 0.14, w: 0.25, h: 0.03, required: true, prefill: 1, field_key: company, prompt: Company, placeholder: Company }
+                locked:
+                  value: { ok: false, error: 'locked — already sent' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: sk_live_…
+      description: >-
+        A developer API key from the Developers tab, sent as `Authorization: Bearer
+        sk_live_…` (or `sk_test_…` in sandbox). Server-side only.
+
+  parameters:
+    AgreementId:
+      name: aid
+      in: path
+      required: true
+      description: The envelope (agreement) id.
+      schema: { type: integer, example: 42 }
+    TemplateId:
+      name: tid
+      in: path
+      required: true
+      description: The template id.
+      schema: { type: integer, example: 5 }
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: unauthorized }
+    NotFound:
+      description: No such envelope owned by this account (existence is not leaked).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: not found }
+    NotFoundTemplate:
+      description: No such template owned by this account (existence is not leaked).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: not found }
+
+  schemas:
+    Envelope:
+      type: object
+      description: A document sent (or being prepared) for signature, with its signers and fields.
+      properties:
+        id: { type: integer, description: Unique envelope id., example: 42 }
+        name: { type: string, description: Envelope name., example: Master Services Agreement.pdf }
+        message:
+          type: string
+          description: Optional note shown to signers in the invitation email.
+          example: Please countersign by Friday.
+        status:
+          type: string
+          description: Lifecycle state.
+          enum: [draft, out_for_signature, completed, declined, voided, cancelled]
+          example: out_for_signature
+        order_mode:
+          type: string
+          description: Signing routing mode.
+          enum: [sequential, parallel]
+          example: parallel
+        created_by:
+          type: string
+          description: Free-text display name of the creator (never used for authorization).
+          example: dev@acme.com
+        doc_hash:
+          type: string
+          description: SHA-256 of the current document bytes.
+          example: 9f2c…a71b
+        created_at: { type: number, description: Unix epoch seconds when created., example: 1752624000.0 }
+        sent_at: { type: [number, 'null'], description: Unix epoch seconds when sent (null if draft). }
+        completed_at: { type: [number, 'null'], description: Unix epoch seconds when completed (null otherwise). }
+        signers:
+          type: array
+          items: { $ref: '#/components/schemas/Signer' }
+        fields:
+          type: array
+          items: { $ref: '#/components/schemas/Field' }
+        events:
+          type: array
+          description: Ordered audit trail (present on the single-envelope GET).
+          items: { $ref: '#/components/schemas/Event' }
+      required: [id, name, status, created_at, signers, fields]
+      example:
+        id: 42
+        name: Master Services Agreement.pdf
+        message: Please countersign by Friday.
+        status: out_for_signature
+        order_mode: sequential
+        created_by: dev@acme.com
+        doc_hash: 9f2c1b7e…a71b
+        created_at: 1752624000.0
+        sent_at: 1752624120.0
+        completed_at: null
+        signers:
+          - id: 101
+            name: Dana Client
+            email: dana@example.com
+            role: Client
+            sign_order: 1
+            status: viewed
+            auth_method: email
+            color: '#2F6FED'
+        fields:
+          - signer_id: 101
+            type: signature
+            page: 3
+            x: 0.12
+            y: 0.78
+            w: 0.30
+            h: 0.06
+            required: true
+        events:
+          - type: sent
+            signer_id: 101
+            detail: to dana@example.com
+            at: 1752624120.0
+
+    Signer:
+      type: object
+      description: A person invited to sign, as returned by the API.
+      properties:
+        id: { type: integer, example: 101 }
+        name: { type: string, example: Dana Client }
+        email: { type: string, format: email, example: dana@example.com }
+        role: { type: string, description: Free-text role label., example: Client }
+        sign_order: { type: integer, description: 1-based signing order., example: 1 }
+        status:
+          type: string
+          enum: [pending, sent, viewed, signed, declined]
+          example: viewed
+        auth_method:
+          type: string
+          description: >-
+            Authentication method. Sent on input as `auth`; returned as `auth_method`.
+          enum: [email, email_otp, access_code]
+          example: email
+        color: { type: string, description: UI color assigned to the signer., example: '#2F6FED' }
+        viewed_at: { type: [number, 'null'], description: Unix epoch seconds first viewed. }
+        signed_at: { type: [number, 'null'], description: Unix epoch seconds signed. }
+      required: [id, name, email, status]
+
+    SignerInput:
+      type: object
+      description: A signer as supplied to `POST /signers`.
+      required: [name, email]
+      properties:
+        name: { type: string, example: Dana Client }
+        email: { type: string, format: email, example: dana@example.com }
+        role: { type: string, description: 'Optional role label (default: signer).', example: Client }
+        order: { type: integer, description: 1-based signing order (defaults to array position)., example: 1 }
+        auth:
+          type: string
+          description: 'Authentication method (default: email).'
+          enum: [email, email_otp, access_code]
+          example: email
+        is_consumer:
+          type: boolean
+          description: Marks a consumer (B2C) signer for the appropriate ESIGN consumer disclosure.
+          example: false
+
+    Field:
+      type: object
+      description: >-
+        A field as **resolved and placed** on the document (the shape returned by
+        `POST /fields`). Whatever placement mode you supplied, the server reports the final
+        landing spot in normalized 0..1 fractions of the page (origin top-left, y increasing
+        downward); `(x, y)` is the box's top-left corner. `anchor` is echoed back when the
+        field was placed by anchor.
+      properties:
+        signer_id: { type: integer, description: The signer this field belongs to (resolved from the supplied email or id)., example: 101 }
+        type:
+          type: string
+          enum: [signature, initials, date, text, name, email, title, company, checkbox]
+          example: signature
+        page: { type: integer, description: 0-based page index the field landed on., example: 0 }
+        x: { type: number, minimum: 0, maximum: 1, description: Left edge, fraction of page width., example: 0.217 }
+        y: { type: number, minimum: 0, maximum: 1, description: Top edge, fraction of page height., example: 0.347 }
+        w: { type: number, minimum: 0, maximum: 1, description: Width, fraction of page width., example: 0.294 }
+        h: { type: number, minimum: 0, maximum: 1, description: Height, fraction of page height., example: 0.056 }
+        placed: { type: boolean, description: True when the field was resolved and stored., example: true }
+        anchor: { type: string, description: The anchor text this field snapped to (present only for anchor-placed fields)., example: 'Signature:' }
+        required: { type: boolean, description: 'Whether the signer must complete it (default true).', example: true }
+        value: { type: string, description: Pre-filled value., example: '' }
+        placeholder: { type: string, description: Placeholder / prompt text., example: MM/DD/YYYY }
+        prefill: { type: boolean, description: True when this is a sender-filled prefill field., example: false }
+        field_key: { type: string, description: Stable key of a prefill field (the `answers` key on template use)., example: company }
+        prompt: { type: string, description: The prefill field's question., example: Company name }
+      required: [signer_id, type, page, x, y, w, h, placed]
+
+    FieldInput:
+      type: object
+      description: >-
+        A single field to place, as supplied to `POST /fields`. Pick **one** of three
+        placement modes:
+
+
+        • **Anchor (recommended — no coordinate math):** set `anchor` to text that already
+        exists in the document; the field snaps to it. Refine with `place`, `dx`/`dy` and
+        `anchor_index`. This is the recommended way to integrate.
+
+
+        • **Absolute points:** set `page`, `x`, `y`, `unit: "pt"` (PDF points from the
+        top-left), and optional `width`/`height`.
+
+
+        • **Normalized 0..1:** set `page` and `x`/`y`/`w`/`h` as fractions of the page.
+
+
+        The signer comes from `signer` (email) **or** `signer_id` (integer), and defaults to
+        the sole signer when the envelope has exactly one.
+      required: [type]
+      properties:
+        # --- signer (one of; defaults to the sole signer) ---
+        signer: { type: string, format: email, description: Signer EMAIL (resolved server-side). Use this OR `signer_id`. Optional when the envelope has exactly one signer., example: dana@example.com }
+        signer_id: { type: integer, description: Signer id (integer). Use this OR `signer`., example: 101 }
+        type:
+          type: string
+          description: The field kind. Each type has a sensible default size you can override with `width`/`height`.
+          enum: [signature, initials, date, text, name, email, title, company, checkbox]
+          example: signature
+        # --- mode 1: anchor (recommended) ---
+        anchor: { type: string, description: 'Mode 1 (recommended). Text already in the document to snap to; case-insensitive, matches across word boundaries.', example: 'Signature:' }
+        anchor_index: { type: integer, default: 1, minimum: 1, description: Which occurrence of the anchor text to use, for repeated labels (1-based)., example: 1 }
+        place: { type: string, enum: [right, left, below, above, over], default: right, description: Where the field sits relative to the anchor text., example: right }
+        dx: { type: number, default: 6, description: Horizontal offset from the anchor, in points., example: 6 }
+        dy: { type: number, default: 0, description: Vertical offset from the anchor, in points., example: 0 }
+        # --- mode 2: absolute points ---
+        unit: { type: string, enum: [pt], description: 'Set to `pt` to interpret `x`/`y`/`width`/`height` as PDF points (mode 2, absolute).', example: pt }
+        # --- mode 2 & 3: explicit coordinates ---
+        page: { type: integer, description: 0-based page index (modes 2 and 3)., example: 0 }
+        x: { type: number, description: 'Left edge. Points when `unit: pt` (mode 2), else a 0..1 fraction of page width (mode 3).', example: 0.6 }
+        y: { type: number, description: 'Top edge. Points when `unit: pt` (mode 2), else a 0..1 fraction of page height (mode 3).', example: 0.8 }
+        w: { type: number, minimum: 0, maximum: 1, description: Width as a 0..1 fraction of the page (mode 3, normalized)., example: 0.2 }
+        h: { type: number, minimum: 0, maximum: 1, description: Height as a 0..1 fraction of the page (mode 3, normalized)., example: 0.05 }
+        width: { type: number, description: Field width in points; overrides the per-type default (anchor & points modes). e.g. signature 180, date 110, text 170, checkbox 18., example: 180 }
+        height: { type: number, description: Field height in points; overrides the per-type default. e.g. signature 44, date 26, checkbox 18., example: 44 }
+        # --- common ---
+        required: { type: boolean, default: true, description: Whether the signer must complete the field., example: true }
+        value: { type: string, description: Pre-filled value., example: '' }
+        placeholder: { type: string, description: Placeholder / prompt text., example: MM/DD/YYYY }
+        # --- template prefill (sender-filled) ---
+        prefill: { type: boolean, default: false, description: 'Mark this as a prefill field — filled by you (the sender) via `answers` at template-use time, not by a signer. Give it a `field_key` and `prompt`.', example: true }
+        field_key: { type: string, description: Stable key for a prefill field; the `answers` map on `use` is keyed by this., example: company }
+        prompt: { type: string, description: The question shown for a prefill field (e.g. "Company name")., example: Company name }
+
+    FieldError:
+      type: object
+      description: >-
+        A fail-closed rejection from `POST /fields`. The whole batch failed and nothing was
+        written. `error` is a machine code; `field` is the 0-based index of the offending
+        field; `detail` echoes the unresolved value where applicable.
+      properties:
+        ok: { type: boolean, example: false }
+        error:
+          type: string
+          description: Machine error code.
+          enum: [anchor_not_found, signer_not_found, signer_required, 'no fields']
+          example: anchor_not_found
+        field: { type: integer, description: 0-based index of the field that failed to resolve., example: 0 }
+        detail: { type: string, description: The unresolved value (anchor text or signer email), when applicable., example: 'Signature:' }
+      required: [ok, error]
+
+    Event:
+      type: object
+      description: One entry in the envelope's audit trail.
+      properties:
+        type: { type: string, description: Event kind (e.g. created, sent, viewed, signed, voided)., example: sent }
+        signer_id: { type: [integer, 'null'], description: Signer the event concerns, if any. }
+        detail: { type: string, description: Human-readable detail., example: to dana@example.com }
+        at: { type: number, description: Unix epoch seconds., example: 1752624120.0 }
+
+    EnvelopeList:
+      type: object
+      description: A paginated list of envelopes.
+      properties:
+        agreements:
+          type: array
+          items: { $ref: '#/components/schemas/Envelope' }
+        total: { type: integer, description: Total envelopes owned by the account., example: 1 }
+        offset: { type: integer, example: 0 }
+        limit: { type: integer, example: 50 }
+        has_more: { type: boolean, description: Whether another page exists., example: false }
+      required: [agreements, total, has_more]
+
+    Account:
+      type: object
+      description: The client-safe account profile.
+      properties:
+        id: { type: integer, example: 7 }
+        email: { type: string, format: email, example: dev@acme.com }
+        name: { type: string, example: Acme Corp }
+        plan: { type: string, example: pro }
+        plan_price: { type: number, example: 29.99 }
+        sub_status: { type: string, description: Subscription status., example: active }
+        status: { type: string, description: Account status., example: active }
+        totp_enabled: { type: boolean, example: true }
+        email_verified: { type: boolean, example: true }
+        is_google: { type: boolean, description: Whether the account signs in with Google., example: false }
+        sms_2fa: { type: boolean, example: false }
+        phone_masked: { type: string, description: Masked phone (last 4 digits)., example: '•••••1234' }
+        agreement_count: { type: integer, description: Total envelopes owned., example: 42 }
+
+    Error:
+      type: object
+      description: A bare error envelope returned by binary/download and auth failures.
+      properties:
+        error: { type: string, example: not found }
+      required: [error]
+
+    OkError:
+      type: object
+      description: >-
+        The `{ok, error}` result shape used by mutating endpoints. `ok` is false on an
+        in-body rejection, with `error` carrying a machine code.
+      properties:
+        ok: { type: boolean, example: false }
+        error: { type: string, example: 'locked — already sent' }
+        billing: { type: boolean, description: Present (true) on subscription_inactive. }
+      required: [ok]
+
+    SendResult:
+      type: object
+      description: The result of dispatching an envelope for signature.
+      properties:
+        ok: { type: boolean, example: true }
+        emailed: { type: integer, description: Number of signing invites successfully emailed., example: 2 }
+        email_errors:
+          type: array
+          items: { type: string }
+          description: Any per-recipient email errors.
+        links:
+          type: array
+          description: Per-signer signing links (also emailed to each signer).
+          items:
+            type: object
+            properties:
+              signer_id: { type: integer, example: 101 }
+              name: { type: string, example: Dana Client }
+              email: { type: string, format: email, example: dana@example.com }
+              token: { type: string, description: Single-use signing token., example: EXAMPLE-signer-token-xxxx }
+              url: { type: string, format: uri, example: https://sign.example.com/sign/EXAMPLE-signer-token-xxxx }
+        error: { type: string, description: Present on an in-body business rejection. }
+      required: [ok]
+
+    DetectedField:
+      type: object
+      description: >-
+        A prefill field produced by `POST /detect`. Unlike a placed `Field`, a detected
+        field is not yet bound to a signer — it carries no `signer_id`/`placed`, and
+        `prefill` is `1`. Coordinates are normalized 0..1 (origin top-left).
+      properties:
+        type:
+          type: string
+          enum: [signature, initials, date, text, name, email, title, company, checkbox]
+          example: company
+        page: { type: integer, example: 0 }
+        x: { type: number, example: 0.30 }
+        y: { type: number, example: 0.14 }
+        w: { type: number, example: 0.25 }
+        h: { type: number, example: 0.03 }
+        required: { type: boolean, example: true }
+        prefill: { type: integer, enum: [1], description: Always 1 — detected fields are prefill fields., example: 1 }
+        field_key: { type: string, example: company }
+        prompt: { type: string, example: Company }
+        placeholder: { type: string, example: Company }
+      required: [type, page, x, y, w, h, prefill, field_key, prompt]
+
+    TemplateField:
+      type: object
+      description: A field within a template's saved layout. `signer_index` points into the template's `signers`.
+      properties:
+        signer_index: { type: integer, description: Index into the template's signer roles., example: 0 }
+        type:
+          type: string
+          enum: [signature, initials, date, text, name, email, title, company, checkbox]
+          example: text
+        page: { type: integer, example: 0 }
+        x: { type: number, example: 0.2 }
+        y: { type: number, example: 0.3 }
+        w: { type: number, example: 0.25 }
+        h: { type: number, example: 0.03 }
+        required: { type: boolean, example: true }
+        value: { type: string, description: Stored default value., example: '' }
+        placeholder: { type: string, example: Company name }
+        prefill: { type: boolean, description: True when the sender fills this via `answers`., example: true }
+        field_key: { type: string, description: The `answers` key for this prefill field., example: company }
+        prompt: { type: string, description: The prefill question., example: Company name }
+
+    Template:
+      type: object
+      description: A reusable template — a snapshot of a PDF plus signer roles and a field layout.
+      properties:
+        id: { type: integer, example: 5 }
+        name: { type: string, example: MSA template }
+        created_at: { type: number, example: 1752624000.0 }
+        page_n: { type: integer, description: Page count of the source PDF., example: 4 }
+        signer_n: { type: integer, description: Number of signer roles., example: 1 }
+        field_n: { type: integer, description: Number of fields., example: 6 }
+        has_source: { type: boolean, description: Whether a source PDF is stored., example: true }
+        signers:
+          type: array
+          description: The template's signer roles.
+          items:
+            type: object
+            properties:
+              name: { type: string, example: '' }
+              email: { type: string, example: '' }
+              role: { type: string, example: signer }
+              order: { type: integer, example: 1 }
+        fields:
+          type: array
+          items: { $ref: '#/components/schemas/TemplateField' }
+      required: [id, name, fields, signers]
+      example:
+        id: 5
+        name: MSA template
+        created_at: 1752624000.0
+        page_n: 4
+        signer_n: 1
+        field_n: 2
+        has_source: true
+        signers:
+          - { name: '', email: '', role: Client, order: 1 }
+        fields:
+          - { signer_index: 0, type: signature, page: 3, x: 0.12, y: 0.78, w: 0.30, h: 0.06, required: true, prefill: false, field_key: '', prompt: '' }
+          - { signer_index: 0, type: company, page: 0, x: 0.30, y: 0.14, w: 0.25, h: 0.03, required: true, prefill: true, field_key: company, prompt: Company name }
+
+    UseTemplateInput:
+      type: object
+      description: Options for creating a draft from a template. All fields optional.
+      properties:
+        name: { type: string, description: Name for the new draft (defaults to the template name)., example: MSA — Acme Corp }
+        recipients:
+          type: array
+          description: >-
+            Signers to fill the template's roles by position. Each may set `name`,
+            `email`, `role`, `auth`, `is_consumer`. Extra recipients beyond the template's
+            roles are appended.
+          items: { $ref: '#/components/schemas/SignerInput' }
+        answers:
+          type: object
+          description: >-
+            Prefill values, keyed by each prefill field's `field_key` (recommended) or its
+            positional index. `field_key` wins when both match.
+          additionalProperties: { type: string }
+          example: { company: Acme Corp, effective_date: '2026-08-01' }

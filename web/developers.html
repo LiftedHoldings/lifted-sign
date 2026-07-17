@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en" data-brand="sign" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lifted Sign API — Developer Reference</title>
+<meta name="description" content="Lifted Sign API reference: turn any PDF into a legally-binding, sealed, certificate-backed signed document from your own backend. REST, Bearer-authed, OpenAPI 3.1.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://sign.example.com/developers">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='%232E6BFF' stroke-width='2.4' stroke-linecap='round'><circle cx='20' cy='20' r='16.5'/><line x1='3.5' y1='20' x2='36.5' y2='20'/><ellipse cx='20' cy='20' rx='16.5' ry='7.4'/><ellipse cx='20' cy='20' rx='8' ry='16.5'/></svg>">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lifted Sign API — Developer Reference">
+<meta property="og:description" content="Turn any PDF into a legally-binding, sealed, certificate-backed signed document — from your own backend.">
+<meta property="og:url" content="https://sign.example.com/developers">
+<!-- Fonts are self-hosted from the vendored DS typefaces (Sora / Inter / JetBrains
+     Mono). Zero external origins — the page makes no requests off 'self'. -->
+<link rel="stylesheet" href="/static/ds/tokens/fonts.css">
+<style>
+  /* ============================================================
+     LIFTED SIGN — DEVELOPER API REFERENCE (/developers)
+     Self-contained, self-styled. Dark developer-docs look matched
+     to the Lifted Sign landing (brand blue #2E6BFF, Sora display,
+     Inter body, JetBrains Mono for code). No external scripts —
+     Scalar is vendored at /static/ds/vendor/scalar/ and renders a
+     full-dark reference. Fonts are self-hosted, so the strict
+     sign-host CSP can lock everything to 'self'.
+     ============================================================ */
+  :root{
+    --brand:#2E6BFF; --brand-bright:#5A8CFF; --brand-deep:#1B4CD6;
+    --brand-contrast:#ffffff; --brand-tint:rgba(46,107,255,.12);
+    --bg:#070b14; --bg-2:#0b1020; --card:#0e1526; --card-2:#111a30;
+    --border:#1e2a44; --border-strong:#2b3a5c;
+    --text:#e8eefb; --text-body:#c3cfe4; --text-muted:#93a3c0; --text-faint:#6c7d9c;
+    --ring:rgba(46,107,255,.35);
+    --radius:14px; --radius-sm:9px;
+    --font-display:'Sora',system-ui,sans-serif;
+    --font-sans:'Inter',system-ui,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --container:1120px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  html,body{overflow-x:hidden}
+  body{margin:0;font-family:var(--font-sans);background:var(--bg);color:var(--text-body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+  a{color:var(--brand-bright);text-decoration:none}
+  a:hover{text-decoration:underline}
+  h1,h2,h3{font-family:var(--font-display);letter-spacing:-.02em;color:var(--text);margin:0}
+  .wrap{max-width:var(--container);margin:0 auto;padding:0 24px}
+  ::selection{background:rgba(46,107,255,.3)}
+
+  /* ---- top bar ---- */
+  header{position:sticky;top:0;z-index:50;-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);background:color-mix(in srgb,var(--bg) 82%,transparent);border-bottom:1px solid var(--border)}
+  header .wrap{display:flex;align-items:center;gap:16px;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:18px;letter-spacing:-.02em;color:var(--text)}
+  .brand svg{width:24px;height:24px;color:var(--brand)}
+  .brand b{color:var(--brand);font-weight:800}
+  .brand .tag{font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);border:1px solid var(--border-strong);border-radius:999px;padding:3px 9px;margin-left:4px}
+  header .sp{flex:1}
+  header .hlink{font-size:14px;color:var(--text-muted);font-weight:500}
+  header .hlink:hover{color:var(--text);text-decoration:none}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;padding:9px 16px;border-radius:10px;border:1px solid var(--border-strong);background:transparent;color:var(--text);cursor:pointer;transition:border-color .18s,background .18s,color .18s;white-space:nowrap}
+  .btn:hover{border-color:var(--brand);color:var(--brand);text-decoration:none}
+  .btn.primary{background:var(--brand);border-color:transparent;color:var(--brand-contrast)}
+  .btn.primary:hover{background:var(--brand-bright);color:var(--brand-contrast)}
+  .btn svg{width:16px;height:16px;flex:none}
+
+  /* ---- hero ---- */
+  .hero{position:relative;padding:64px 0 46px;overflow:hidden;border-bottom:1px solid var(--border)}
+  .hero::before{content:"";position:absolute;inset:0;z-index:0;background:
+     radial-gradient(680px 420px at 78% -8%,rgba(46,107,255,.18),transparent 62%),
+     radial-gradient(560px 380px at 8% 8%,rgba(46,107,255,.09),transparent 60%);pointer-events:none}
+  .hero::after{content:"";position:absolute;inset:0;z-index:0;opacity:.5;pointer-events:none;
+     background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+     background-size:44px 44px;-webkit-mask-image:radial-gradient(120% 90% at 70% 0%,#000 30%,transparent 78%);mask-image:radial-gradient(120% 90% at 70% 0%,#000 30%,transparent 78%)}
+  .hero .wrap{position:relative;z-index:1}
+  .eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-mono);font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--brand);font-weight:600;margin-bottom:18px}
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--brand);opacity:.75}
+  .hero h1{font-size:clamp(34px,5vw,54px);font-weight:800;line-height:1.04;margin-bottom:16px}
+  .hero h1 .grad{background:linear-gradient(100deg,#fff 8%,var(--brand-bright) 60%,var(--brand) 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .lede{font-size:clamp(16px,2vw,19px);color:var(--text-muted);max-width:640px;margin:0 0 30px;line-height:1.55}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,4vw,56px);align-items:start}
+  .hero-grid>*{min-width:0}
+
+  /* ---- quick links ---- */
+  .qlinks{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px}
+  .qlink{display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--card) 70%,transparent);flex:1;min-width:210px;transition:border-color .18s,transform .18s,background .18s}
+  .qlink:hover{border-color:var(--brand);transform:translateY(-1px);background:var(--card);text-decoration:none}
+  .qlink .ic{display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:9px;background:var(--brand-tint);color:var(--brand)}
+  .qlink .ic svg{width:17px;height:17px}
+  .qlink .tx{min-width:0}
+  .qlink .tx b{display:block;font-family:var(--font-sans);font-size:14px;font-weight:600;color:var(--text)}
+  .qlink .tx span{display:block;font-size:12px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ---- code / quickstart ---- */
+  .codecard{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-2);overflow:hidden;box-shadow:0 24px 60px -30px rgba(0,0,0,.8)}
+  .codecard__bar{display:flex;align-items:center;gap:8px;padding:12px 15px;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--card) 60%,transparent)}
+  .codecard__dot{width:11px;height:11px;border-radius:50%;background:var(--border-strong)}
+  .codecard__dot:nth-child(1){background:#ff5f56}.codecard__dot:nth-child(2){background:#ffbd2e}.codecard__dot:nth-child(3){background:#27c93f}
+  .codecard__title{margin-left:6px;font-family:var(--font-mono);font-size:11.5px;color:var(--text-faint);letter-spacing:.5px}
+  .codecard__copy{margin-left:auto;font-family:var(--font-sans);font-size:12px;font-weight:600;color:var(--text-muted);background:transparent;border:1px solid var(--border-strong);border-radius:8px;padding:5px 11px;cursor:pointer;transition:color .18s,border-color .18s}
+  .codecard__copy:hover{color:var(--brand);border-color:var(--brand)}
+  pre{margin:0;padding:16px 18px;overflow-x:auto;font-family:var(--font-mono);font-size:12.5px;line-height:1.75;color:#cdd8ef;tab-size:2}
+  pre .c{color:#6c7d9c;font-style:italic}
+  pre .k{color:#5A8CFF}
+  pre .s{color:#7ee0b8}
+  pre .v{color:#e8b06b}
+  .codenote{font-size:12.5px;color:var(--text-faint);margin:12px 2px 0;line-height:1.5}
+
+  /* ---- plug and play (SDKs) ---- */
+  .sdksection{padding:44px 0 8px}
+  .sdk-grid{display:grid;grid-template-columns:1.5fr .5fr;gap:24px;align-items:start;margin-top:10px}
+  .sdk-grid>*{min-width:0}
+  .tabbar{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
+  .tabbar button{font-family:var(--font-sans);font-size:13px;font-weight:600;color:var(--text-muted);background:transparent;border:1px solid var(--border);border-radius:9px;padding:7px 15px;cursor:pointer;transition:color .16s,border-color .16s,background .16s}
+  .tabbar button:hover{color:var(--text);border-color:var(--border-strong)}
+  .tabbar button[aria-selected="true"]{color:var(--brand-contrast);background:var(--brand);border-color:transparent}
+  .tab-pane{display:none}
+  .tab-pane.on{display:block}
+  .sdk-dl{display:flex;flex-direction:column;gap:10px}
+  .sdk-dl h3{font-size:11px;font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin:0 0 2px}
+  .dlcard{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--border);border-radius:11px;background:color-mix(in srgb,var(--card) 70%,transparent);transition:border-color .16s,transform .16s,background .16s}
+  .dlcard:hover{border-color:var(--brand);transform:translateY(-1px);background:var(--card);text-decoration:none}
+  .dlcard .ic{flex:none;width:34px;height:34px;border-radius:8px;display:grid;place-items:center;background:var(--brand-tint);color:var(--brand)}
+  .dlcard .ic svg{width:17px;height:17px}
+  .dlcard .tx{min-width:0}
+  .dlcard .tx b{display:block;font-family:var(--font-mono);font-size:12.5px;color:var(--text);font-weight:600}
+  .dlcard .tx span{display:block;font-size:11.5px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  @media (max-width:860px){.sdk-grid{grid-template-columns:1fr}}
+
+  /* ---- reference frame (Scalar, full-dark) ---- */
+  .refsection{padding:40px 0 8px}
+  .refhead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+  .refhead h2{font-size:22px;font-weight:800}
+  .refhead .sub{font-size:13.5px;color:var(--text-faint)}
+  /* The reference viewer is Scalar (vendored, full-dark) — the whole panel is dark, unlike Redoc's
+     light content pane. Framed to sit flush with this page's palette. */
+  .ref-frame{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg);box-shadow:0 30px 80px -40px rgba(0,0,0,.9);margin-bottom:48px;min-height:640px}
+  #scalar-ref{display:block}
+  #ref-loading{display:flex;align-items:center;justify-content:center;gap:12px;min-height:420px;color:var(--text-muted);font-size:14px;background:var(--bg-2)}
+  .spin{width:22px;height:22px;border:2.5px solid var(--border-strong);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #ref-error{display:none;padding:30px;text-align:center;color:var(--text-body);background:var(--bg-2);font-size:14px}
+  #ref-error a{font-weight:600}
+
+  /* ---- footer ---- */
+  footer{border-top:1px solid var(--border);padding:28px 0 40px}
+  footer .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--text-faint)}
+  footer a{color:var(--text-muted)}
+  footer a:hover{color:var(--brand)}
+  footer .sp{flex:1}
+
+  @media (max-width:860px){
+    .hero-grid{grid-template-columns:1fr}
+    header .hlink{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="/">
+      <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="20" cy="20" r="16.5"/><line x1="3.5" y1="20" x2="36.5" y2="20"/><ellipse cx="20" cy="20" rx="16.5" ry="7.4"/><ellipse cx="20" cy="20" rx="8" ry="16.5"/></svg>
+      Lifted <b>Sign</b><span class="tag">API</span>
+    </a>
+    <span class="sp"></span>
+    <a class="hlink" href="/developers/openapi.json">OpenAPI spec</a>
+    <a class="btn primary" href="/signapp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V8a5 5 0 0 1 10 0v3"/></svg> Get an API key</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Developer Reference · REST · OpenAPI 3.1</div>
+        <h1>Lifted Sign <span class="grad">API</span></h1>
+        <p class="lede">Turn any PDF into a legally-binding, sealed, certificate-backed signed document — from your own backend.</p>
+        <div class="qlinks">
+          <a class="qlink" href="/signapp">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V8a5 5 0 0 1 10 0v3"/></svg></span>
+            <span class="tx"><b>Get an API key</b><span>Developers tab in your dashboard</span></span>
+          </a>
+          <a class="qlink" href="/static/ds/vendor/postman/lifted-sign.postman_collection.json" download>
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span>
+            <span class="tx"><b>Postman collection</b><span>Import &amp; call every endpoint</span></span>
+          </a>
+          <a class="qlink" href="/developers/openapi.json">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg></span>
+            <span class="tx"><b>Raw OpenAPI spec</b><span>openapi.json · codegen-ready</span></span>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="codecard">
+          <div class="codecard__bar">
+            <span class="codecard__dot"></span><span class="codecard__dot"></span><span class="codecard__dot"></span>
+            <span class="codecard__title">quickstart — create, place by anchor &amp; send</span>
+            <button class="codecard__copy" id="copy-curl" type="button">Copy</button>
+          </div>
+<pre id="curl-snippet"><span class="c"># 1. Create an envelope from a PDF (returns {"ok":true,"id":42})</span>
+<span class="k">curl</span> https://sign.example.com/api/mysign/agreements \
+  -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> \
+  -F file=@contract.pdf \
+  -F name=<span class="s">"Master Services Agreement"</span>
+
+<span class="c"># 2. Add a signer (JSON, replaces the signer set)</span>
+<span class="k">curl</span> https://sign.example.com/api/mysign/agreements/<span class="v">42</span>/signers \
+  -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"signers":[{"name":"Dana Client","email":"dana@example.com"}]}'</span>
+
+<span class="c"># 3. Drop a signature wherever the doc says "Signature:" — no coordinates</span>
+<span class="k">curl</span> https://sign.example.com/api/mysign/agreements/<span class="v">42</span>/fields \
+  -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"fields":[{"signer":"dana@example.com","type":"signature","anchor":"Signature:"}]}'</span>
+
+<span class="c"># 4. Send it — freezes the PDF, emails each signer a single-use link</span>
+<span class="k">curl</span> https://sign.example.com/api/mysign/agreements/<span class="v">42</span>/send \
+  -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> \
+  -X POST</pre>
+        </div>
+        <p class="codenote">Authenticate every request with a Bearer key (<code>sk_live_…</code> / <code>sk_test_…</code>). Mint one in the <a href="/signapp">Developers tab</a> — it’s shown once. Step&nbsp;3 places fields by <b>anchor</b> — name text that already exists in the document and the field snaps to it, no coordinate math. Need pixel control? A field can also take absolute PDF points or normalized 0..1 coordinates — see the <a href="#api-1/tag/fields">Fields reference</a>. Send the same document often? Build it once as a <a href="#api-1/tag/templates">template</a>, mark the fields you fill as <b>prefill</b>, then spin up a ready-to-send draft any time with <code>POST /templates/{id}/use</code> and an <code>answers</code> map.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sdksection">
+  <div class="wrap">
+    <div class="refhead">
+      <h2>Plug and play</h2>
+      <span class="sub">Copy one file, set your key, ship. Zero dependencies — real, runnable clients.</span>
+    </div>
+    <div class="sdk-grid">
+      <div>
+        <div class="tabbar" role="tablist" aria-label="Language">
+          <button role="tab" id="tab-py" aria-controls="pane-py" aria-selected="true" data-pane="py" type="button">Python</button>
+          <button role="tab" id="tab-node" aria-controls="pane-node" aria-selected="false" data-pane="node" type="button">Node</button>
+          <button role="tab" id="tab-curl" aria-controls="pane-curl" aria-selected="false" data-pane="curl" type="button">curl</button>
+        </div>
+        <div class="codecard">
+          <div class="codecard__bar">
+            <span class="codecard__dot"></span><span class="codecard__dot"></span><span class="codecard__dot"></span>
+            <span class="codecard__title" id="sdk-title">send a document — Python</span>
+            <button class="codecard__copy" id="sdk-copy" type="button">Copy</button>
+          </div>
+          <div class="tab-pane on" id="pane-py" role="tabpanel" aria-labelledby="tab-py"><pre><span class="c"># pip install nothing — standard library only. Python 3.8+</span>
+<span class="k">from</span> lifted_sign <span class="k">import</span> LiftedSign
+
+ls  = LiftedSign(api_key=<span class="s">"<span class="v">$LIFTED_SIGN_KEY</span>"</span>)
+env = ls.create_agreement(<span class="s">"contract.pdf"</span>, name=<span class="s">"Master Services Agreement"</span>)
+ls.add_signers(env[<span class="s">"id"</span>], [{<span class="s">"name"</span>: <span class="s">"Dana Client"</span>, <span class="s">"email"</span>: <span class="s">"dana@example.com"</span>}])
+ls.place_fields(env[<span class="s">"id"</span>], [
+    {<span class="s">"signer"</span>: <span class="s">"dana@example.com"</span>, <span class="s">"type"</span>: <span class="s">"signature"</span>, <span class="s">"anchor"</span>: <span class="s">"Signature:"</span>},
+    {<span class="s">"signer"</span>: <span class="s">"dana@example.com"</span>, <span class="s">"type"</span>: <span class="s">"date"</span>,      <span class="s">"anchor"</span>: <span class="s">"Date:"</span>},
+])
+ls.send(env[<span class="s">"id"</span>])   <span class="c"># each signer gets a single-use link</span></pre></div>
+          <div class="tab-pane" id="pane-node" role="tabpanel" aria-labelledby="tab-node"><pre><span class="c">// no npm install — built-in fetch/FormData. Node 18+</span>
+<span class="k">import</span> { LiftedSign } <span class="k">from</span> <span class="s">"./lifted-sign.mjs"</span>;
+
+<span class="k">const</span> ls  = <span class="k">new</span> LiftedSign({ apiKey: <span class="s">"<span class="v">$LIFTED_SIGN_KEY</span>"</span> });
+<span class="k">const</span> env = <span class="k">await</span> ls.createAgreement(<span class="s">"contract.pdf"</span>, { name: <span class="s">"Master Services Agreement"</span> });
+<span class="k">await</span> ls.addSigners(env.id, [{ name: <span class="s">"Dana Client"</span>, email: <span class="s">"dana@example.com"</span> }]);
+<span class="k">await</span> ls.placeFields(env.id, [
+  { signer: <span class="s">"dana@example.com"</span>, type: <span class="s">"signature"</span>, anchor: <span class="s">"Signature:"</span> },
+  { signer: <span class="s">"dana@example.com"</span>, type: <span class="s">"date"</span>,      anchor: <span class="s">"Date:"</span> },
+]);
+<span class="k">await</span> ls.send(env.id);   <span class="c">// each signer gets a single-use link</span></pre></div>
+          <div class="tab-pane" id="pane-curl" role="tabpanel" aria-labelledby="tab-curl"><pre><span class="c"># requires curl + jq — the whole flow, no SDK</span>
+<span class="k">export</span> LIFTED_SIGN_KEY=<span class="v">sk_live_xxx</span>
+<span class="k">AID</span>=$(curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> \
+  -F file=@contract.pdf -F name=<span class="s">"MSA"</span> \
+  https://sign.example.com/api/mysign/agreements | jq -r .id)
+
+curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"signers":[{"name":"Dana Client","email":"dana@example.com"}]}'</span> \
+  https://sign.example.com/api/mysign/agreements/<span class="v">$AID</span>/signers
+
+curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"fields":[{"signer":"dana@example.com","type":"signature","anchor":"Signature:"}]}'</span> \
+  https://sign.example.com/api/mysign/agreements/<span class="v">$AID</span>/fields
+
+curl -fsS -H <span class="s">"Authorization: Bearer <span class="v">$LIFTED_SIGN_KEY</span>"</span> -X POST \
+  https://sign.example.com/api/mysign/agreements/<span class="v">$AID</span>/send</pre></div>
+        </div>
+        <p class="codenote">Same four steps in every language: create an envelope, add a signer, place a signature <b>by anchor</b>, send. Get the runnable file on the right — it doubles as a CLI: <code>python lifted_sign.py contract.pdf dana@example.com</code>.</p>
+      </div>
+
+      <div class="sdk-dl">
+        <h3>Starter kit</h3>
+        <a class="dlcard" href="/static/ds/vendor/sdk/lifted_sign.py" download>
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg></span>
+          <span class="tx"><b>lifted_sign.py</b><span>Python 3.8+ · stdlib only</span></span>
+        </a>
+        <a class="dlcard" href="/static/ds/vendor/sdk/lifted-sign.mjs" download>
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg></span>
+          <span class="tx"><b>lifted-sign.mjs</b><span>Node 18+ · no deps</span></span>
+        </a>
+        <a class="dlcard" href="/static/ds/vendor/sdk/quickstart.sh" download>
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></svg></span>
+          <span class="tx"><b>quickstart.sh</b><span>bash · curl + jq</span></span>
+        </a>
+        <a class="dlcard" href="/static/ds/vendor/sdk/README.md" download>
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+          <span class="tx"><b>README.md</b><span>how to use all three</span></span>
+        </a>
+        <a class="dlcard" href="/static/ds/vendor/postman/lifted-sign.postman_collection.json" download>
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span>
+          <span class="tx"><b>Postman collection</b><span>import &amp; call every endpoint</span></span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="refsection">
+  <div class="wrap">
+    <div class="refhead">
+      <h2>API reference</h2>
+      <span class="sub">Every endpoint, schema, and status code — generated from the OpenAPI 3.1 spec.</span>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="ref-frame">
+      <div id="ref-loading"><span class="spin" role="status" aria-label="Loading reference"></span> Loading the API reference…</div>
+      <div id="ref-error">
+        Couldn’t render the interactive reference. You can still
+        <a href="/developers/openapi.json">view the raw OpenAPI spec</a> or
+        <a href="/static/ds/vendor/postman/lifted-sign.postman_collection.json" download>download the Postman collection</a>.
+      </div>
+      <div id="scalar-ref"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© [Operator Name] · Lifted Sign API</span>
+    <span class="sp"></span>
+    <a href="/sign-privacy">Privacy</a>
+    <a href="/sign-terms">Terms</a>
+    <a href="/">Back to Lifted Sign</a>
+  </div>
+</footer>
+
+<!-- Vendored Scalar standalone bundle — served from 'self' (/static/ds/vendor/scalar/),
+     CSP-allowed. NO external script CDN. Full-dark reference (Scalar themes the ENTIRE panel dark,
+     unlike Redoc's light content pane). Default web-fonts are disabled (withDefaultFonts:false) so
+     it never reaches fonts.scalar.com — our Google-font stack (CSP-allowed) carries the type. The
+     external request proxy is nulled (proxyUrl:'') — the API is same-origin, so no proxy is needed
+     and connect-src 'self' would block it anyway. -->
+<script>
+  // Scalar's standalone bundle unconditionally probes its hosted API registry
+  // (api.scalar.com/vector/registry/*) on mount + search. We vendor everything and never want
+  // that third-party call: the sign-host CSP (connect-src 'self') already blocks it, but we also
+  // short-circuit it here so the attempt never leaves the page and this developer-facing console
+  // stays clean. Scalar wraps these fetches in a safe result, so a rejection degrades silently.
+  // Every non-scalar.com request (our same-origin spec, etc.) passes straight to native fetch.
+  (function () {
+    if (!window.fetch) return;
+    var nativeFetch = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+      var url = "";
+      try {
+        // input may be a string, a Request ({url}), or a URL (stringifies to href).
+        url = typeof input === "string" ? input : (input && (input.url || String(input))) || "";
+      } catch (e) {}
+      if (url.indexOf("scalar.com") !== -1) {
+        return Promise.reject(new Error("scalar.com registry disabled (self-hosted, CSP)"));
+      }
+      return nativeFetch(input, init);
+    };
+  })();
+</script>
+<script src="/static/ds/vendor/scalar/scalar.standalone.js"></script>
+<script>
+  (function () {
+    // Copy the curl quickstart (plain text, no HTML markup).
+    var copyBtn = document.getElementById("copy-curl");
+    if (copyBtn) copyBtn.addEventListener("click", function () {
+      var txt = document.getElementById("curl-snippet").textContent;
+      function done() { copyBtn.textContent = "Copied ✓"; setTimeout(function () { copyBtn.textContent = "Copy"; }, 1600); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(done, function () { legacy(txt); done(); });
+      } else { legacy(txt); done(); }
+    });
+
+    // Language tabs + per-pane copy for the plug-and-play section.
+    var tabs = [].slice.call(document.querySelectorAll('.tabbar [role="tab"]'));
+    var titles = { py: "Python", node: "Node", curl: "curl" };
+    function selectTab(pane) {
+      tabs.forEach(function (t) {
+        t.setAttribute("aria-selected", t.getAttribute("data-pane") === pane ? "true" : "false");
+      });
+      [].slice.call(document.querySelectorAll(".tab-pane")).forEach(function (p) {
+        p.classList.toggle("on", p.id === "pane-" + pane);
+      });
+      var title = document.getElementById("sdk-title");
+      if (title) title.textContent = "send a document — " + (titles[pane] || pane);
+    }
+    tabs.forEach(function (t) {
+      t.addEventListener("click", function () { selectTab(t.getAttribute("data-pane")); });
+    });
+    var sdkCopy = document.getElementById("sdk-copy");
+    if (sdkCopy) sdkCopy.addEventListener("click", function () {
+      var active = document.querySelector(".tab-pane.on pre");
+      if (!active) return;
+      var txt = active.textContent;
+      function done2() { sdkCopy.textContent = "Copied ✓"; setTimeout(function () { sdkCopy.textContent = "Copy"; }, 1600); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(done2, function () { legacy(txt); done2(); });
+      } else { legacy(txt); done2(); }
+    });
+
+    function legacy(text) {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.top = "-1000px";
+        document.body.appendChild(ta); ta.select(); document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch (e) {}
+    }
+
+    function fail() {
+      var l = document.getElementById("ref-loading");
+      var e = document.getElementById("ref-error");
+      if (l) l.style.display = "none";
+      if (e) e.style.display = "block";
+    }
+
+    // Brand the whole Scalar reference to this page's dark palette (#070b14 ground, #2E6BFF accent,
+    // Sora/Inter/JetBrains-Mono type). Scalar exposes design tokens as CSS custom properties; we
+    // pin them for both the app chrome and the dark-mode scope so nothing renders light.
+    var brandCss = [
+      ":root, .dark-mode, .light-mode {",
+      "  --scalar-color-1:#e8eefb; --scalar-color-2:#c3cfe4; --scalar-color-3:#93a3c0;",
+      "  --scalar-color-accent:#5A8CFF; --scalar-background-accent:rgba(46,107,255,.14);",
+      "  --scalar-background-1:#070b14; --scalar-background-2:#0b1020; --scalar-background-3:#111a30;",
+      "  --scalar-border-color:#1e2a44;",
+      "  --scalar-button-1:#2E6BFF; --scalar-button-1-color:#fff; --scalar-button-1-hover:#5A8CFF;",
+      "  --scalar-color-green:#1f9d6b; --scalar-color-red:#d64545; --scalar-color-yellow:#c98a12;",
+      "  --scalar-color-blue:#2E6BFF; --scalar-color-orange:#e0762b; --scalar-color-purple:#7a5af5;",
+      "  --scalar-font:'Inter',system-ui,sans-serif;",
+      "  --scalar-font-code:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;",
+      "}",
+      ".dark-mode {",
+      "  --scalar-sidebar-background-1:#0b1020; --scalar-sidebar-color-1:#c3cfe4;",
+      "  --scalar-sidebar-color-2:#93a3c0; --scalar-sidebar-border-color:#1e2a44;",
+      "  --scalar-sidebar-item-hover-background:#111a30; --scalar-sidebar-item-hover-color:#e8eefb;",
+      "  --scalar-sidebar-item-active-background:rgba(46,107,255,.14); --scalar-sidebar-color-active:#5A8CFF;",
+      "  --scalar-sidebar-search-background:#0e1526; --scalar-sidebar-search-border-color:#1e2a44;",
+      "}",
+      ".scalar-api-reference{ --scalar-header-height:0px; }",
+      ".scalar-app h1,.scalar-app h2,.scalar-app h3{font-family:'Sora',system-ui,sans-serif;letter-spacing:-.02em}"
+    ].join("\n");
+
+    if (typeof Scalar === "undefined" || !Scalar.createApiReference) { fail(); return; }
+    try {
+      Scalar.createApiReference("#scalar-ref", {
+        url: "/developers/openapi.json",
+        theme: "none",               // fully drive the look from brandCss below
+        darkMode: true,
+        forceDarkModeState: "dark",  // never flip to light
+        hideDarkModeToggle: true,
+        withDefaultFonts: false,     // no fonts.scalar.com fetch (CSP-blocked); use our loaded stack
+        proxyUrl: "",                // API is same-origin; no proxy.scalar.com (CSP-blocked)
+        telemetry: false,            // no phone-home; our CSP (connect-src 'self') blocks it anyway
+        layout: "modern",
+        hideModels: false,
+        showSidebar: true,
+        hideClientButton: false,
+        defaultHttpClient: { targetKey: "shell", clientKey: "curl" },
+        customCss: brandCss,
+        metaData: { title: "Lifted Sign API — Developer Reference" }
+      });
+      // Scalar mounts asynchronously; clear the loader once its root appears.
+      var tries = 0;
+      var iv = setInterval(function () {
+        tries++;
+        var mounted = document.querySelector("#scalar-ref .scalar-app, #scalar-ref .scalar-api-reference");
+        if (mounted) {
+          var l = document.getElementById("ref-loading");
+          if (l) l.style.display = "none";
+          clearInterval(iv);
+        } else if (tries > 60) {   // ~9s — bundle present but never mounted
+          clearInterval(iv); fail();
+        }
+      }, 150);
+    } catch (e) { fail(); }
+  })();
+</script>
+</body>
+</html>

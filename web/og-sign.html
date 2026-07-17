@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lifted Sign — Open Graph card</title>
+<style>
+/* ============================================================
+   LIFTED SIGN — OPEN GRAPH CARD  (1200 x 630, standalone)
+   Rendered offline/screenshotted to PNG. No DS stylesheet, no
+   external requests: all CSS + fonts inline, every icon SVG.
+   Brand blue #2E6BFF on deep near-black #04070b, matching the
+   landing's sg-doc / seal aesthetic.
+   ============================================================ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --brand:#2E6BFF;
+  --brand-bright:#5b8bff;
+  --brand-deep:#1b4fd6;
+  --ground:#04070b;
+  --ink:#eef3fb;
+  --muted:#8b97ab;
+  --faint:#5c6879;
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+html,body{width:1200px;height:630px;overflow:hidden;background:var(--ground)}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+.card{
+  position:relative;width:1200px;height:630px;overflow:hidden;
+  background:
+    radial-gradient(820px 560px at 84% 22%, rgba(46,107,255,.20), transparent 60%),
+    radial-gradient(680px 640px at 6% 108%, rgba(46,107,255,.12), transparent 62%),
+    linear-gradient(180deg,#05080e 0%, var(--ground) 60%, #03060a 100%);
+}
+/* blueprint grid, masked so it fades toward the edges */
+.card::before{
+  content:"";position:absolute;inset:0;z-index:0;
+  background-image:
+    linear-gradient(to right, rgba(120,150,210,.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120,150,210,.055) 1px, transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(120% 100% at 60% 30%, #000 42%, transparent 88%);
+  mask-image:radial-gradient(120% 100% at 60% 30%, #000 42%, transparent 88%);
+}
+/* thin brand rule along the top edge */
+.card::after{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;z-index:3;
+  background:linear-gradient(90deg,var(--brand-deep),var(--brand),var(--brand-bright),transparent 82%);
+}
+
+.frame{position:relative;z-index:2;width:100%;height:100%;display:flex;align-items:center;padding:66px 72px}
+
+/* ---- LEFT: brand + headline + chip ---- */
+.left{width:600px;display:flex;flex-direction:column;height:100%;justify-content:center}
+.wordmark{display:flex;align-items:center;gap:15px;margin-bottom:40px}
+.wordmark .globe{width:44px;height:44px;flex:none;filter:drop-shadow(0 0 14px rgba(46,107,255,.55))}
+.wordmark .txt{font-weight:800;font-size:34px;letter-spacing:-.02em;color:var(--ink)}
+.wordmark .txt b{color:var(--brand);font-weight:800}
+
+.eyebrow{
+  font-family:var(--mono);font-size:15px;font-weight:700;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--brand-bright);display:inline-flex;align-items:center;gap:12px;margin-bottom:24px;
+}
+.eyebrow::before{content:"";width:34px;height:2px;background:var(--brand);opacity:.85;border-radius:2px}
+
+h1{
+  font-size:78px;line-height:.98;font-weight:800;letter-spacing:-.035em;color:#fff;
+}
+h1 .blue{
+  background:linear-gradient(102deg,#fff 6%, var(--brand-bright) 46%, var(--brand) 96%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.sub{margin-top:26px;font-size:23px;line-height:1.42;color:var(--muted);max-width:520px;font-weight:450}
+.sub strong{color:var(--ink);font-weight:600}
+
+.chip{
+  margin-top:40px;display:inline-flex;align-items:center;gap:11px;align-self:flex-start;
+  padding:12px 20px;border-radius:999px;
+  border:1px solid rgba(46,107,255,.42);
+  background:rgba(46,107,255,.10);
+  font-family:var(--mono);font-size:14.5px;letter-spacing:.06em;color:var(--brand-bright);font-weight:600;
+}
+.chip .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 12px var(--brand)}
+.chip b{color:#fff;font-weight:700}
+
+/* ---- RIGHT: document instrument ---- */
+.right{flex:1;display:flex;align-items:center;justify-content:center;position:relative;height:100%}
+.doc-halo{
+  position:absolute;width:520px;height:520px;border-radius:50%;
+  background:radial-gradient(closest-side, rgba(46,107,255,.28), transparent 70%);
+  filter:blur(10px);z-index:0;
+}
+/* glassy signer shell wrapping the paper */
+.signer{
+  position:relative;z-index:1;width:404px;
+  padding:20px;border-radius:22px;
+  background:rgba(20,28,44,.55);
+  border:1px solid rgba(120,150,210,.20);
+  box-shadow:0 40px 90px -30px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.signer-bar{display:flex;align-items:center;gap:8px;padding:2px 4px 16px;border-bottom:1px solid rgba(120,150,210,.16);margin-bottom:18px}
+.signer-bar .d{width:9px;height:9px;border-radius:50%;background:rgba(120,150,210,.4)}
+.signer-bar .host{
+  margin-left:auto;display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);
+}
+.signer-bar .host svg{width:13px;height:13px;color:var(--brand)}
+
+/* the white paper */
+.paper{
+  position:relative;background:#fff;color:#0b1220;border-radius:12px;
+  padding:26px 28px 30px;overflow:hidden;
+  box-shadow:0 20px 44px -14px rgba(0,0,0,.5);
+}
+.seal-badge{
+  position:absolute;top:16px;right:16px;width:46px;height:46px;border-radius:50%;
+  display:grid;place-items:center;background:rgba(46,107,255,.12);
+  border:1.75px solid var(--brand);color:var(--brand-deep);
+}
+.seal-badge svg{width:24px;height:24px}
+.paper-head{display:flex;align-items:center;gap:9px;margin-bottom:20px;padding-right:56px}
+.paper-head svg{width:19px;height:19px;color:var(--brand);flex:none}
+.paper-head .org{font-weight:800;font-size:16px;letter-spacing:-.01em;color:#0b1220}
+.line{height:9px;border-radius:999px;background:#e3e8ef;margin-bottom:12px}
+.line.short{width:54%}
+.line.mid{width:80%}
+.spacer{height:12px}
+
+.field{
+  margin-top:22px;border:1.75px dashed var(--brand);border-radius:9px;
+  background:rgba(46,107,255,.06);padding:16px 18px 14px;position:relative;
+}
+.field .tag{
+  position:absolute;top:-13px;left:16px;background:var(--brand);color:#fff;
+  font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  padding:4px 11px;border-radius:5px;display:inline-flex;align-items:center;gap:6px;
+}
+.field .tag svg{width:13px;height:13px}
+.field .sig{display:block;height:46px}
+.field .sig svg{height:100%;width:auto;overflow:visible}
+.field .sub{display:block;margin-top:9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.02em;color:#5b6472}
+
+.progress{display:flex;align-items:center;gap:14px;margin-top:18px;padding:2px 4px 0}
+.progress .track{flex:1;height:7px;border-radius:999px;background:rgba(120,150,210,.18);overflow:hidden}
+.progress .fill{height:100%;width:100%;border-radius:inherit;background:linear-gradient(90deg,var(--brand),var(--brand-bright))}
+.progress .lbl{font-family:var(--mono);font-size:12.5px;color:var(--muted);white-space:nowrap}
+.progress .lbl b{color:var(--brand-bright);font-weight:700}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="frame">
+
+    <!-- LEFT COLUMN -->
+    <div class="left">
+      <div class="wordmark">
+        <!-- spinning-globe motif, rendered static -->
+        <svg class="globe" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="1.5" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.2"/>
+          <path d="M2.8 12h18.4M12 2.8c2.7 2.6 4.1 5.9 4.1 9.2s-1.4 6.6-4.1 9.2c-2.7-2.6-4.1-5.9-4.1-9.2S9.3 5.4 12 2.8z"/>
+          <path d="M4 7.2c2.4 1.3 5 2 8 2s5.6-.7 8-2M4 16.8c2.4-1.3 5-2 8-2s5.6.7 8 2" opacity=".7"/>
+        </svg>
+        <span class="txt">Lifted <b>Sign</b></span>
+      </div>
+
+      <span class="eyebrow">Legally-binding e-signature</span>
+      <h1>Sign it.<br>Seal it.<br><span class="blue">Done.</span></h1>
+      <p class="sub">Turn any PDF into a sealed, <strong>tamper-evident</strong> agreement — with a Certificate of Completion on every send.</p>
+
+      <div class="chip"><span class="dot"></span> <b>Free during beta</b>&nbsp;— unlimited documents</div>
+    </div>
+
+    <!-- RIGHT COLUMN: document instrument -->
+    <div class="right">
+      <div class="doc-halo"></div>
+      <div class="signer">
+        <div class="signer-bar">
+          <span class="d"></span><span class="d"></span><span class="d"></span>
+          <span class="host">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            sign.example.com
+          </span>
+        </div>
+
+        <div class="paper">
+          <div class="seal-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div class="paper-head">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9S14.5 18.5 12 21c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3z"/></svg>
+            <span class="org">Master Services Agreement</span>
+          </div>
+          <div class="line mid"></div>
+          <div class="line"></div>
+          <div class="line short"></div>
+          <div class="spacer"></div>
+          <div class="line"></div>
+          <div class="line mid"></div>
+
+          <div class="field">
+            <span class="tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+              Sign here
+            </span>
+            <span class="sig">
+              <svg viewBox="-30 -855 6480 1310" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Handwritten signature of Daniel W. Kemp">
+                <path fill="#1b4fd6" d="M427.0 58Q260.0 66 187.0 -25Q99.0 43 58.0 43Q36.0 43 25.5 21.5Q15.0 0 15.0 -25Q15.0 -73 52.0 -163Q96.0 -265 133.0 -265Q152.0 -265 162.0 -205Q179.0 -115 193.0 -81Q226.0 -116 275.5 -176.0Q325.0 -236 390.0 -321Q552.0 -534 605.0 -554Q623.0 -561 641.0 -561Q661.0 -561 673.5 -552.5Q686.0 -544 686.0 -533Q686.0 -516 657.0 -513Q636.0 -502 605.5 -475.0Q575.0 -448 541.5 -413.5Q508.0 -379 479.0 -345.5Q450.0 -312 432.0 -288Q325.0 -139 218.0 -50L212.0 -45Q244.0 2 289.0 20.0Q334.0 38 389.0 38Q480.0 38 562.5 10.5Q645.0 -17 711.5 -71.5Q778.0 -126 821.0 -205Q868.0 -291 868.0 -369Q868.0 -422 845.0 -469.5Q822.0 -517 783.5 -551.0Q745.0 -585 698.0 -595Q643.0 -607 583.0 -607Q429.0 -607 299.0 -536Q162.0 -461 162.0 -368Q162.0 -343 177.0 -325Q189.0 -311 194.0 -309H188.0Q160.0 -314 140.0 -337.0Q120.0 -360 120.0 -388Q120.0 -440 152.5 -483.5Q185.0 -527 247.0 -563Q371.0 -634 540.0 -634Q578.0 -634 616.0 -630.0Q654.0 -626 691.0 -618Q756.0 -604 809.0 -565.0Q862.0 -526 894.0 -470.0Q926.0 -414 926.0 -349Q926.0 -274 882.0 -194Q838.0 -113 768.5 -58.5Q699.0 -4 612.0 24.5Q525.0 53 427.0 58ZM63.0 25Q106.0 6 167.0 -54Q138.0 -102 129.0 -135Q123.0 -157 120.0 -202Q51.0 -103 51.0 -29Q51.0 2 63.0 25Z M988.0 5Q964.0 5 940.0 -12.0Q916.0 -29 913.0 -52Q903.0 -129 1010.0 -235Q1116.0 -341 1201.0 -341Q1224.0 -341 1237.0 -330Q1244.0 -323 1247.5 -311.0Q1251.0 -299 1253.0 -299Q1257.0 -299 1260.0 -300.5Q1263.0 -302 1267.0 -302Q1279.0 -302 1288.0 -293.0Q1297.0 -284 1298.0 -277Q1299.0 -275 1234.0 -178Q1169.0 -83 1175.0 -49Q1180.0 -26 1197.0 -26Q1249.0 -26 1387.0 -198Q1390.0 -202 1393.0 -202Q1398.0 -202 1398.0 -195Q1398.0 -187 1389.0 -175Q1262.0 -4 1194.0 -4Q1185.0 -4 1177.0 -7Q1133.0 -24 1133.0 -73Q1133.0 -90 1137.0 -107L1075.0 -47Q1047.0 -19 1024.5 -7.0Q1002.0 5 988.0 5ZM979.0 -17Q1037.0 -17 1137.0 -144L1243.0 -290Q1235.0 -304 1217.0 -304Q1156.0 -304 1052.0 -206Q944.0 -106 955.0 -41Q960.0 -17 979.0 -17Z M1588.0 2Q1561.0 2 1550.0 -13.5Q1539.0 -29 1539.0 -52Q1539.0 -110 1579.0 -176L1643.0 -280Q1575.0 -230 1508.0 -155Q1490.0 -135 1467.5 -108.0Q1445.0 -81 1418.0 -46Q1382.0 1 1375.0 1Q1361.0 1 1352.0 -11.5Q1343.0 -24 1343.0 -34Q1343.0 -42 1348.0 -63.5Q1353.0 -85 1360.0 -101Q1367.0 -118 1374.5 -134.5Q1382.0 -151 1389.0 -167L1329.0 -104Q1327.0 -102 1317.0 -92.0Q1307.0 -82 1301.0 -82Q1296.0 -82 1296.0 -89Q1296.0 -91 1297.5 -94.5Q1299.0 -98 1304.0 -103Q1319.0 -118 1335.0 -135.0Q1351.0 -152 1368.0 -174Q1377.0 -185 1395.0 -207.5Q1413.0 -230 1434.5 -256.0Q1456.0 -282 1475.0 -304Q1480.0 -311 1486.0 -313.5Q1492.0 -316 1494.0 -316Q1521.0 -316 1521.0 -295Q1521.0 -289 1518.0 -283Q1428.0 -159 1410.0 -94Q1526.0 -210 1596.5 -268.5Q1667.0 -327 1697.0 -327Q1713.0 -327 1721.5 -322.0Q1730.0 -317 1730.0 -303Q1730.0 -298 1729.0 -295Q1726.0 -288 1688.0 -239Q1665.0 -211 1647.5 -188.0Q1630.0 -165 1619.0 -148Q1601.0 -120 1592.0 -95.5Q1583.0 -71 1583.0 -54Q1583.0 -47 1585.0 -37.0Q1587.0 -27 1597.0 -27Q1620.0 -27 1669.0 -67Q1692.0 -87 1712.0 -107.5Q1732.0 -128 1750.0 -148Q1754.0 -152 1763.0 -163.5Q1772.0 -175 1774.0 -175Q1778.0 -175 1778.0 -167Q1778.0 -163 1773.5 -153.5Q1769.0 -144 1764.0 -139Q1753.0 -126 1731.5 -103.0Q1710.0 -80 1683.5 -56.0Q1657.0 -32 1632.0 -15.0Q1607.0 2 1588.0 2Z M1957.0 -344Q1940.0 -344 1927.5 -355.0Q1915.0 -366 1915.0 -380Q1915.0 -408 1953.0 -408Q1967.0 -408 1981.0 -398.5Q1995.0 -389 1995.0 -375Q1995.0 -363 1982.0 -353.5Q1969.0 -344 1957.0 -344ZM1772.0 11Q1750.0 11 1735.5 -3.5Q1721.0 -18 1721.0 -55Q1721.0 -76 1730.5 -103.5Q1740.0 -131 1754.5 -159.0Q1769.0 -187 1783.0 -209Q1839.0 -300 1875.0 -301Q1884.0 -301 1897.0 -293.5Q1910.0 -286 1910.0 -277Q1910.0 -277 1834.0 -179Q1759.0 -82 1759.0 -41Q1759.0 -9 1784.0 -9Q1800.0 -9 1825.5 -22.5Q1851.0 -36 1879.0 -57.0Q1907.0 -78 1932.5 -102.0Q1958.0 -126 1974.0 -146Q1984.0 -159 1991.5 -164.0Q1999.0 -169 2001.0 -169Q2005.0 -169 2005.0 -163Q2005.0 -158 1993.5 -143.0Q1982.0 -128 1962.0 -108Q1938.0 -84 1909.0 -56.0Q1880.0 -28 1846.0 -8.5Q1812.0 11 1772.0 11Z M2013.0 13Q1981.0 13 1955.0 -7.5Q1929.0 -28 1929.0 -62Q1929.0 -133 2016.0 -224Q2105.0 -316 2175.0 -316Q2198.0 -316 2212.5 -303.5Q2227.0 -291 2227.0 -273Q2227.0 -217 2138.0 -163Q2059.0 -115 2005.0 -115Q1997.0 -115 1991.0 -117Q1976.0 -90 1976.0 -60Q1976.0 -8 2025.0 -8Q2075.0 -8 2154.0 -75Q2215.0 -124 2258.0 -179Q2267.0 -191 2274.0 -191Q2280.0 -191 2280.0 -185Q2280.0 -179 2272.0 -168Q2244.0 -131 2212.0 -100.0Q2180.0 -69 2143.0 -43Q2066.0 13 2013.0 13ZM2019.0 -137Q2057.0 -137 2118.0 -175Q2138.0 -189 2157.5 -206.5Q2177.0 -224 2189.5 -242.0Q2202.0 -260 2202.0 -274Q2202.0 -287 2181.0 -287Q2151.0 -287 2097.0 -242Q2071.0 -220 2047.0 -194.0Q2023.0 -168 2006.0 -139Q2012.0 -137 2019.0 -137Z M2295.0 2Q2266.0 2 2241.0 -12.5Q2216.0 -27 2216.0 -61Q2216.0 -108 2249.5 -173.0Q2283.0 -238 2326.0 -308Q2443.0 -498 2492.0 -498Q2502.0 -498 2512.5 -490.5Q2523.0 -483 2524.0 -474L2454.0 -380Q2413.0 -325 2380.0 -278.5Q2347.0 -232 2323.0 -195Q2311.0 -176 2296.0 -152.0Q2281.0 -128 2269.5 -102.5Q2258.0 -77 2258.0 -51Q2258.0 -39 2265.0 -29.5Q2272.0 -20 2290.0 -20Q2322.0 -20 2374.0 -54.5Q2426.0 -89 2477.0 -150Q2482.0 -156 2488.0 -161.0Q2494.0 -166 2498.0 -166Q2503.0 -166 2503.0 -160Q2503.0 -157 2496.5 -148.5Q2490.0 -140 2486.0 -135L2462.0 -108Q2442.0 -86 2414.5 -60.0Q2387.0 -34 2356.5 -16.0Q2326.0 2 2295.0 2Z M2877.0 112Q2859.0 112 2859.0 89Q2859.0 67 2877.0 33L3070.0 -245Q3159.0 -373 3202.0 -455.0Q3245.0 -537 3245.0 -571Q3245.0 -587 3233.0 -595.0Q3221.0 -603 3205.0 -606.0Q3189.0 -609 3175.0 -609Q3090.0 -609 2938.0 -505Q2895.0 -476 2859.0 -440.0Q2823.0 -404 2792.0 -363Q2732.0 -281 2732.0 -225Q2732.0 -182 2772.0 -173Q2787.0 -169 2806.0 -169Q2842.0 -169 2878.0 -187.0Q2914.0 -205 2948.0 -233Q2974.0 -255 2978.0 -255Q2982.0 -255 2981.0 -248Q2975.0 -227 2952.0 -208.0Q2929.0 -189 2897.0 -173.5Q2865.0 -158 2832.5 -149.5Q2800.0 -141 2775.0 -141Q2735.0 -141 2705.0 -161.5Q2675.0 -182 2675.0 -222Q2675.0 -283 2746.0 -372Q2814.0 -458 2914.0 -525Q2955.0 -553 3010.0 -578.5Q3065.0 -604 3121.0 -620.5Q3177.0 -637 3221.0 -637Q3300.0 -637 3300.0 -585Q3300.0 -522 3205.0 -368Q3138.0 -262 3028.0 -116Q2937.0 5 2936.0 5Q2939.0 5 3032.0 -98Q3089.0 -162 3139.5 -212.5Q3190.0 -263 3233.0 -301Q3254.0 -320 3284.0 -348.5Q3314.0 -377 3354.0 -415Q3389.0 -447 3422.5 -473.0Q3456.0 -499 3484.0 -499Q3513.0 -499 3522.0 -485Q3430.0 -371 3350.0 -206Q3293.0 -88 3293.0 -27Q3293.0 9 3312.0 25.0Q3331.0 41 3362.0 41Q3396.0 41 3433.5 22.0Q3471.0 3 3508.0 -27.0Q3545.0 -57 3577.0 -90Q3692.0 -206 3760.0 -341Q3813.0 -447 3813.0 -510Q3813.0 -516 3812.5 -521.0Q3812.0 -526 3811.0 -530Q3790.0 -530 3766.0 -552Q3751.0 -564 3751.0 -577Q3751.0 -589 3761.0 -597.0Q3771.0 -605 3784.0 -605Q3803.0 -605 3812.0 -588Q3816.0 -580 3828.0 -568Q3836.0 -560 3835.0 -556Q3841.0 -547 3855.0 -547Q3869.0 -547 3881.5 -559.0Q3894.0 -571 3909.0 -571Q3917.0 -571 3917.0 -565Q3917.0 -554 3898.0 -544Q3888.0 -537 3874.0 -535Q3866.0 -534 3858.0 -533.5Q3850.0 -533 3842.0 -535Q3854.0 -495 3854.0 -476Q3854.0 -396 3778.0 -269Q3740.0 -205 3691.0 -148.0Q3642.0 -91 3581.0 -41Q3460.0 61 3366.0 61Q3263.0 61 3263.0 -35Q3263.0 -80 3282.0 -137.5Q3301.0 -195 3327.0 -252L3399.0 -409Q3355.0 -375 3327.5 -353.5Q3300.0 -332 3281.5 -317.0Q3263.0 -302 3246.5 -286.5Q3230.0 -271 3207.0 -249Q3182.0 -224 3140.0 -177.5Q3098.0 -131 3042.0 -62L2926.0 80Q2916.0 92 2903.0 102.0Q2890.0 112 2877.0 112Z M3925.0 1Q3908.0 1 3895.5 -9.5Q3883.0 -20 3883.0 -34Q3883.0 -63 3921.0 -63Q3935.0 -63 3949.0 -53.5Q3963.0 -44 3963.0 -29Q3963.0 -17 3950.0 -8.0Q3937.0 1 3925.0 1Z M5252.0 129Q5213.0 129 5183.0 115Q5140.0 94 5098.0 56.5Q5056.0 19 5018.0 -28.0Q4980.0 -75 4950.0 -127.0Q4920.0 -179 4900.0 -228Q4845.0 -196 4809.0 -193Q4781.0 -157 4738.0 -111.0Q4695.0 -65 4642.5 -22.0Q4590.0 21 4530.5 48.5Q4471.0 76 4410.0 76Q4332.0 76 4286.5 36.5Q4241.0 -3 4241.0 -88Q4241.0 -135 4264.0 -181.0Q4287.0 -227 4326.0 -264.0Q4365.0 -301 4411.0 -320Q4468.0 -345 4530.0 -345Q4565.0 -345 4586.0 -326.5Q4607.0 -308 4607.0 -279Q4607.0 -266 4603.0 -262Q4602.0 -261 4600.0 -261Q4597.0 -261 4592.0 -269Q4576.0 -300 4560.0 -310.0Q4544.0 -320 4515.0 -320Q4471.0 -320 4429.5 -298.5Q4388.0 -277 4354.5 -241.0Q4321.0 -205 4301.0 -160.5Q4281.0 -116 4281.0 -71Q4281.0 37 4403.0 51Q4449.0 55 4524.0 12Q4636.0 -52 4763.0 -208Q4740.0 -229 4740.0 -268Q4740.0 -311 4769.0 -346Q4801.0 -384 4854.0 -384Q4869.0 -384 4882.0 -381Q4909.0 -427 4934.0 -474.0Q4959.0 -521 4982.0 -569Q5026.0 -660 5026.0 -675Q5026.0 -677 5025.0 -677Q5022.0 -679 5001.0 -669.5Q4980.0 -660 4952.0 -646.5Q4924.0 -633 4900.0 -620.0Q4876.0 -607 4867.0 -601Q4833.0 -579 4799.0 -545Q4755.0 -501 4755.0 -477Q4755.0 -466 4765.0 -459Q4786.0 -444 4827.0 -444Q4832.0 -442 4832.0 -440Q4832.0 -435 4800.0 -430Q4768.0 -425 4750.0 -427Q4725.0 -433 4725.0 -456Q4725.0 -491 4768.0 -540Q4811.0 -589 4862.0 -617Q5011.0 -697 5051.0 -697Q5061.0 -697 5068.0 -693Q5072.0 -690 5072.0 -682Q5072.0 -621 4904.0 -333Q4907.0 -321 4912.5 -305.5Q4918.0 -290 4926.0 -270L5224.0 -497Q5299.0 -554 5361.0 -600.0Q5423.0 -646 5479.5 -678.0Q5536.0 -710 5593.5 -727.0Q5651.0 -744 5718.0 -744Q5755.0 -744 5786.0 -732Q5805.0 -725 5805.0 -704Q5805.0 -687 5795.0 -687Q5790.0 -687 5785.0 -693Q5776.0 -703 5747.0 -703Q5731.0 -703 5705.0 -699.0Q5679.0 -695 5642.0 -687Q5585.0 -674 5521.5 -646.0Q5458.0 -618 5388.0 -575Q5300.0 -520 5148.0 -404Q5071.0 -345 5017.5 -306.5Q4964.0 -268 4935.0 -249Q4957.0 -203 4988.5 -154.0Q5020.0 -105 5057.0 -59.5Q5094.0 -14 5135.0 21.5Q5176.0 57 5216.0 75Q5255.0 93 5287.0 93Q5335.0 93 5335.0 56Q5335.0 54 5335.0 51.0Q5335.0 48 5334.0 46Q5334.0 44 5333.5 42.5Q5333.0 41 5333.0 40Q5333.0 30 5338.0 22.5Q5343.0 15 5349.0 15Q5362.0 15 5366.0 46Q5367.0 48 5367.0 51.0Q5367.0 54 5367.0 56Q5367.0 80 5350.0 96.5Q5333.0 113 5307.0 121.0Q5281.0 129 5252.0 129ZM4795.0 -249 4802.0 -259Q4810.0 -271 4823.5 -290.0Q4837.0 -309 4854.0 -335Q4842.0 -340 4833.0 -340Q4812.0 -340 4798.0 -322.0Q4784.0 -304 4784.0 -282Q4784.0 -263 4795.0 -249ZM4839.0 -232Q4849.0 -232 4852.0 -233Q4865.0 -235 4892.0 -249Q4888.0 -261 4884.5 -271.0Q4881.0 -281 4879.0 -289Q4872.0 -278 4862.0 -263.5Q4852.0 -249 4839.0 -232Z M5206.0 13Q5174.0 13 5148.0 -7.5Q5122.0 -28 5122.0 -62Q5122.0 -133 5209.0 -224Q5298.0 -316 5368.0 -316Q5391.0 -316 5405.5 -303.5Q5420.0 -291 5420.0 -273Q5420.0 -217 5331.0 -163Q5252.0 -115 5198.0 -115Q5190.0 -115 5184.0 -117Q5169.0 -90 5169.0 -60Q5169.0 -8 5218.0 -8Q5268.0 -8 5347.0 -75Q5408.0 -124 5451.0 -179Q5460.0 -191 5467.0 -191Q5473.0 -191 5473.0 -185Q5473.0 -179 5465.0 -168Q5437.0 -131 5405.0 -100.0Q5373.0 -69 5336.0 -43Q5259.0 13 5206.0 13ZM5212.0 -137Q5250.0 -137 5311.0 -175Q5331.0 -189 5350.5 -206.5Q5370.0 -224 5382.5 -242.0Q5395.0 -260 5395.0 -274Q5395.0 -287 5374.0 -287Q5344.0 -287 5290.0 -242Q5264.0 -220 5240.0 -194.0Q5216.0 -168 5199.0 -139Q5205.0 -137 5212.0 -137Z M5648.0 2Q5624.0 2 5624.0 -25Q5635.0 -81 5669.0 -151Q5685.0 -185 5701.5 -218.0Q5718.0 -251 5734.0 -285Q5697.0 -260 5660.0 -229.5Q5623.0 -199 5588.0 -161Q5547.0 -117 5493.0 -48Q5454.0 1 5448.0 1Q5434.0 1 5425.0 -12.0Q5416.0 -25 5416.0 -34Q5416.0 -47 5439.0 -101Q5446.0 -118 5453.5 -134.5Q5461.0 -151 5468.0 -167L5408.0 -104Q5406.0 -102 5396.0 -92.0Q5386.0 -82 5380.0 -82Q5375.0 -82 5375.0 -89Q5375.0 -91 5376.5 -94.5Q5378.0 -98 5383.0 -103Q5398.0 -118 5414.0 -135.0Q5430.0 -152 5447.0 -174Q5460.0 -191 5484.5 -224.5Q5509.0 -258 5545.0 -309Q5556.0 -324 5576.0 -324Q5596.0 -324 5596.0 -305Q5596.0 -298 5545.0 -212Q5519.0 -166 5503.5 -137.0Q5488.0 -108 5484.0 -94Q5506.0 -118 5536.5 -148.0Q5567.0 -178 5607.0 -215Q5730.0 -329 5769.0 -329Q5780.0 -329 5790.5 -322.0Q5801.0 -315 5801.0 -304Q5801.0 -299 5762.0 -231Q5724.0 -162 5720.0 -149Q5831.0 -242 5831.0 -243Q5925.0 -316 5966.0 -316Q5978.0 -316 5988.5 -308.5Q5999.0 -301 5999.0 -291Q5999.0 -289 5935.0 -207Q5869.0 -124 5861.0 -71Q5857.0 -35 5898.0 -35Q5923.0 -35 5968.0 -67.0Q6013.0 -99 6062.0 -155Q6068.0 -162 6075.0 -168.5Q6082.0 -175 6087.0 -175Q6093.0 -175 6093.0 -170Q6093.0 -163 6084.0 -154Q6058.0 -123 6022.5 -90.0Q5987.0 -57 5952.0 -34.5Q5917.0 -12 5890.0 -12Q5822.0 -12 5822.0 -75Q5822.0 -97 5834.0 -126.5Q5846.0 -156 5858.0 -180Q5887.0 -236 5921.0 -279Q5889.0 -263 5854.5 -237.0Q5820.0 -211 5783.0 -176Q5697.0 -92 5665.0 -6Q5660.0 2 5648.0 2Z M5985.0 189Q5943.0 166 5943.0 102Q5943.0 33 6056.0 -134Q6164.0 -295 6206.0 -308Q6210.0 -309 6213.0 -309.5Q6216.0 -310 6219.0 -310Q6236.0 -310 6236.0 -273Q6243.0 -280 6260.5 -286.5Q6278.0 -293 6296.5 -297.0Q6315.0 -301 6324.0 -302Q6365.0 -304 6392.5 -282.5Q6420.0 -261 6420.0 -226Q6420.0 -145 6323.0 -69Q6235.0 0 6167.0 0Q6122.0 0 6105.0 -5Q6081.0 -12 6056.0 -42Q6045.0 -33 6032.0 -11.5Q6019.0 10 6007.5 35.5Q5996.0 61 5988.5 86.0Q5981.0 111 5981.0 128Q5981.0 145 5987.5 156.5Q5994.0 168 6000.0 178Q6000.0 179 6000.5 179.5Q6001.0 180 6001.0 180Q6001.0 185 5995.5 188.5Q5990.0 192 5985.0 189ZM6154.0 -28Q6210.0 -28 6283.0 -85Q6369.0 -153 6369.0 -236Q6369.0 -274 6322.0 -274Q6279.0 -274 6242.0 -255Q6232.0 -251 6209.5 -229.0Q6187.0 -207 6150.0 -169Q6071.0 -87 6071.0 -64Q6071.0 -46 6104.0 -35Q6126.0 -28 6154.0 -28Z"/>
+              </svg>
+            </span>
+            <span class="sub">Signed · 2026-06-19 14:21:58 UTC · 73.92.x.x</span>
+          </div>
+
+          <div class="progress">
+            <div class="track"><div class="fill"></div></div>
+            <span class="lbl"><b>3</b> / 3 signed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

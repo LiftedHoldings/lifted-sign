@@ -1,0 +1,37 @@
+/* ============================================================================
+   LIFTED — BASE ELEMENT STYLES & TYPOGRAPHY UTILITIES
+   Lightweight resets + named text styles that map to the type scale.
+   ============================================================================ */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-body);
+  background: var(--bg-page);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--brand-tint-strong); color: var(--text-strong); }
+
+a { color: var(--brand); text-decoration: none; }
+a:hover { color: var(--brand-bright); }
+
+/* ---- Named text styles --------------------------------------------------- */
+.t-display  { font-size: var(--fs-display);  line-height: var(--lh-display);  letter-spacing: var(--ls-display);  font-weight: var(--fw-bold); color: var(--text-strong); }
+.t-headline { font-size: var(--fs-headline); line-height: var(--lh-headline); letter-spacing: var(--ls-headline); font-weight: var(--fw-bold); color: var(--text-strong); }
+.t-title    { font-size: var(--fs-title);    line-height: var(--lh-title);    letter-spacing: var(--ls-title);    font-weight: var(--fw-semibold); color: var(--text-strong); }
+.t-subtitle { font-size: var(--fs-subtitle); line-height: var(--lh-subtitle); letter-spacing: var(--ls-subtitle); font-weight: var(--fw-medium); color: var(--text-strong); }
+.t-body     { font-size: var(--fs-body);     line-height: var(--lh-body);     color: var(--text-body); }
+.t-small    { font-size: var(--fs-small);    line-height: var(--lh-small);    color: var(--text-body); }
+.t-caption  { font-size: var(--fs-caption);  line-height: var(--lh-caption);  color: var(--text-muted); }
+.t-overline { font-size: var(--fs-overline); line-height: var(--lh-overline); letter-spacing: var(--ls-overline); text-transform: uppercase; font-weight: var(--fw-bold); color: var(--brand); }
+.t-mono     { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.t-amount   { font-family: var(--font-mono); font-weight: var(--fw-medium); color: var(--brand); font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+
+/* ---- The wireframe globe, animated ------------------------------------- */
+@keyframes lifted-spin { to { transform: rotate(360deg); } }
+@keyframes lifted-pulse { 0%,100% { opacity: .9; } 50% { opacity: 1; } }

@@ -1,0 +1,32 @@
+/* ============================================================================
+   LIFTED — TYPOGRAPHY TOKENS
+   Inter for everything UI + display. JetBrains Mono for amounts, hashes, IDs.
+   Type scale from the brand book (Display 64 → Overline 11).
+   ============================================================================ */
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-display: 'Sora', 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Weights */
+  --fw-regular: 400; /* @kind font */
+  --fw-medium:  500; /* @kind font */
+  --fw-semibold:600; /* @kind font */
+  --fw-bold:    700; /* @kind font */
+  --fw-black:   800; /* @kind font */
+
+  /* Type scale — size / line-height / tracking (from the brand book) */
+  --fs-display:  64px;  --lh-display:  1.02; /* @kind other */  --ls-display:  -1.5px;
+  --fs-headline: 40px;  --lh-headline: 1.08; /* @kind other */  --ls-headline: -1px;
+  --fs-title:    28px;  --lh-title:    1.15; /* @kind other */  --ls-title:    -0.5px;
+  --fs-subtitle: 20px;  --lh-subtitle: 1.35; /* @kind other */  --ls-subtitle: 0px;
+  --fs-body:     16px;  --lh-body:     1.55; /* @kind other */  --ls-body:     0px;
+  --fs-small:    14px;  --lh-small:    1.5; /* @kind other */   --ls-small:    0px;
+  --fs-caption:  13px;  --lh-caption:  1.45; /* @kind other */  --ls-caption:  0px;
+  --fs-overline: 11px;  --lh-overline: 1.2; /* @kind other */   --ls-overline: 3px;
+
+  /* Metric steps — KPI/money numerals. Unified step so every numeric hero
+     across views shares one scale (primary 26 / secondary peer 20). */
+  --fs-metric:    26px; /* @kind other */
+  --fs-metric-sm: 20px; /* @kind other */
+}

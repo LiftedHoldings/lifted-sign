@@ -1,0 +1,23 @@
+Alex Brush — provenance note
+=============================
+
+The Lifted Sign marketing landing (web/signland.html) and the Open-Graph card
+(web/og-sign.html) render the wordmark signature "Daniel W. Kemp" as static SVG
+<path> data. That path data is the glyph outlines of the typeface **Alex Brush**
+(by TypeSETit), converted to vector paths via fontTools.
+
+  Typeface:  Alex Brush (Regular)
+  Designer:  TypeSETit, LLC
+  Upstream:  https://fonts.google.com/specimen/Alex+Brush
+  License:   SIL Open Font License, Version 1.1 (OFL-1.1)
+             https://openfontlicense.org/
+
+The Alex Brush .ttf is NOT vendored into this repository. Only the outlines of a
+single fixed string are embedded as SVG path data — an ordinary "document set in
+the font" use, which the OFL permits without restriction and which does not
+trigger the license's font-redistribution clause (§ requiring the license to
+accompany the Font Software) because the Font Software itself is not distributed.
+No Reserved Font Name is used for any derivative, and no font file is shipped.
+
+Recorded so the signature artwork's origin stays discoverable alongside the other
+third-party font licenses in this directory.

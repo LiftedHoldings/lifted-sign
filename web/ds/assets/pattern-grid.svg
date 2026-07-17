@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Major grid square (tileable edges) -->
+  <g opacity="0.18" stroke-width="1.5">
+    <path d="M0 0 H64 V64 H0 Z"/>
+  </g>
+  <!-- Minor grid lines -->
+  <g opacity="0.09" stroke-width="0.75">
+    <path d="M16 0 V64 M32 0 V64 M48 0 V64"/>
+    <path d="M0 16 H64 M0 32 H64 M0 48 H64"/>
+  </g>
+  <!-- Engineering tick marks at major intersections -->
+  <g opacity="0.22" stroke-width="1">
+    <path d="M32 30 V34 M30 32 H34"/>
+    <path d="M0 30 V34 M30 0 H34 M64 30 V34 M30 64 H34"/>
+  </g>
+</svg>

@@ -1,0 +1,6 @@
+# Normalize line endings so shipped scripts stay Unix regardless of the
+# contributor's platform. Without this, a checkout on Windows can rewrite these
+# with CRLF and break shebang execution / node's module loader.
+*.sh   text eol=lf
+*.mjs  text eol=lf
+*.py   text eol=lf

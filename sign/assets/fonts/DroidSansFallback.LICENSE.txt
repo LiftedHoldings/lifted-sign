@@ -1,0 +1,4 @@
+Droid Sans Fallback — Apache License, Version 2.0.
+Copyright (C) 2008 The Android Open Source Project.
+Bundled for CJK/Cyrillic/Greek coverage in Lifted Sign's permissive PDF text stamping
+(fitz.Font("cjk") replacement). The .ttf is Apache-2.0 independently of any AGPL toolchain.

@@ -1,0 +1,64 @@
+/* ============================================================================
+   LIFTED — SPACING, RADIUS, SHADOW, MOTION TOKENS
+   ============================================================================ */
+:root {
+  /* Spacing — 4px base grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Radius — calm, lightly rounded. Cards use lg; pills use full. */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 999px;
+
+  /* Elevation — soft, low-spread shadows on near-black surfaces.
+     On dark theme depth comes from surface lightness + a 1px hairline more
+     than from cast shadow, so shadows stay subtle. */
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.40);
+  --shadow-md:  0 6px 18px rgba(0,0,0,0.45);
+  --shadow-lg:  0 18px 48px rgba(0,0,0,0.55);
+  --shadow-xl:  0 32px 80px rgba(0,0,0,0.60);
+  /* Inset hairline that reads as a crisp top edge on raised surfaces */
+  --shadow-edge: inset 0 1px 0 rgba(255,255,255,0.04);
+
+  /* Motion — calm, premium, never frantic. */
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* @kind other */
+  --dur-fast:   120ms; /* @kind other */
+  --dur-base:   200ms; /* @kind other */
+  --dur-slow:   320ms; /* @kind other */
+  --dur-globe:  14s; /* @kind other */  /* one full globe revolution */
+
+  /* Layout */
+  --container:  1200px;
+  --container-wide: 1440px;
+
+  /* Blueprint grid — the Lifted backdrop texture (used behind heroes, covers,
+     dark surfaces). Line color is faint by default; size sets the cell pitch. */
+  --grid-line: rgba(174,184,208,0.06); /* @kind color */
+  --grid-line-strong: rgba(174,184,208,0.10); /* @kind color */
+  --grid-size: 28px;
+  --grid-size-lg: 60px;
+  /* Prebuilt grid images for the .lds-grid utilities (used, not overridden). */
+  --grid-img:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px); /* @kind other */
+  --grid-img-brand:
+    linear-gradient(color-mix(in srgb, var(--brand) 16%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--brand) 16%, transparent) 1px, transparent 1px); /* @kind other */
+  --grid-img-dots: radial-gradient(var(--grid-line-strong) 1px, transparent 1.4px); /* @kind other */
+}

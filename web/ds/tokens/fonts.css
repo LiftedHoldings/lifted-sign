@@ -1,0 +1,53 @@
+/* Lifted typeface system — Inter (UI / body), Sora (display / wordmark, used on
+   the live portal + signer), JetBrains Mono (data, hashes, IDs).
+
+   SELF-HOSTED: these @font-face rules load from the vendored TTFs under
+   ../fonts, so the app renders with ZERO external requests (no Google Fonts).
+   The bundled weights (Inter 400/600, Sora 400/600/700, JetBrains Mono 400)
+   cover the design system; each face is declared over a weight range so the
+   browser maps intermediate weights to the nearest bundled file. */
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/Inter-400.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500 800;
+  font-display: swap;
+  src: url('../fonts/Inter-600.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 400 550;
+  font-display: swap;
+  src: url('../fonts/Sora-400.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 551 650;
+  font-display: swap;
+  src: url('../fonts/Sora-600.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 651 800;
+  font-display: swap;
+  src: url('../fonts/Sora-700.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../fonts/JBMono-400.ttf') format('truetype');
+}

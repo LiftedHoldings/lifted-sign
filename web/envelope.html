@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="en" data-brand="sign">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your envelope · LiftedSign</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='%232E6BFF' stroke-width='2.4' stroke-linecap='round'><circle cx='20' cy='20' r='16.5'/><line x1='3.5' y1='20' x2='36.5' y2='20'/><ellipse cx='20' cy='20' rx='16.5' ry='7.4'/><ellipse cx='20' cy='20' rx='8' ry='16.5'/></svg>">
+<!-- Lifted Design System foundation (vendored) — tokens + the app/admin kit.
+     data-brand="sign" (blue) retints --brand and friends; every page-specific
+     rule below builds ON these tokens (no parallel palette). -->
+<link rel="stylesheet" href="/static/ds/styles.css">
+<link rel="stylesheet" href="/static/ds/appkit/_appkit.css">
+<script src="/static/ds/assets/lds-globe.js" defer></script>
+<style>
+  /* ============================================================================
+     LiftedSign ENVELOPE return-view · /envelope/{env} — verified-access dashboard
+     rebuilt on the Lifted DS (_appkit + tokens). data-brand="sign" (blue). Every
+     id + class hook the envelope script toggles is preserved; ap-* / DS tokens
+     carry the cards, badges, buttons, gate and timeline.
+     ============================================================================ */
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--void);
+     color:var(--text-body);font-family:var(--font-sans);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{position:relative;isolation:isolate;
+     background:
+       radial-gradient(900px 520px at 84% -8%,color-mix(in srgb,var(--brand) 14%,transparent),transparent 62%),
+       radial-gradient(760px 480px at 6% 2%,color-mix(in srgb,var(--brand-grad-to) 8%,transparent),transparent 60%),
+       linear-gradient(180deg,var(--void) 0%,var(--ink-900) 56%,var(--void) 100%);
+     background-attachment:fixed}
+  /* ambient — the canonical blueprint grid, masked + calm */
+  body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+     background-image:var(--grid-img);background-size:var(--grid-size) var(--grid-size);
+     -webkit-mask-image:radial-gradient(120% 80% at 50% -4%,#000,transparent 76%);
+             mask-image:radial-gradient(120% 80% at 50% -4%,#000,transparent 76%);opacity:.55}
+  a{color:var(--brand);text-decoration:none}
+  a:hover{color:var(--brand-bright)}
+  svg{flex-shrink:0}
+  svg.ico{width:16px;height:16px}
+  .ico{display:inline-flex;align-items:center;justify-content:center;line-height:0;vertical-align:middle}
+  .btn svg.ico{width:17px;height:17px}
+  ::selection{background:color-mix(in srgb,var(--brand) 26%,transparent);color:#fff}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-thumb{background:var(--surface-raised);border-radius:999px;border:3px solid transparent;background-clip:padding-box}
+  ::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--brand) 38%,var(--surface-raised));background-clip:padding-box;border:3px solid transparent}
+  *{scrollbar-color:var(--surface-raised) transparent;scrollbar-width:thin}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .reveal{animation:rise .5s var(--ease-out) both}
+
+  #bar{position:fixed;top:0;left:0;height:2px;width:0;z-index:60;
+       background:var(--grad-brand);box-shadow:0 0 14px color-mix(in srgb,var(--brand) 55%,transparent);transition:width var(--dur-slow) var(--ease-out)}
+  header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:18px;padding:0 24px;height:60px;
+         background:color-mix(in srgb,var(--void) 80%,transparent);
+         backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);
+         border-bottom:1px solid var(--border-subtle)}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+    background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--brand) 55%,transparent) 18%,color-mix(in srgb,var(--brand-grad-to) 55%,transparent) 82%,transparent);opacity:.5}
+  .brand{display:inline-flex;align-items:center;gap:11px;white-space:nowrap}
+  .brand .lds-globe{color:var(--brand)}
+  .brand-word{position:relative;font-family:var(--font-display);font-weight:800;font-size:18px;letter-spacing:-.022em;line-height:1}
+  .brand-word .l{color:var(--text-strong)}
+  .brand-word .s{color:var(--brand)}
+  .hdr-div{width:1px;height:24px;background:var(--border-default);flex-shrink:0}
+  .hdr-doc{display:flex;flex-direction:column;min-width:0;gap:1px}
+  .hdr-doc .ey{font-family:var(--font-mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint)}
+  .doc-name{font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:34vw}
+  .spacer{flex:1}
+  .signer-pill{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;padding:5px 13px 5px 6px;border-radius:999px;
+    background:var(--ink-800);border:1px solid var(--border-default);color:var(--text-body);max-width:240px;overflow:hidden;white-space:nowrap}
+  .signer-pill .av{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:9.5px;
+    background:var(--grad-brand);color:var(--brand-contrast)}
+  .signer-pill .nm{overflow:hidden;text-overflow:ellipsis}
+
+  .wrap{max-width:920px;margin:0 auto;padding:30px 18px 90px}
+
+  /* status banner — glass card with a brand top edge */
+  .banner{position:relative;overflow:hidden;background:var(--glass-fill);border:1px solid var(--glass-border);border-radius:var(--radius-xl);
+          padding:24px 26px;margin-bottom:22px;box-shadow:var(--glass-shadow);
+          -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.25);backdrop-filter:blur(var(--glass-blur)) saturate(1.25)}
+  .banner::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;border-radius:var(--radius-xl) var(--radius-xl) 0 0;background:var(--grad-brand)}
+  .banner .eyb{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--brand);margin-bottom:11px}
+  .banner .eyb::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--grad-brand);box-shadow:0 0 12px color-mix(in srgb,var(--brand) 55%,transparent)}
+  .banner h1{margin:0 0 7px;font-family:var(--font-display);font-weight:700;font-size:23px;letter-spacing:-.02em;color:var(--text-strong)}
+  .banner p{margin:0;color:var(--text-muted);font-size:14px;line-height:1.6;max-width:62ch}
+  .banner .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;position:relative;z-index:2}
+
+  /* .chip == ap-badge variants (mono, dot before) */
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.3px;
+    padding:4px 10px;border-radius:999px;border:1px solid var(--border-default);background:var(--surface-raised);color:var(--text-body);font-family:var(--font-mono)}
+  .chip .ico svg{width:13px;height:13px}
+  .chip.done{border-color:transparent;background:color-mix(in srgb,var(--success) 14%,transparent);color:var(--success)}
+  .chip.wait{border-color:transparent;background:color-mix(in srgb,var(--warning) 14%,transparent);color:var(--warning)}
+  .chip.bad{border-color:transparent;background:color-mix(in srgb,var(--error) 14%,transparent);color:var(--error)}
+
+  /* .mini == ap-btn ap-btn--ghost sized */
+  .mini{font-size:12.5px;font-weight:600;padding:9px 15px;border-radius:var(--radius-md);border:1px solid var(--border-default);
+    background:var(--ink-800);color:var(--text-strong);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:border-color var(--dur-base) var(--ease-out),color var(--dur-base) var(--ease-out),background var(--dur-base) var(--ease-out)}
+  .mini:hover{border-color:var(--brand);color:var(--brand)}
+  .mini .ico svg{width:15px;height:15px}
+  .mini.primary{background:var(--brand);color:var(--brand-contrast);border-color:transparent}
+  .mini.primary:hover{background:var(--brand-bright);color:var(--brand-contrast)}
+  .mini[aria-disabled="true"]{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+  /* card == ap-card (glass) */
+  .card{position:relative;background:var(--glass-fill);border:1px solid var(--glass-border);border-radius:var(--radius-lg);
+    padding:20px 22px;margin-bottom:20px;box-shadow:var(--glass-shadow);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.25);backdrop-filter:blur(var(--glass-blur)) saturate(1.25)}
+  .card::after{content:"";position:absolute;inset:0 0 auto 0;height:1px;border-radius:inherit;
+    background:linear-gradient(90deg,transparent,var(--glass-hi) 22%,var(--glass-hi) 78%,transparent);pointer-events:none}
+  .card > .ch{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .card > .ch .ci{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;
+    background:var(--brand-tint);border:1px solid color-mix(in srgb,var(--brand) 25%,transparent);color:var(--brand)}
+  .card > .ch .ci svg{width:16px;height:16px}
+  .card > .ch h2{margin:0;font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:-.01em;color:var(--text-strong)}
+  .card > .ch .sub{font-size:11px;color:var(--text-faint);font-family:var(--font-mono);letter-spacing:.04em;margin-left:auto}
+
+  /* parties */
+  .party{display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid var(--border-subtle)}
+  .party:first-of-type{border-top:none;padding-top:0}
+  .party .av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:12px;
+    background:var(--grad-brand);color:var(--brand-contrast)}
+  .party .av.me{box-shadow:0 0 0 2px var(--brand)}
+  .party .pwho{min-width:0;flex:1}
+  .party .pn{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;overflow:hidden;color:var(--text-strong)}
+  .party .pn .youtag{font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--brand-contrast);background:var(--brand);padding:2px 7px;border-radius:999px;font-family:var(--font-mono)}
+  .party .pe{font-size:12px;color:var(--text-muted);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .party .pst{flex-shrink:0;text-align:right}
+  .party .pst .when{font-size:10.5px;color:var(--text-faint);font-family:var(--font-mono);margin-top:4px}
+
+  /* timeline */
+  .tl{position:relative;margin:0;padding:0;list-style:none}
+  .tl::before{content:"";position:absolute;left:13px;top:6px;bottom:6px;width:1.5px;background:linear-gradient(180deg,color-mix(in srgb,var(--brand) 40%,transparent),var(--border-default))}
+  .tl li{position:relative;padding:0 0 18px 40px;min-height:28px}
+  .tl li:last-child{padding-bottom:0}
+  .tl .dot{position:absolute;left:6px;top:1px;width:16px;height:16px;border-radius:50%;background:var(--void);
+    border:2px solid var(--brand-deep);display:grid;place-items:center;color:var(--brand)}
+  .tl .dot svg{width:9px;height:9px}
+  .tl .te{font-size:13.5px;font-weight:600;color:var(--text-strong)}
+  .tl .tm{font-size:11.5px;color:var(--text-muted);font-family:var(--font-mono);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 12px}
+  .tl .tm .ip{color:var(--text-body)}
+
+  .empty{color:var(--text-muted);font-size:13px;padding:8px 0;text-align:center}
+
+  /* download row */
+  .dlrow{display:flex;gap:12px;flex-wrap:wrap}
+  .dlcard{flex:1 1 200px;display:flex;align-items:center;gap:12px;text-decoration:none;
+    padding:15px 16px;border-radius:var(--radius-md);border:1px solid var(--border-default);
+    background:var(--ink-800);color:var(--text-strong);transition:border-color var(--dur-base) var(--ease-out),background var(--dur-base) var(--ease-out);cursor:pointer}
+  .dlcard:hover{border-color:var(--brand);background:var(--brand-tint);color:var(--text-strong)}
+  .dlcard .di{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;color:var(--brand);
+    background:var(--brand-tint);border:1px solid color-mix(in srgb,var(--brand) 25%,transparent)}
+  .dlcard .di svg{width:19px;height:19px}
+  .dlcard .dt{font-weight:600;font-size:13.5px}
+  .dlcard .ds{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+  .dlcard[aria-disabled="true"]{opacity:.42;pointer-events:none}
+  .lockednote{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text-muted);line-height:1.45;
+    background:var(--brand-tint);border:1px solid color-mix(in srgb,var(--brand) 22%,transparent);border-radius:var(--radius-md);padding:11px 15px;margin-top:4px}
+  .lockednote svg.ico{color:var(--brand);width:16px;height:16px;flex-shrink:0}
+
+  /* brand footer */
+  .brandfoot{text-align:center;margin-top:28px;font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-mono);letter-spacing:.03em}
+  .brandfoot svg.ico{width:14px;height:14px;color:var(--brand)}
+
+  /* multi-envelope inbox (ENV-7) */
+  .inbox-note{color:var(--text-muted);font-size:12.5px;line-height:1.5;margin:0 0 14px}
+  .inbox-row{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--surface-card);
+    border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:12px 15px;margin-bottom:9px;cursor:pointer;
+    color:var(--text-strong);font:inherit;transition:border-color var(--dur-base) var(--ease-out),background var(--dur-base) var(--ease-out)}
+  .inbox-row:last-child{margin-bottom:0}
+  button.inbox-row:hover{border-color:var(--brand);background:var(--brand-tint)}
+  .inbox-row.current{cursor:default;border-color:color-mix(in srgb,var(--brand) 40%,transparent);background:var(--brand-tint)}
+  .inbox-ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;
+    background:var(--brand-tint);color:var(--brand)}
+  .inbox-ic svg{width:17px;height:17px}
+  .inbox-mid{flex:1;min-width:0}
+  .inbox-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .inbox-meta{display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;font-size:11.5px;color:var(--text-muted)}
+  .inbox-lock{display:inline-flex;align-items:center;gap:4px;color:var(--warning)}
+  .inbox-lock svg{width:12px;height:12px}
+  .inbox-cur{font-size:10.5px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;font-family:var(--font-mono)}
+  .inbox-go{font-size:12.5px;font-weight:700;color:var(--brand);flex-shrink:0}
+
+  /* centered identity / challenge gate (glass card) */
+  .gate{max-width:480px;margin:46px auto 0}
+  .gatecard{background:var(--glass-fill);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);
+    backdrop-filter:blur(var(--glass-blur)) saturate(1.25);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.25);
+    border-radius:var(--radius-xl);padding:30px 28px}
+  .gatecard .gico{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;margin:0 auto 16px;color:var(--brand);
+    background:linear-gradient(140deg,color-mix(in srgb,var(--brand) 16%,transparent),color-mix(in srgb,var(--brand-grad-to) 6%,transparent));border:1px solid color-mix(in srgb,var(--brand) 30%,transparent);
+    box-shadow:0 12px 30px -12px color-mix(in srgb,var(--brand) 55%,transparent)}
+  .gatecard .gico svg{width:24px;height:24px}
+  .gatecard h2{margin:0 0 6px;font-family:var(--font-display);font-weight:700;font-size:21px;letter-spacing:-.02em;text-align:center;color:var(--text-strong)}
+  .gatecard .gsub{color:var(--text-muted);font-size:13px;text-align:center;margin:0 0 22px;line-height:1.55}
+  .gbtn{width:100%;border:1px solid transparent;border-radius:var(--radius-md);padding:14px 18px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:var(--font-display);
+    display:inline-flex;align-items:center;justify-content:center;gap:10px;transition:transform var(--dur-fast) var(--ease-out),background var(--dur-base) var(--ease-out),border-color var(--dur-base) var(--ease-out);margin-bottom:11px}
+  .gbtn:active{transform:translateY(1px)}
+  .gbtn.primary{background:var(--brand);color:var(--brand-contrast)}
+  .gbtn.primary:hover{background:var(--brand-bright)}
+  .gbtn.primary:disabled{opacity:.4;cursor:not-allowed}
+  .gbtn.google{background:#fff;color:#1f2328;border-color:rgba(255,255,255,.4)}
+  .gbtn.google:hover{filter:brightness(.97)}
+  .gbtn.ghost{background:var(--ink-800);color:var(--text-strong);border-color:var(--border-default)}
+  .gbtn.ghost:hover{border-color:var(--brand);color:var(--brand)}
+  .gbtn svg{width:18px;height:18px}
+  .gor{display:flex;align-items:center;gap:12px;color:var(--text-muted);font-size:11px;font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;margin:6px 0 14px}
+  .gor::before,.gor::after{content:"";flex:1;height:1px;background:var(--border-default)}
+  .gfield{margin-bottom:13px}
+  .glabel{display:block;font-size:11.5px;font-weight:600;color:var(--text-body);margin:0 0 6px;letter-spacing:.01em}
+  .ginput{width:100%;padding:13px 14px;border-radius:var(--radius-md);border:1px solid var(--border-default);background:var(--ink-900);color:var(--text-strong);font-size:15px;font-family:inherit;transition:border-color var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out)}
+  .ginput:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--ring)}
+  .ginput.code{font-family:var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:.42em;text-align:center;font-size:22px;font-weight:600}
+  .chanrow{display:flex;gap:9px;margin-bottom:14px}
+  .chanopt{flex:1;border:1px solid var(--border-default);background:var(--ink-900);color:var(--text-body);border-radius:var(--radius-md);padding:12px;cursor:pointer;
+    font-weight:600;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:border-color var(--dur-base) var(--ease-out)}
+  .chanopt:hover{border-color:var(--border-strong)}
+  .chanopt.on{border-color:var(--brand);background:var(--brand-tint);color:var(--brand);box-shadow:0 0 0 3px var(--ring)}
+  .chanopt svg{width:16px;height:16px}
+  .gnote{font-size:11.5px;color:var(--text-muted);line-height:1.5;text-align:center;margin:14px 0 0}
+  .gerr{font-size:12.5px;color:#ffc9c9;background:color-mix(in srgb,var(--error) 10%,transparent);border:1px solid color-mix(in srgb,var(--error) 30%,transparent);
+    border-radius:var(--radius-md);padding:10px 13px;margin:0 0 14px;display:none;line-height:1.45}
+  .gerr.show{display:block}
+  .glink{display:block;text-align:center;font-size:12.5px;color:var(--text-muted);margin-top:14px;cursor:pointer}
+  .glink:hover{color:var(--brand)}
+  .gsec{display:inline-flex;align-items:center;gap:7px;justify-content:center;width:100%;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:.05em;margin-top:18px}
+  .gsec svg.ico{width:13px;height:13px;color:var(--brand)}
+
+  /* terminal / error / spinner (ceremonial seal) */
+  .center{text-align:center;padding:80px 20px;position:relative}
+  .center .ck{position:relative;width:80px;height:80px;border-radius:50%;margin:0 auto 22px;display:flex;align-items:center;justify-content:center;
+     background:radial-gradient(circle at 32% 28%,color-mix(in srgb,var(--brand) 24%,transparent),color-mix(in srgb,var(--brand) 5%,transparent));border:1.5px solid color-mix(in srgb,var(--brand) 45%,transparent);color:var(--brand);
+     box-shadow:0 18px 50px -16px color-mix(in srgb,var(--brand) 50%,transparent),inset 0 1px 0 rgba(255,255,255,.12);animation:pop .55s cubic-bezier(.2,1.4,.4,1)}
+  .center .ck.warn{background:radial-gradient(circle at 32% 28%,color-mix(in srgb,var(--warning) 22%,transparent),transparent);border-color:color-mix(in srgb,var(--warning) 40%,transparent);color:var(--warning)}
+  .center .ck.bad{background:radial-gradient(circle at 32% 28%,color-mix(in srgb,var(--error) 22%,transparent),transparent);border-color:color-mix(in srgb,var(--error) 40%,transparent);color:var(--error)}
+  @keyframes pop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .center .ck svg{width:36px;height:36px}
+  .center h2{font-family:var(--font-display);font-weight:700;font-size:24px;letter-spacing:-.02em;margin:0 0 8px;color:var(--text-strong)}
+  .center p{color:var(--text-muted);max-width:440px;margin:0 auto;line-height:1.6}
+  .spin{width:34px;height:34px;border:3px solid var(--surface-raised);border-top-color:var(--brand);border-radius:50%;animation:sp 1s linear infinite;margin:96px auto}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+
+  #toast{position:fixed;left:50%;top:72px;transform:translateX(-50%) translateY(-16px);z-index:90;
+     background:var(--glass-fill);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);
+     backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);
+     border-radius:var(--radius-md);padding:12px 18px;font-size:13.5px;font-weight:600;color:var(--text-strong);
+     opacity:0;pointer-events:none;transition:.25s;max-width:90vw}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.err{border-color:color-mix(in srgb,var(--error) 50%,transparent);color:#ffc9c9}
+  #toast.ok{border-color:color-mix(in srgb,var(--brand) 50%,transparent);color:var(--text-strong)}
+
+  @media(max-width:560px){
+    header{padding:0 14px;gap:10px;height:56px}
+    .wrap{padding:22px 12px 60px}
+    .doc-name{max-width:42vw}
+    .hdr-doc .ey{display:none}
+    .signer-pill .nm{display:none}.signer-pill{padding:6px;border-radius:50%}
+    .banner{padding:20px}.banner h1{font-size:20px}
+    .card{padding:18px 16px}
+    .party .pe{max-width:38vw}
+    .gatecard{padding:24px 18px;border-radius:var(--radius-lg)}
+    .gate{margin-top:24px}
+    .center{padding:54px 16px}
+    .dlrow{flex-direction:column}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<header>
+  <span class="brand">
+    <span class="lds-globe" data-size="30" aria-hidden="true"></span>
+    <span class="brand-word"><span class="l">Lifted</span><span class="s">Sign</span></span>
+  </span>
+  <span class="hdr-div" aria-hidden="true"></span>
+  <span class="hdr-doc"><span class="ey">Envelope</span><span class="doc-name" id="docName">Loading…</span></span>
+  <span class="spacer"></span>
+  <span class="signer-pill" id="signerPill" style="display:none"></span>
+</header>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div class="wrap" id="main"><div class="spin" aria-label="Loading"></div></div>
+
+<script>
+/* LiftedSign — envelope return-view (public, verified-access).
+ * Consumes EXACTLY the contract endpoints:
+ *   GET  /api/envelope/{env}                  -> envelope payload | {need_auth} | {challenge_required} | {voided}
+ *   POST /api/envelope/{env}/auth/start       -> {method:'google'|'otp', channel?, signer_hint?} -> {redirect} | {to_masked,channel}
+ *   POST /api/envelope/{env}/auth/otp-verify  -> {signer_hint, channel, code} -> {ok}
+ *   POST /api/envelope/{env}/challenge         -> {value} -> {ok} | {attempts_remaining} | {locked,retry_after}
+ *   GET  /api/envelope/{env}/download           -> sealed PDF (completed only)
+ *   GET  /api/envelope/{env}/certificate        -> Certificate of Completion PDF
+ * The Google handshake is a top-level navigation to the server-returned redirect; the
+ * callback is handled server-side and sets the __Host-ls_env cookie before bouncing back here.
+ * No secrets, SSN, DOB, OTP, or challenge values are stored or logged client-side.
+ * No prompt()/confirm()/alert(). Inline SVG icons only — no emoji. */
+(function () {
+  "use strict";
+
+  // envelope_id is the LAST opaque segment of /envelope/{env_id}
+  var ENV = location.pathname.split("/").filter(Boolean).pop() || "";
+  var API = "/api/envelope/" + encodeURIComponent(ENV);
+
+  // Remembered between auth steps so OTP verify can send the same hint+channel the user chose.
+  // (an email hint the signer typed — NOT a secret; never persisted beyond this page session)
+  var otpHint = "", otpChannel = "email";
+
+  /* =====================================================================================
+     KEEP IN SYNC with web/sign.html — the core UI helpers below ($/el/esc, the SVG
+     icon set + icon(), toast(), applyBrand(), and friends) are duplicated across both
+     signer pages. There is no shared module yet, so any fix here must be mirrored in
+     web/sign.html (and vice-versa). Dedupe into a build-time shared module is a
+     follow-up; until then, edit both files together.
+     ===================================================================================== */
+  var $ = function (id) { return document.getElementById(id); };
+  function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+
+  /* ---------------- inline SVG icon set (1.5px stroke, currentColor) — no emoji ---------------- */
+  var S = function (paths, extra) {
+    return '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" ' +
+           'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (extra || "") + '>' + paths + '</svg>';
+  };
+  var SVG_ICONS = {
+    shield:   S('<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/>'),
+    lock:     S('<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'),
+    check:    S('<path d="M5 13l4 4L19 7"/>'),
+    checksm:  S('<path d="M5 12l4 4L19 6"/>'),
+    x:        S('<path d="M6 6l12 12M18 6L6 18"/>'),
+    bang:     S('<path d="M12 8v5"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/>'),
+    warn:     S('<path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/>'),
+    doc:      S('<path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 14h6M9 17h4"/>'),
+    download: S('<path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/>'),
+    cert:     S('<circle cx="12" cy="9" r="6"/><path d="m9 13-2 8 5-3 5 3-2-8"/><path d="m9.5 9 1.7 1.7L15 7"/>'),
+    clock:    S('<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>'),
+    eye:      S('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>'),
+    pen:      S('<path d="M3 17c3 0 4-10 7-10s2 8 4 8 2-4 4-4"/><path d="M3 21h18"/>'),
+    send:     S('<path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7Z"/>'),
+    mail:     S('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+    phone:    S('<path d="M5 4h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/>'),
+    google:   S('<path d="M12 11v3.5h5a5 5 0 1 1-1.4-5.6" stroke="currentColor"/>', ' viewBox="0 0 24 24"'),
+    user:     S('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>'),
+    key:      S('<circle cx="8" cy="14" r="4"/><path d="m11 11 9-9 2 2-2 2 2 2-3 3-2-2-3 3"/>'),
+    people:   S('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.4 3-5.5 6.5-5.5s6.5 2.1 6.5 5.5"/><path d="M16 5.2A3.5 3.5 0 0 1 16 12M22 20c0-2.6-1.6-4.4-4-5.1"/>'),
+    history:  S('<path d="M4 12a8 8 0 1 0 2.4-5.7L4 9"/><path d="M4 4v5h5"/><path d="M12 8v4l3 2"/>'),
+    refresh:  S('<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>')
+  };
+  function icon(name) { return SVG_ICONS[name] || SVG_ICONS.doc; }
+  function iconSpan(name) { var s = el("span", "ico"); s.innerHTML = icon(name); return s; }
+  function hydrateIcons(root) {
+    (root || document).querySelectorAll("[data-svg]").forEach(function (n) {
+      n.innerHTML = icon(n.getAttribute("data-svg"));
+    });
+  }
+
+  /* ---------------- toast ---------------- */
+  var toastT = null;
+  function toast(msg, kind) {
+    var t = $("toast"); t.textContent = msg; t.className = "show " + (kind || "");
+    clearTimeout(toastT); toastT = setTimeout(function () { t.className = ""; }, kind === "err" ? 5200 : 3200);
+  }
+
+  /* ---------------- request helper ---------------- */
+  function jsonPost(url, body) {
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(body || {})
+    }).then(function (x) { return x.json().then(function (j) { j.__status = x.status; return j; }); });
+  }
+
+  /* ---------------- screen scaffolding ---------------- */
+  function clearMain() { var m = $("main"); m.textContent = ""; return m; }
+  function topBar(pct) { $("bar").style.width = (pct == null ? 100 : pct) + "%"; }
+
+  function showCenter(kind, title, body, extra) {
+    var m = clearMain(); var d = el("div", "center reveal");
+    var ck = el("div", "ck " + (kind || ""));
+    ck.innerHTML = icon(kind === "bad" ? "x" : kind === "warn" ? "bang" : "check");
+    d.appendChild(ck);
+    d.appendChild(el("h2", null, title));
+    if (body) d.appendChild(el("p", null, body));
+    if (extra) d.appendChild(extra);
+    m.appendChild(d); topBar(100);
+  }
+  function showErr(title, body) { showCenter("warn", title || "Something went wrong", body || "Please reload and try again."); }
+
+  /* =====================================================================================
+     LOAD / ROUTING — a single GET drives which surface we show (auth gate, challenge, view)
+     ===================================================================================== */
+  function setSignerPill(me) {
+    var pill = $("signerPill");
+    if (!me || (!me.name && !me.email_masked)) { pill.style.display = "none"; return; }
+    pill.textContent = ""; pill.style.display = "inline-flex";
+    var nm = me.name || me.email_masked || "";
+    var inits = (me.name || me.email_masked || "?").split(/[\s@.]+/).filter(Boolean)
+                  .map(function (w) { return (w[0] || "").toUpperCase(); }).join("").slice(0, 2) || "?";
+    var av = el("span", "av", inits); av.setAttribute("aria-hidden", "true");
+    var label = el("span", "nm", nm);
+    pill.appendChild(av); pill.appendChild(label);
+    pill.setAttribute("title", nm);
+    pill.setAttribute("aria-label", "Signed in as " + nm);
+  }
+
+  function applyBrand(b) {
+    if (!b) return;
+    var root = document.documentElement.style;
+    if (b.accent) root.setProperty("--accent", b.accent);
+    if (b.accent2) root.setProperty("--accent2", b.accent2);
+    if (b.teal) root.setProperty("--teal", b.teal);
+    if (b.cyan) root.setProperty("--cyan", b.cyan);
+  }
+
+  async function load() {
+    topBar(18);
+    var r;
+    try { r = await fetch(API, { credentials: "same-origin" }).then(function (x) { return x.json().then(function (j) { j.__status = x.status; return j; }); }); }
+    catch (e) { return showErr("Connection problem", "We couldn't reach the envelope service. Check your connection and reload."); }
+    if (!r) return showErr();
+    topBar(60);
+
+    // Not signed in (verified envelope session absent/expired) -> identity gate.
+    if (r.need_auth || r.__status === 401) { return renderAuthGate(); }
+    // Sender voided/cancelled the envelope.
+    if (r.voided) { return showCenter("warn", "This document was voided", r.message || "The sender voided this envelope. It can no longer be viewed or downloaded."); }
+    // Identity verified, but a sender access-lock challenge stands between you and the contents.
+    if (r.challenge_required) { return renderChallenge(r.challenge_type, r.challenge_prompt); }
+    if (!r.ok) { return showErr("Couldn't open this envelope", r.error || "This envelope link is invalid or no longer available."); }
+
+    renderDashboard(r);
+  }
+
+  /* =====================================================================================
+     IDENTITY GATE — prove who you are (Google OR one-time code) before anything is shown
+     ===================================================================================== */
+  function renderAuthGate() {
+    topBar(45);
+    var m = clearMain();
+    var g = el("div", "gate reveal");
+    var card = el("div", "gatecard");
+    var gi = el("div", "gico"); gi.innerHTML = icon("lock"); card.appendChild(gi);
+    card.appendChild(el("h2", null, "Verify it's you"));
+    card.appendChild(el("p", "gsub", "For your security, confirm your identity before we show this envelope — its status, every party's progress, and your sealed copy."));
+
+    var err = el("div", "gerr"); err.id = "authErr"; card.appendChild(err);
+
+    // Google
+    var gbtn = el("button", "gbtn google"); gbtn.type = "button";
+    gbtn.innerHTML = icon("google") + "<span>Continue with Google</span>";
+    gbtn.addEventListener("click", startGoogle);
+    card.appendChild(gbtn);
+
+    card.appendChild(el("div", "gor", "or"));
+
+    // OTP — email a one-time code to the address already on this envelope (no phone needed)
+    var lab = el("label", "glabel", "Email me a one-time code"); lab.setAttribute("for", "otpEmail"); card.appendChild(lab);
+
+    var fld = el("div", "gfield");
+    var inp = el("input", "ginput"); inp.id = "otpEmail"; inp.type = "email"; inp.autocomplete = "email";
+    inp.placeholder = "you@example.com — your address on this envelope";
+    fld.appendChild(inp); card.appendChild(fld);
+
+    var send = el("button", "gbtn primary"); send.type = "button"; send.id = "otpSend";
+    send.innerHTML = icon("send") + "<span>Send me a code</span>";
+    send.addEventListener("click", function () { sendOtp(inp.value); });
+    card.appendChild(send);
+    inp.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); sendOtp(inp.value); } });
+
+    card.appendChild(el("p", "gnote", "We only send the code to the email the sender already has on file for you — never to an address you type that isn't on this envelope."));
+
+    var sec = el("div", "gsec"); sec.innerHTML = icon("shield") + "<span>Secured by LiftedSign</span>"; card.appendChild(sec);
+
+    g.appendChild(card); m.appendChild(g);
+    hydrateIcons(g);
+    setTimeout(function () { try { inp.focus(); } catch (e) {} }, 120);
+  }
+
+  function gateErr(msg) {
+    var e = $("authErr"); if (!e) { toast(msg, "err"); return; }
+    e.textContent = msg; e.className = msg ? "gerr show" : "gerr";
+  }
+
+  async function startGoogle() {
+    gateErr("");
+    var btn = document.querySelector(".gbtn.google");
+    if (btn) { btn.disabled = true; }
+    var r;
+    try { r = await jsonPost(API + "/auth/start", { method: "google" }); }
+    catch (e) { r = null; }
+    if (r && r.ok && r.redirect) {
+      // top-level navigation to Google's consent screen (server set the state/nonce cookies)
+      window.location.href = r.redirect;
+      return;
+    }
+    if (btn) btn.disabled = false;
+    gateErr((r && r.error) || "Google sign-in isn't available right now. Try a one-time code instead.");
+  }
+
+  async function sendOtp(emailVal) {
+    var v = (emailVal || "").trim();
+    if (!v) { gateErr("Enter the email address the sender used for you."); return; }
+    if (otpChannel === "email" && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { gateErr("Enter a valid email address."); return; }
+    gateErr("");
+    otpHint = v;
+    var btn = $("otpSend"); btn.disabled = true; var prev = btn.innerHTML; btn.innerHTML = '<span>Sending…</span>';
+    var r;
+    try { r = await jsonPost(API + "/auth/start", { method: "otp", channel: otpChannel, signer_hint: v }); }
+    catch (e) { r = null; }
+    btn.disabled = false; btn.innerHTML = prev;
+    if (r && r.ok) {
+      // server returns to_masked + channel when it actually sent; if it withheld (no match) it
+      // still returns ok to avoid enumeration — we show the verify screen either way.
+      renderOtpVerify(r.to_masked, r.channel || otpChannel);
+    } else {
+      gateErr((r && r.error) || "We couldn't send a code right now. Please try again.");
+    }
+  }
+
+  function renderOtpVerify(masked, channel) {
+    var m = clearMain();
+    var g = el("div", "gate reveal");
+    var card = el("div", "gatecard");
+    var gi = el("div", "gico"); gi.innerHTML = icon(channel === "sms" ? "phone" : "mail"); card.appendChild(gi);
+    card.appendChild(el("h2", null, "Enter your code"));
+    var dest = masked ? (" to " + masked) : "";
+    card.appendChild(el("p", "gsub", "We sent a 6-digit code" + dest + ". Enter it below to continue. If you don't receive one, it may not be the address on file."));
+
+    var err = el("div", "gerr"); err.id = "authErr"; card.appendChild(err);
+
+    var fld = el("div", "gfield");
+    var inp = el("input", "ginput code"); inp.id = "otpCode"; inp.type = "text"; inp.inputMode = "numeric";
+    inp.autocomplete = "one-time-code"; inp.maxLength = 6; inp.placeholder = "••••••";
+    fld.appendChild(inp); card.appendChild(fld);
+
+    var go = el("button", "gbtn primary"); go.type = "button"; go.id = "otpVerify";
+    go.innerHTML = icon("check") + "<span>Verify &amp; continue</span>";
+    go.addEventListener("click", function () { verifyOtp(inp.value, channel); });
+    card.appendChild(go);
+
+    inp.addEventListener("input", function () { inp.value = inp.value.replace(/\D/g, "").slice(0, 6); });
+    inp.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); verifyOtp(inp.value, channel); } });
+
+    var back = el("div", "glink", "Use a different method"); back.addEventListener("click", renderAuthGate); card.appendChild(back);
+
+    var sec = el("div", "gsec"); sec.innerHTML = icon("shield") + "<span>Secured by LiftedSign</span>"; card.appendChild(sec);
+
+    g.appendChild(card); m.appendChild(g);
+    hydrateIcons(g);
+    setTimeout(function () { try { inp.focus(); } catch (e) {} }, 120);
+  }
+
+  async function verifyOtp(code, channel) {
+    var c = (code || "").replace(/\D/g, "");
+    // Codes are always exactly 6 digits — don't burn a rate-limited verify attempt on a short input.
+    if (c.length !== 6) { gateErr("Enter the 6-digit code we sent you."); return; }
+    gateErr("");
+    var btn = $("otpVerify"); btn.disabled = true; var prev = btn.innerHTML; btn.innerHTML = '<span>Verifying…</span>';
+    var r;
+    try { r = await jsonPost(API + "/auth/otp-verify", { signer_hint: otpHint, channel: channel, code: c }); }
+    catch (e) { r = null; }
+    if (r && r.ok) {
+      toast("Verified — opening your envelope.", "ok");
+      // session cookie is set; re-fetch the envelope (may then show a challenge or the dashboard)
+      load();
+    } else {
+      btn.disabled = false; btn.innerHTML = prev;
+      gateErr((r && r.error) || "That code didn't match. Please try again.");
+    }
+  }
+
+  /* =====================================================================================
+     ACCESS-LOCK CHALLENGE — sender-set second factor (code / Q&A / DOB / SSN-last4)
+     NEVER sends or stores anything but the single value the signer types, over TLS, once.
+     ===================================================================================== */
+  // KEEP IN SYNC with web/sign.html:CHAL_INPUT — the per-challenge-type input
+  // affordance/prompt maps are duplicated across both signer pages; edit both together.
+  function challengeMeta(ctype) {
+    // UI affordances ONLY — the value is normalized + verified server-side; we never reveal the answer.
+    switch (ctype) {
+      case "code":      return { ico: "key",  label: "Access code", ph: "Enter the access code", inputmode: "text" };
+      case "text":      return { ico: "pen",  label: "Security answer", ph: "Type your answer", inputmode: "text" };
+      case "dob":       return { ico: "clock", label: "Date of birth", ph: "", inputmode: "date" };
+      case "ssn_last4": return { ico: "lock", label: "Last 4 of SSN", ph: "0000", inputmode: "numeric", maxlen: 4 };
+      case "ssn":       return { ico: "lock", label: "SSN", ph: "•••••••••", inputmode: "numeric", maxlen: 11 };
+      default:          return { ico: "lock", label: "Verification", ph: "Enter the requested value", inputmode: "text" };
+    }
+  }
+
+  function renderChallenge(ctype, prompt) {
+    topBar(70);
+    var meta = challengeMeta(ctype);
+    var m = clearMain();
+    var g = el("div", "gate reveal");
+    var card = el("div", "gatecard");
+    var gi = el("div", "gico"); gi.innerHTML = icon(meta.ico); card.appendChild(gi);
+    card.appendChild(el("h2", null, "One more check"));
+    // The sender's prompt is shown verbatim; if absent we fall back to the type label.
+    card.appendChild(el("p", "gsub", prompt || ("Please confirm your " + meta.label.toLowerCase() + " to open this envelope.")));
+
+    var err = el("div", "gerr"); err.id = "chalErr"; card.appendChild(err);
+
+    var fld = el("div", "gfield");
+    var lab = el("label", "glabel", meta.label); lab.setAttribute("for", "chalVal"); fld.appendChild(lab);
+    var inp;
+    if (meta.inputmode === "date") {
+      inp = el("input", "ginput"); inp.type = "date"; inp.style.colorScheme = "dark";
+    } else {
+      inp = el("input", "ginput"); inp.type = "text";
+      inp.inputMode = meta.inputmode === "numeric" ? "numeric" : "text";
+      inp.placeholder = meta.ph;
+      if (meta.maxlen) inp.maxLength = meta.maxlen;
+      // never persist or autofill secret-ish values
+      inp.autocomplete = "off"; inp.autocapitalize = "off"; inp.spellcheck = false;
+      if (ctype === "ssn" || ctype === "ssn_last4") {
+        inp.addEventListener("input", function () { inp.value = inp.value.replace(/[^\d\-\s]/g, ""); });
+      }
+    }
+    inp.id = "chalVal";
+    fld.appendChild(inp); card.appendChild(fld);
+
+    var go = el("button", "gbtn primary"); go.type = "button"; go.id = "chalGo";
+    go.innerHTML = icon("check") + "<span>Continue</span>";
+    go.addEventListener("click", function () { submitChallenge(inp.value); });
+    card.appendChild(go);
+    inp.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); submitChallenge(inp.value); } });
+
+    card.appendChild(el("p", "gnote", "This was set by the sender. We never store what you type in clear text."));
+    var sec = el("div", "gsec"); sec.innerHTML = icon("shield") + "<span>Secured by LiftedSign</span>"; card.appendChild(sec);
+
+    g.appendChild(card); m.appendChild(g);
+    hydrateIcons(g);
+    setTimeout(function () { try { inp.focus(); } catch (e) {} }, 120);
+  }
+
+  function chalErr(msg) {
+    var e = $("chalErr"); if (!e) { toast(msg, "err"); return; }
+    e.textContent = msg; e.className = msg ? "gerr show" : "gerr";
+  }
+
+  async function submitChallenge(value) {
+    var v = (value || "").trim();
+    if (!v) { chalErr("Please enter the requested value."); return; }
+    chalErr("");
+    var btn = $("chalGo"); btn.disabled = true; var prev = btn.innerHTML; btn.innerHTML = '<span>Checking…</span>';
+    var inp = $("chalVal");
+    var r;
+    try { r = await jsonPost(API + "/challenge", { value: v }); }
+    catch (e) { r = null; }
+    // Wipe the typed value from the field immediately after submit (defense-in-depth).
+    if (inp) inp.value = "";
+    if (r && r.ok) {
+      // session re-minted with chal_ok; open the dashboard
+      load();
+      return;
+    }
+    btn.disabled = false; btn.innerHTML = prev;
+    if (r && r.locked) {
+      var mins = Math.max(1, Math.round((r.retry_after || 900) / 60));
+      chalErr("Too many attempts. Please try again in about " + mins + " minutes.");
+    } else if (r && typeof r.attempts_remaining === "number") {
+      var n = r.attempts_remaining;
+      chalErr("That didn't match. " + (n > 0 ? (n + " attempt" + (n === 1 ? "" : "s") + " left.") : "Please try again."));
+    } else {
+      chalErr("That didn't match. Please try again.");
+    }
+    setTimeout(function () { try { if (inp) inp.focus(); } catch (e) {} }, 60);
+  }
+
+  /* =====================================================================================
+     DASHBOARD — document + status, parties' progress, audit timeline, downloads
+     ===================================================================================== */
+  function statusChip(status) {
+    var s = (status || "").toLowerCase();
+    var map = {
+      completed: ["done", "check", "Completed"],
+      sent:      ["wait", "send", "Out for signature"],
+      partial:   ["wait", "pen", "In progress"],
+      signed:    ["done", "check", "Signed"],
+      opened:    ["wait", "eye", "Opened"],
+      declined:  ["bad", "x", "Declined"],
+      voided:    ["bad", "x", "Voided"],
+      cancelled: ["bad", "x", "Cancelled"],
+      expired:   ["bad", "bang", "Expired"],
+      draft:     ["", "doc", "Draft"]
+    };
+    var c = map[s] || ["wait", "clock", status ? (status.charAt(0).toUpperCase() + status.slice(1)) : "Pending"];
+    var chip = el("span", "chip " + c[0]);
+    chip.appendChild(iconSpan(c[1]));
+    chip.appendChild(el("span", null, c[2]));
+    return chip;
+  }
+
+  function fmtTime(ts) {
+    if (ts == null || ts === "") return "";
+    var d;
+    if (typeof ts === "number") d = new Date(ts * 1000);
+    else { var n = Number(ts); d = isNaN(n) ? new Date(ts) : new Date(n * 1000); }
+    if (isNaN(d.getTime())) return String(ts);
+    try {
+      return d.toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    } catch (e) { return d.toISOString(); }
+  }
+
+  function initialsFor(name, email) {
+    return (name || email || "?").split(/[\s@.]+/).filter(Boolean)
+      .map(function (w) { return (w[0] || "").toUpperCase(); }).join("").slice(0, 2) || "?";
+  }
+
+  function renderDashboard(d) {
+    topBar(100);
+    var env = d.envelope || {};
+    var me = d.me || {};
+    var parties = d.parties || [];
+    var timeline = d.timeline || [];
+    var dl = d.download || {};
+
+    $("docName").textContent = env.name || "Document";
+    applyBrand(d.brand);
+    setSignerPill(me);
+
+    var m = clearMain();
+
+    /* --- status banner --- */
+    var st = (env.status || "").toLowerCase();
+    var sealed = st === "completed";
+    var b = el("div", "banner reveal");
+    b.appendChild(el("div", "eyb", "Your envelope"));
+    b.appendChild(el("h1", null, env.name || "Document"));
+    var lead = sealed
+      ? "This envelope is complete and sealed. Every party signed — download your sealed copy and the Certificate of Completion below."
+      : (st === "declined" || st === "voided" || st === "cancelled")
+        ? "This envelope is no longer active. See the timeline below for the full record."
+        : "Track this envelope in real time: every party's progress and a full, timestamped audit trail. We'll keep this page up to date.";
+    b.appendChild(el("p", null, lead));
+    var acts = el("div", "acts");
+    acts.appendChild(statusChip(env.status));
+    if (env.created_at) {
+      var sentChip = el("span", "chip"); sentChip.appendChild(iconSpan("send"));
+      sentChip.appendChild(el("span", null, "Sent " + fmtTime(env.created_at)));
+      acts.appendChild(sentChip);
+    }
+    if (sealed && env.completed_at) {
+      var doneChip = el("span", "chip done"); doneChip.appendChild(iconSpan("check"));
+      doneChip.appendChild(el("span", null, "Completed " + fmtTime(env.completed_at)));
+      acts.appendChild(doneChip);
+    }
+    b.appendChild(acts);
+    m.appendChild(b);
+
+    /* --- downloads --- */
+    var dcard = el("div", "card reveal"); dcard.style.animationDelay = "60ms";
+    var dch = el("div", "ch");
+    var dci = el("div", "ci"); dci.innerHTML = icon("download"); dch.appendChild(dci);
+    dch.appendChild(el("h2", null, "Your documents"));
+    dcard.appendChild(dch);
+
+    if (dl.available) {
+      var row = el("div", "dlrow");
+      row.appendChild(buildDlCard("doc", "Signed document", "Sealed, tamper-evident PDF", dl.doc_url || (API + "/download")));
+      row.appendChild(buildDlCard("cert", "Certificate of Completion", "Identities, timestamps & document hash", dl.cert_url || (API + "/certificate")));
+      dcard.appendChild(row);
+    } else {
+      var note = el("div", "lockednote");
+      note.innerHTML = icon("lock") +
+        "<span>Your sealed copy and Certificate of Completion unlock here the moment every party has signed. We'll email them too.</span>";
+      dcard.appendChild(note);
+    }
+    m.appendChild(dcard);
+
+    /* --- parties --- */
+    var pcard = el("div", "card reveal"); pcard.style.animationDelay = "120ms";
+    var pch = el("div", "ch");
+    var pci = el("div", "ci"); pci.innerHTML = icon("people"); pch.appendChild(pci);
+    pch.appendChild(el("h2", null, "Parties"));
+    var signed = parties.filter(function (p) { return (p.status || "").toLowerCase() === "signed"; }).length;
+    var psub = el("span", "sub", signed + " / " + parties.length + " signed"); pch.appendChild(psub);
+    pcard.appendChild(pch);
+
+    if (!parties.length) {
+      pcard.appendChild(el("div", "empty", "No parties on record."));
+    } else {
+      parties.forEach(function (p) {
+        var isMe = (me && p.email_masked && p.email_masked === me.email_masked && (!me.name || p.name === me.name));
+        var row = el("div", "party");
+        var av = el("span", "av" + (isMe ? " me" : ""), initialsFor(p.name, p.email_masked)); av.setAttribute("aria-hidden", "true");
+        row.appendChild(av);
+        var who = el("div", "pwho");
+        var pn = el("div", "pn"); pn.appendChild(document.createTextNode(p.name || p.email_masked || "Signer"));
+        if (isMe) { pn.appendChild(el("span", "youtag", "You")); }
+        who.appendChild(pn);
+        if (p.role) { var rl = el("span", "pe", p.role); rl.style.color = "var(--text-body)"; rl.style.fontFamily = "var(--font-sans)"; who.appendChild(rl); }
+        if (p.email_masked) who.appendChild(el("div", "pe", p.email_masked));
+        row.appendChild(who);
+        var pst = el("div", "pst");
+        pst.appendChild(statusChip(p.status));
+        if (p.signed_at) pst.appendChild(el("div", "when", fmtTime(p.signed_at)));
+        row.appendChild(pst);
+        pcard.appendChild(row);
+      });
+    }
+    m.appendChild(pcard);
+
+    /* --- timeline / audit --- */
+    var tcard = el("div", "card reveal"); tcard.style.animationDelay = "180ms";
+    var tch = el("div", "ch");
+    var tci = el("div", "ci"); tci.innerHTML = icon("history"); tch.appendChild(tci);
+    tch.appendChild(el("h2", null, "Audit timeline"));
+    var refresh = el("button", "mini"); refresh.type = "button"; refresh.innerHTML = icon("refresh") + "<span>Refresh</span>";
+    refresh.style.marginLeft = "auto"; refresh.style.padding = "6px 11px";
+    refresh.addEventListener("click", function () { refresh.disabled = true; load(); });
+    tch.appendChild(refresh);
+    tcard.appendChild(tch);
+
+    if (!timeline.length) {
+      tcard.appendChild(el("div", "empty", "No activity recorded yet."));
+    } else {
+      var ul = el("ul", "tl");
+      timeline.forEach(function (e) {
+        var li = el("li");
+        var dot = el("span", "dot"); dot.innerHTML = icon(timelineIcon(e.type_label)); li.appendChild(dot);
+        li.appendChild(el("div", "te", e.type_label || "Event"));
+        var meta = el("div", "tm");
+        if (e.actor) meta.appendChild(el("span", null, e.actor));
+        if (e.at) meta.appendChild(el("span", null, fmtTime(e.at)));
+        if (e.ip) { var ips = el("span", "ip", "IP " + e.ip); meta.appendChild(ips); }
+        li.appendChild(meta);
+        ul.appendChild(li);
+      });
+      tcard.appendChild(ul);
+    }
+    m.appendChild(tcard);
+
+    /* --- brand footer --- */
+    var foot = el("div", "brandfoot");
+    foot.innerHTML = icon("shield") + "<span>Secured by LiftedSign</span>";
+    m.appendChild(foot);
+
+    loadInbox(env.id);   /* ENV-7: if this email has more than one envelope, surface a picker */
+  }
+
+  /* =====================================================================================
+     MULTI-ENVELOPE INBOX (ENV-7) — once the email is verified, this same identity may have
+     several envelopes over time. Surface them all so the signer can choose; opening a
+     locked one still triggers that envelope's own security check (enforced server-side).
+     ===================================================================================== */
+  function loadInbox(curEnv) {
+    fetch(API + "/inbox", { credentials: "same-origin" })
+      .then(function (x) { return x.json(); })
+      .then(function (r) {
+        if (!r || !r.ok || (r.count || 0) < 2) return;   // only when there are multiple
+        var m = $("main");
+        var card = el("div", "card reveal");
+        var ch = el("div", "ch");
+        var ci = el("div", "ci"); ci.innerHTML = icon("people"); ch.appendChild(ci);
+        ch.appendChild(el("h2", null, "All your documents"));
+        ch.appendChild(el("span", "sub", r.count + " total"));
+        card.appendChild(ch);
+        card.appendChild(el("p", "inbox-note",
+          "Every document addressed to " + (r.email_masked || "you") +
+          ". Choose one to open — a locked document will ask for its security check first."));
+        r.envelopes.forEach(function (e) {
+          var row = el(e.current ? "div" : "button", "inbox-row" + (e.current ? " current" : ""));
+          if (!e.current) {
+            row.type = "button";
+            row.addEventListener("click", function () { switchEnvelope(e.envelope_id); });
+          }
+          var ic = el("span", "inbox-ic"); ic.innerHTML = icon("doc"); row.appendChild(ic);
+          var mid = el("div", "inbox-mid");
+          mid.appendChild(el("div", "inbox-name", e.name || "Document"));
+          var meta = el("div", "inbox-meta");
+          meta.appendChild(statusChip(e.status));
+          if (e.locked) {
+            var lk = el("span", "inbox-lock"); lk.innerHTML = icon("lock");
+            lk.appendChild(el("span", null, "Security check")); meta.appendChild(lk);
+          }
+          var when = e.completed_at || e.created_at;
+          if (when) meta.appendChild(el("span", null, fmtTime(when)));
+          mid.appendChild(meta);
+          row.appendChild(mid);
+          row.appendChild(el("span", e.current ? "inbox-cur" : "inbox-go", e.current ? "Viewing" : "Open"));
+          card.appendChild(row);
+        });
+        m.insertBefore(card, m.firstChild);   // pin the inbox to the very top
+      })
+      .catch(function () { /* inbox is additive — never block the dashboard */ });
+  }
+
+  function switchEnvelope(target) {
+    topBar(30);
+    jsonPost(API + "/switch", { target: target }).then(function (r) {
+      if (r && r.ok) { window.location.href = "/envelope/" + encodeURIComponent(target); }
+      else { toast((r && r.error) || "Couldn't open that document.", "err"); topBar(100); }
+    }).catch(function () { toast("Couldn't open that document.", "err"); topBar(100); });
+  }
+
+  function buildDlCard(ico, title, sub, href) {
+    var a = el("a", "dlcard"); a.href = href; a.target = "_blank"; a.rel = "noopener";
+    var di = el("div", "di"); di.innerHTML = icon(ico); a.appendChild(di);
+    var t = el("div"); t.appendChild(el("div", "dt", title)); t.appendChild(el("div", "ds", sub)); a.appendChild(t);
+    return a;
+  }
+
+  // Map a human-readable event label to a glyph (labels come pre-formatted from the server).
+  function timelineIcon(label) {
+    var l = (label || "").toLowerCase();
+    if (l.indexOf("sign") >= 0 && l.indexOf("decl") < 0) return "pen";
+    if (l.indexOf("complete") >= 0 || l.indexOf("seal") >= 0) return "check";
+    if (l.indexOf("sent") >= 0 || l.indexOf("invit") >= 0 || l.indexOf("remind") >= 0) return "send";
+    if (l.indexOf("open") >= 0 || l.indexOf("view") >= 0) return "eye";
+    if (l.indexOf("consent") >= 0) return "checksm";
+    if (l.indexOf("verif") >= 0 || l.indexOf("access") >= 0) return "lock";
+    if (l.indexOf("identity") >= 0) return "user";
+    if (l.indexOf("declin") >= 0 || l.indexOf("void") >= 0 || l.indexOf("withdraw") >= 0 || l.indexOf("lock") >= 0) return "x";
+    if (l.indexOf("download") >= 0 || l.indexOf("deliver") >= 0) return "download";
+    return "clock";
+  }
+
+  /* ---------------- boot ---------------- */
+  hydrateIcons(document);
+  load();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,845 @@
+{
+	"info": {
+		"name": "Lifted Sign API",
+		"_postman_id": "b7e1c4a2-6f3d-4d21-9a8e-1f0c2d3e4b5a",
+		"description": "Official Postman collection for the **Lifted Sign API** — turn a PDF into a legally binding, sealed, certificate-backed signed document.\n\nAuthentication is a developer **Bearer API key** (`sk_live_…` / `sk_test_…`) minted in the Developers tab of your Lifted Sign dashboard. Set `api_key` in the environment; the collection sends it as `Authorization: Bearer {{api_key}}` on every request.\n\n**Start here:** open the **Quickstart: send your first envelope** folder and run its requests top to bottom — Create captures the new `agreement_id` into a collection variable so every following request is pre-wired.\n\nBase URL and key live in the companion environment (`lifted-sign.postman_environment.json`). Hosted docs: https://sign.example.com",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{api_key}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://sign.example.com",
+			"type": "string"
+		},
+		{
+			"key": "agreement_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "signer_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "template_id",
+			"value": "5",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Quickstart: send your first envelope",
+			"description": "Run these six requests in order. Create → Add signer → Place field → Send → Get status. Create's test script stores the new `agreement_id`; Add signer stores `signer_id`. Everything else reads those variables, so no manual copy/paste.",
+			"item": [
+				{
+					"name": "1. Create envelope (upload PDF)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('created', function () {",
+									"  var j = pm.response.json();",
+									"  pm.expect(j.ok).to.be.true;",
+									"  pm.expect(j.id).to.be.a('number');",
+									"  pm.collectionVariables.set('agreement_id', j.id);",
+									"  console.log('agreement_id =', j.id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "The source PDF (max 60 MB). Pick a file in Postman."
+								},
+								{
+									"key": "name",
+									"value": "Master Services Agreement.pdf",
+									"type": "text",
+									"description": "Optional envelope name."
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements"
+							]
+						},
+						"description": "Upload a PDF to create a new draft envelope. Returns `{ok, id}` — the test script saves `id` into the `agreement_id` collection variable."
+					}
+				},
+				{
+					"name": "2. Add signer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('signer stored', function () {",
+									"  var j = pm.response.json();",
+									"  pm.expect(j.ok).to.be.true;",
+									"  if (j.signers && j.signers.length) {",
+									"    pm.collectionVariables.set('signer_id', j.signers[0].id);",
+									"    console.log('signer_id =', j.signers[0].id);",
+									"  }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"signers\": [\n    {\n      \"name\": \"Dana Client\",\n      \"email\": \"dana@example.com\",\n      \"role\": \"Client\",\n      \"order\": 1,\n      \"auth\": \"email\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/signers",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"signers"
+							]
+						},
+						"description": "Replace the envelope's signer set. Draft-only. Returns `{ok, signers}` — the test script saves the first signer's id into `signer_id` for the field-placement step."
+					}
+				},
+				{
+					"name": "3. Place a signature field (by anchor)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fields\": [\n    {\n      \"signer_id\": {{signer_id}},\n      \"type\": \"signature\",\n      \"anchor\": \"Signature:\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/fields",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"fields"
+							]
+						},
+						"description": "Place the signature by **anchor** — the easiest way, no coordinate math. `anchor` names text already in the PDF (here `Signature:`) and the field snaps to it (case-insensitive, matches across word boundaries). Returns `{ok, count, fields}`, where each field reports where it landed. Two other modes exist if you need pixel control — see the **Fields → Place fields** request. Fail-closed: if the anchor text isn't found the whole batch is rejected (`400 {ok:false, error:\"anchor_not_found\", field:0, detail:\"Signature:\"}`) and nothing is written."
+					}
+				},
+				{
+					"name": "4. Send for signature",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"Please countersign by Friday. Thanks!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/send",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"send"
+							]
+						},
+						"description": "Freeze the document, email each signer a single-use link, and move the envelope to `out_for_signature`. Returns `{ok, links, emailed, email_errors}`."
+					}
+				},
+				{
+					"name": "5. Get envelope status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}"
+							]
+						},
+						"description": "Read the full envelope — status, signers, fields, and audit events."
+					}
+				},
+				{
+					"name": "6. Remind pending signers",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/remind",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"remind"
+							]
+						},
+						"description": "Re-email every not-yet-signed signer. Returns `{ok, emailed, pending, errors}`."
+					}
+				}
+			]
+		},
+		{
+			"name": "Envelopes",
+			"description": "Create, list, read, and delete envelopes.",
+			"item": [
+				{
+					"name": "List envelopes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements?limit=50&offset=0",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Page size 1..200 (default 50)."
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"description": "Rows to skip (default 0)."
+								}
+							]
+						},
+						"description": "Return the account's envelopes newest-first with pagination. Each item carries derived counts (signed_n, signer_n, field_n, page_n)."
+					}
+				},
+				{
+					"name": "Create envelope (upload PDF)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "name",
+									"value": "Master Services Agreement.pdf",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements"
+							]
+						},
+						"description": "Upload a PDF (multipart `file` + optional `name`) to create a draft envelope. Returns `{ok, id}`."
+					}
+				},
+				{
+					"name": "Get one envelope",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}"
+							]
+						},
+						"description": "Full envelope: metadata, signers, fields, and the ordered events audit trail."
+					}
+				},
+				{
+					"name": "Delete draft envelope",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}"
+							]
+						},
+						"description": "Delete a draft (and its files). A sent/completed envelope returns 409 — void it instead."
+					}
+				}
+			]
+		},
+		{
+			"name": "Signers",
+			"description": "Define who signs and in what order (draft-only).",
+			"item": [
+				{
+					"name": "Set signers (replace all)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"signers\": [\n    {\n      \"name\": \"Dana Client\",\n      \"email\": \"dana@example.com\",\n      \"role\": \"Client\",\n      \"order\": 1,\n      \"auth\": \"email\"\n    },\n    {\n      \"name\": \"Sam Counsel\",\n      \"email\": \"sam@example.com\",\n      \"role\": \"Counsel\",\n      \"order\": 2,\n      \"auth\": \"access_code\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/signers",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"signers"
+							]
+						},
+						"description": "Replace the entire signer set. `auth` is one of email, email_otp, access_code (default email). Returns `{ok, signers}`; a sent envelope returns `{ok:false, error:'locked — already sent'}` at HTTP 200."
+					}
+				},
+				{
+					"name": "Set signing order mode",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mode\": \"sequential\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/order-mode",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"order-mode"
+							]
+						},
+						"description": "Choose `sequential` (one signer at a time) or `parallel` (all at once, default). Draft-only. Returns `{ok, order_mode}`."
+					}
+				}
+			]
+		},
+		{
+			"name": "Fields",
+			"description": "Place the signing fields on a draft envelope, replacing the whole layout in one fail-closed batch. Each field is bound to a signer (`signer` email or `signer_id`, defaulting to the sole signer) and a `type` (signature, initials, date, text, name, email, title, company, checkbox), and you pick **one of three placement modes**:\n\n1. **Anchor (recommended — no coordinate math):** `\"anchor\": \"Signature:\"` snaps the field to text already in the document (case-insensitive, spans word boundaries). Refine with `place` (right/left/below/above/over), `dx`/`dy` point offsets, and `anchor_index` for repeated labels.\n2. **Absolute points:** `\"page\": 1, \"x\": 400, \"y\": 90, \"unit\": \"pt\", \"width\": 110, \"height\": 26` — PDF points from the top-left, page 0-based.\n3. **Normalized 0..1:** `\"page\": 0, \"x\": 0.6, \"y\": 0.8, \"w\": 0.2, \"h\": 0.05` — fractions of the page, origin top-left (advanced).\n\n**Fail-closed:** if any field can't resolve (anchor text missing, unknown signer) the whole batch is rejected with a `400` and nothing is written.",
+			"item": [
+				{
+					"name": "Place fields (anchor — recommended)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fields\": [\n    {\n      \"signer\": \"dana@example.com\",\n      \"type\": \"signature\",\n      \"anchor\": \"Signature:\"\n    },\n    {\n      \"signer\": \"dana@example.com\",\n      \"type\": \"date\",\n      \"anchor\": \"Date:\",\n      \"place\": \"right\",\n      \"dx\": 6\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/fields",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"fields"
+							]
+						},
+						"description": "Place fields by **anchor** — the recommended, no-coordinate-math method. Name text already in the PDF and the field snaps to it. This body drops a signature on `Signature:` and a date just right of `Date:`. Returns `{ok, count, fields}` with each field's resolved position.\n\nNeed pixel control? Swap `anchor` for either of the other two modes on any field:\n- **Absolute points:** `{ \"signer\": \"dana@example.com\", \"type\": \"date\", \"page\": 1, \"x\": 400, \"y\": 90, \"unit\": \"pt\", \"width\": 110, \"height\": 26 }`\n- **Normalized 0..1:** `{ \"signer_id\": 12, \"type\": \"text\", \"page\": 0, \"x\": 0.6, \"y\": 0.8, \"w\": 0.2, \"h\": 0.05 }`\n\nFail-closed: an unresolvable field rejects the whole batch (`400`, `error` ∈ `anchor_not_found`, `signer_not_found`, `signer_required`, `no fields`) and writes nothing."
+					}
+				},
+				{
+					"name": "Auto-detect prefill fields",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/detect",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"detect"
+							]
+						},
+						"description": "Scan the draft PDF for {{tokens}} and labels like 'Company Name:' and add prefill fields (deterministic, no AI).",
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Sending",
+			"description": "Dispatch, remind, and void.",
+			"item": [
+				{
+					"name": "Send for signature",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"Please countersign by Friday. Thanks!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/send",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"send"
+							]
+						},
+						"description": "Freeze and email single-use links. Returns `{ok, links, emailed, email_errors}`. A 403 means the subscription is inactive or the sender email is unverified — nothing sends."
+					}
+				},
+				{
+					"name": "Remind pending signers",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/remind",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"remind"
+							]
+						},
+						"description": "Re-email every not-yet-signed signer. Returns `{ok, emailed, pending, errors}`."
+					}
+				},
+				{
+					"name": "Void envelope",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/void",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"void"
+							]
+						},
+						"description": "Void an in-flight envelope. Revokes live sessions and links. Terminal. Returns `{ok:true}`."
+					}
+				}
+			]
+		},
+		{
+			"name": "Status",
+			"description": "Read state, signers, fields, and page geometry.",
+			"item": [
+				{
+					"name": "Get page geometry",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/pages",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"pages"
+							]
+						},
+						"description": "Per-page {w,h} in PDF points (rotation applied). Returns `{pages, count}`."
+					}
+				}
+			]
+		},
+		{
+			"name": "Downloads",
+			"description": "Fetch the presented, executed, and certificate PDFs.",
+			"item": [
+				{
+					"name": "Download presented PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/pdf",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"pdf"
+							]
+						},
+						"description": "The exact bytes shown to signers (frozen snapshot once sent). Returns application/pdf."
+					}
+				},
+				{
+					"name": "Download executed (signed) PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/download",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"download"
+							]
+						},
+						"description": "The executed, sealed PDF. 404 until signatures are applied. Returns application/pdf."
+					}
+				},
+				{
+					"name": "Download Certificate of Completion",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/agreements/{{agreement_id}}/certificate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"agreements",
+								"{{agreement_id}}",
+								"certificate"
+							]
+						},
+						"description": "The audit certificate PDF. Available only once the envelope is completed (else 404)."
+					}
+				}
+			]
+		},
+		{
+			"name": "Account",
+			"description": "Read the authenticated account.",
+			"item": [
+				{
+					"name": "Get account",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/account",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"account"
+							]
+						},
+						"description": "Client-safe profile of the account the key belongs to, plus `agreement_count`. Returns `{account}`."
+					}
+				}
+			]
+		},
+		{
+			"name": "Templates",
+			"description": "Build a document once, reuse it. Prefill fields are filled via `answers` at use time.",
+			"item": [
+				{
+					"name": "List templates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/templates",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"templates"
+							]
+						},
+						"description": "Your saved templates, newest first (each includes its fields, so you can read the prefill field_key/prompt)."
+					}
+				},
+				{
+					"name": "Get one template",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/templates/{{template_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"templates",
+								"{{template_id}}"
+							]
+						},
+						"description": "A single owned template — read its prefill fields (field_key + prompt) to build the answers for Use."
+					}
+				},
+				{
+					"name": "Save envelope as template",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/templates",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"templates"
+							]
+						},
+						"description": "Snapshot an owned draft envelope (PDF + signer roles + field layout) into a reusable template.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agreement_id\": \"{{agreement_id}}\",\n  \"name\": \"MSA template\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Use template (create prefilled draft)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/templates/{{template_id}}/use",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"templates",
+								"{{template_id}}",
+								"use"
+							]
+						},
+						"description": "Mint a fresh draft from the template. answers is keyed by each prefill field's field_key.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"MSA - Acme Corp\",\n  \"recipients\": [\n    {\n      \"name\": \"Dana Client\",\n      \"email\": \"dana@example.com\"\n    }\n  ],\n  \"answers\": {\n    \"company\": \"Acme Corp\",\n    \"effective_date\": \"2026-08-01\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Archive template",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/mysign/templates/{{template_id}}/archive",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"mysign",
+								"templates",
+								"{{template_id}}",
+								"archive"
+							]
+						},
+						"description": "Soft-archive an owned template so it no longer appears in the list.",
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			]
+		}
+	]
+}

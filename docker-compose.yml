@@ -1,0 +1,49 @@
+# Lifted Sign — self-host compose file.
+#
+#   cp .env.example .env      # then set SIGN_SECRET
+#   docker compose up
+#
+# The default stack is just the app + a SQLite database on a local volume — no
+# external services required. To use Postgres instead, uncomment the `postgres`
+# service below and set DATABASE_URL in your .env (see the note there).
+
+services:
+  app:
+    build: .
+    image: lifted-sign:latest
+    env_file: .env
+    ports:
+      - "8080:8080"
+    volumes:
+      # SQLite database and sealed PDFs persist here across restarts.
+      - ./data:/app/data
+    restart: unless-stopped
+    # To run against Postgres, uncomment this and the `postgres` service below,
+    # and set DATABASE_URL=postgresql://sign:sign@postgres:5432/liftedsign in .env.
+    # depends_on:
+    #   postgres:
+    #     condition: service_healthy
+
+  # --- Optional Postgres backend --------------------------------------------
+  # Uncomment this whole block to run Lifted Sign on Postgres instead of SQLite.
+  # Then set in your .env:
+  #   DATABASE_URL=postgresql://sign:sign@postgres:5432/liftedsign
+  # and install the postgres extra in the image (pip install '.[postgres]').
+  #
+  # postgres:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_USER: sign
+  #     POSTGRES_PASSWORD: sign
+  #     POSTGRES_DB: liftedsign
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U sign -d liftedsign"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 10
+  #   restart: unless-stopped
+
+# volumes:
+#   pgdata:

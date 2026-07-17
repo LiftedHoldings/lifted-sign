@@ -1,0 +1,56 @@
+[project]
+name = "lifted-sign"
+version = "0.1.0"
+description = "Self-hostable, ESIGN/UETA-compliant e-signature server — an open DocuSign alternative."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "Daniel Wilson Kemp" }]
+keywords = ["esignature", "e-signature", "docusign", "pdf", "pades", "self-hosted", "esign"]
+
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "httpx>=0.27",            # Google OAuth / Twilio Verify (optional add-ons)
+    "python-multipart>=0.0.9", # file uploads
+    "cryptography>=42",       # Fernet at-rest encryption + self-signed cert generation
+    # --- PDF engine (all permissive-licensed; no AGPL PyMuPDF) ---
+    "reportlab>=4.5",         # BSD — text/graphics stamping
+    "pypdf>=4.0",             # BSD — page ops
+    "pikepdf>=9.0",           # MPL-2.0 — low-level PDF ops
+    "pypdfium2>=4",           # BSD/Apache — page rasterization
+    "pdfplumber>=0.11",       # MIT — text-span extraction for anchor field placement
+    "fonttools>=4.50",        # MIT — font metrics for text stamping/fitting
+    "Pillow>=10",             # HPND — image validation / redaction painting
+    "pyhanko>=0.35",          # MIT — PAdES/PKCS#7 certification signatures
+    "segno>=1.6",             # BSD — TOTP QR codes
+]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.2"]  # optional Postgres backend
+hosted = ["stripe>=10"]              # hosted-tier billing only
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[project.urls]
+Homepage = "https://sign.liftedholdings.com"
+Repository = "https://github.com/Lifted-Holdings/lifted-sign"
+
+[project.scripts]
+lifted-sign = "sign.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sign"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

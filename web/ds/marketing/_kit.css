@@ -1,0 +1,148 @@
+/* ============================================================================
+   LIFTED — MARKETING LAYER  (marketing/_kit.css)
+   Built ON TOP of styles.css. Link order on every marketing page:
+     <link rel="stylesheet" href="../../styles.css">
+     <link rel="stylesheet" href="../_kit.css">
+   Everything auto-tints to the active [data-brand]. Uses ONLY existing tokens
+   (--brand, --ink-*, --glass-*, --grad-brand, --space-*, --radius-*, --fs-*,
+   --font-display/sans/mono, --ease-out). No new colors invented.
+   ============================================================================ */
+
+/* ---- Page shell ---------------------------------------------------------- */
+.mk { background: var(--void); color: var(--text-body); }
+.mk-wrap { position: relative; isolation: isolate; overflow: clip; }      /* pair with .lds-ambient */
+.mk-container { width: 100%; max-width: var(--container); margin-inline: auto; padding-inline: var(--space-6); }
+.mk-container--wide { max-width: var(--container-wide); }
+.mk-section { padding-block: clamp(56px, 8vw, 120px); position: relative; }
+.mk-section--tight { padding-block: clamp(40px, 5vw, 72px); }
+.mk-center { text-align: center; }
+.mk-center .mk-lead { margin-inline: auto; }
+
+/* ---- Marketing nav ------------------------------------------------------- */
+.mk-nav { position: sticky; top: 0; z-index: 40; display: flex; align-items: center;
+  justify-content: space-between; gap: var(--space-6);
+  padding: 14px clamp(16px,4vw,40px);
+  background: color-mix(in srgb, var(--void) 72%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-subtle); }
+.mk-nav__links { display: flex; gap: var(--space-6); align-items: center; }
+.mk-nav__links a { color: var(--text-muted); font-size: 14px; font-weight: 500; }
+.mk-nav__links a:hover { color: var(--text-strong); }
+
+/* Lockup: neutral "Lifted" + brand product word (mirrors .lds-wordmark rules) */
+.mk-lockup { display: inline-flex; align-items: baseline; gap: .34ch; font-family: var(--font-display);
+  font-weight: 800; letter-spacing: -.02em; font-size: 19px; color: var(--text-strong); }
+.mk-lockup b { font-weight: 800; color: var(--brand); }            /* product word */
+.mk-lockup .mk-lockup__grad { background: var(--grad-brand); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ---- Hero ---------------------------------------------------------------- */
+.mk-hero { position: relative; padding-block: clamp(72px, 11vw, 168px); }
+.mk-hero__inner { position: relative; z-index: 2; max-width: 920px; }
+.mk-hero--center .mk-hero__inner { margin-inline: auto; text-align: center; }
+/* particle / glow canvas sits behind hero content */
+.lds-particles { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
+  pointer-events: none; display: block; }
+.mk-hero .lds-particles { -webkit-mask-image: radial-gradient(120% 90% at 50% 30%, #000 55%, transparent 88%);
+                                  mask-image: radial-gradient(120% 90% at 50% 30%, #000 55%, transparent 88%); }
+
+/* ---- Type helpers (lean on the scale, add fluid display) ----------------- */
+.mk-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono);
+  font-size: var(--fs-overline); line-height: 1; letter-spacing: var(--ls-overline); text-transform: uppercase;
+  font-weight: 700; color: var(--brand); margin-bottom: var(--space-5); }
+.mk-eyebrow::before { content: ""; width: 18px; height: 1px; background: var(--brand); opacity: .7; }
+.mk-eyebrow--plain::before { display: none; }
+.mk-display { font-family: var(--font-display); font-weight: 800; letter-spacing: -.03em; line-height: 1.02;
+  font-size: clamp(40px, 6.4vw, 76px); color: var(--text-strong); margin: 0; }
+.mk-h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: -.02em; line-height: 1.08;
+  font-size: clamp(28px, 3.6vw, 46px); color: var(--text-strong); margin: 0 0 var(--space-4); }
+.mk-h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -.01em;
+  font-size: clamp(19px, 1.5vw, 23px); color: var(--text-strong); margin: 0 0 var(--space-2); }
+.mk-lead { font-size: clamp(17px, 1.5vw, 21px); line-height: 1.5; color: var(--text-body); max-width: 60ch; margin: var(--space-5) 0 0; }
+.mk-grad { background: var(--grad-brand); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.mk-amount { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: .3px; }
+
+/* ---- Buttons (marketing scale; mirrors Button component intent) ---------- */
+.mk-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-sans); font-weight: 600; font-size: 15px; line-height: 1; cursor: pointer;
+  padding: 14px 22px; border-radius: var(--radius-md); border: 1px solid transparent;
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out); text-decoration: none; }
+.mk-btn:active { transform: translateY(1px); }
+.mk-btn--primary { background: var(--brand); color: var(--brand-contrast); }
+.mk-btn--primary:hover { background: var(--brand-bright); color: var(--brand-contrast); }
+.mk-btn--ghost { background: transparent; color: var(--text-strong); border-color: var(--border-strong); }
+.mk-btn--ghost:hover { border-color: var(--brand); color: var(--brand); }
+.mk-btn--lg { padding: 17px 28px; font-size: 16px; }
+.mk-btn-row { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-8); }
+.mk-hero--center .mk-btn-row { justify-content: center; }
+
+/* ---- Feature grid -------------------------------------------------------- */
+.mk-grid { display: grid; gap: var(--space-5); }
+.mk-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.mk-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.mk-grid--4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 900px) { .mk-grid--3, .mk-grid--4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .mk-grid--2, .mk-grid--3, .mk-grid--4 { grid-template-columns: 1fr; } }
+
+/* Glass panel — the house material. Use .mk-panel for marketing cards. */
+.mk-panel { position: relative; background: var(--glass-fill); border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg); box-shadow: var(--glass-shadow); padding: var(--space-6);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.3); backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
+  transition: transform var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out); }
+.mk-panel--hover:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--brand) 50%, var(--glass-border)); }
+.mk-panel--edge::before { content:""; position:absolute; inset:0 0 auto 0; height:2px; border-radius: inherit 0 0 inherit;
+  background: var(--grad-brand); border-top-left-radius: var(--radius-lg); border-top-right-radius: var(--radius-lg); }
+.mk-feat__icon { width: 44px; height: 44px; border-radius: var(--radius-md); display: grid; place-items: center;
+  background: var(--brand-tint); color: var(--brand); margin-bottom: var(--space-4); }
+.mk-feat__icon svg { width: 22px; height: 22px; stroke: currentColor; }
+
+/* ---- Stat strip ---------------------------------------------------------- */
+.mk-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--space-4); }
+@media (max-width: 700px){ .mk-stats { grid-template-columns: repeat(2,1fr);} }
+.mk-stat__num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(28px,3vw,40px);
+  font-weight: 600; color: var(--text-strong); letter-spacing: -.5px; }
+.mk-stat__num b { color: var(--brand); font-weight: 600; }
+.mk-stat__label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-faint); margin-top: 6px; }
+
+/* ---- Pricing ------------------------------------------------------------- */
+.mk-tier { display: flex; flex-direction: column; gap: var(--space-4); }
+.mk-tier--featured { border-color: color-mix(in srgb, var(--brand) 55%, var(--glass-border)); }
+.mk-tier__price { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 40px; font-weight: 600; color: var(--text-strong); }
+.mk-tier__price small { font-size: 14px; color: var(--text-muted); font-family: var(--font-sans); }
+.mk-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.mk-list li { display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; color: var(--text-body); }
+.mk-list li::before { content: ""; flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: 999px;
+  background: var(--brand-tint); box-shadow: inset 0 0 0 1.5px var(--brand); }
+
+/* ---- CTA band ------------------------------------------------------------ */
+.mk-cta { position: relative; overflow: hidden; border-radius: var(--radius-2xl); padding: clamp(40px,6vw,80px);
+  background:
+    radial-gradient(700px 380px at 80% -30%, var(--brand-tint), transparent 60%),
+    var(--glass-fill);
+  border: 1px solid var(--glass-border); text-align: center; }
+
+/* ---- Footer -------------------------------------------------------------- */
+.mk-footer { border-top: 1px solid var(--border-subtle); padding-block: var(--space-12); color: var(--text-muted); font-size: 14px; }
+.mk-footer a { color: var(--text-muted); } .mk-footer a:hover { color: var(--brand); }
+
+/* ---- Specimen frames (social / ads / print boards) ----------------------
+   Use .mk-board to lay out fixed-size creative tiles, each .mk-frame sized to
+   its real export dimensions, with a mono caption. The card thumbnailer in the
+   viewer scales the whole board; inside, frames stay true-proportion. */
+.mk-board { display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start; padding: 48px;
+  background: var(--bg-page); }
+.mk-frame { position: relative; flex: none; overflow: hidden; border-radius: 6px;
+  border: 1px solid var(--border-default); box-shadow: var(--shadow-lg); background: var(--ink-900); }
+.mk-frame__cap { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-faint); margin: 10px 2px 0; }
+.mk-frame__group { display: flex; flex-direction: column; }
+
+/* sheet (one-pager / print on light or dark) */
+.mk-sheet { width: 850px; min-height: 1100px; margin: 40px auto; padding: 56px; position: relative;
+  background: var(--bg-page); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-xl); }
+
+/* ---- Divider / hairline -------------------------------------------------- */
+.mk-rule { height: 1px; background: var(--border-subtle); border: 0; margin-block: var(--space-10); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-panel, .mk-btn { transition: none; }
+}

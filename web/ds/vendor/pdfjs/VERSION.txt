@@ -1,0 +1,5 @@
+pdfjs-dist 4.10.38 (Apache-2.0). Vendored via: npm pack pdfjs-dist@4.10.38, then copy:
+  build/pdf.min.mjs, build/pdf.worker.min.mjs, standard_fonts/, cmaps/
+Served at /static/ds/vendor/pdfjs/. In getDocument: workerSrc=pdf.worker.min.mjs,
+standardFontDataUrl=standard_fonts/ (14 base fonts), cMapUrl=cmaps/ + cMapPacked:true
+(CID/CJK/non-Latin coverage). Bump: repeat pack, replace files, re-test signapp render+select.

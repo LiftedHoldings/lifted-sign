@@ -1,0 +1,137 @@
+/* ============================================================================
+   LIFTED — EFFECTS & MATERIALS
+   The "good parts" of the live portal/signer, cleaned up for readability:
+   a calm ambient backdrop, a glass surface, and the gradient wordmark.
+   Everything auto-tints to the active [data-brand] via --brand / --grad-*.
+   Keep these restrained — depth and polish, never noise.
+   ============================================================================ */
+
+/* ---- Ambient page backdrop ------------------------------------------------
+   Two soft brand-tinted radial glows + a faintly masked grid. Apply to a
+   full-bleed page wrapper (position it; the layers sit behind via z-index). */
+.lds-ambient {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(820px 480px at 84% -12%, var(--ambient-glow), transparent 60%),
+    radial-gradient(720px 520px at 6% 108%, var(--ambient-glow-2), transparent 58%),
+    var(--bg-page);
+}
+.lds-ambient::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(174,184,208,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(174,184,208,0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+  -webkit-mask-image: radial-gradient(circle at 50% -4%, #000, transparent 72%);
+          mask-image: radial-gradient(circle at 50% -4%, #000, transparent 72%);
+}
+
+/* ---- Glass surface --------------------------------------------------------
+   A readable frosted panel — opaque enough that text never dissolves, with a
+   defined top sheen + a crisp inner highlight line for a Fortune-500 finish. */
+.lds-glass {
+  position: relative;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
+          backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
+  box-shadow: var(--glass-shadow);
+}
+/* Crisp highlight along the very top edge — the "polished glass" tell. */
+.lds-glass::after {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 1px; border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--glass-hi) 22%, var(--glass-hi) 78%, transparent);
+  pointer-events: none;
+}
+/* Optional brand edge-light on the top hairline (calm, not glowing). */
+.lds-glass--edge { position: relative; }
+.lds-glass--edge::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 1px; border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--brand) 20%, var(--brand-grad-to) 80%, transparent);
+  opacity: 0.4;
+}
+
+/* ---- Wordmark / display ---------------------------------------------------
+   The lockup is TWO-TONE and locked to the globe: "Lifted" stays neutral (the
+   opposite of the globe) and only the PRODUCT word carries the brand color,
+   swapping in lockstep with the globe (green=Payments, blue=Sign, …).
+   .lds-wordmark = the neutral "Lifted" lead; wrap the product word in
+   .lds-grad-text for the brand gradient (or just color:var(--brand) for solid). */
+.lds-wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
+}
+.lds-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-strong);
+}
+
+/* ---- Blueprint grid / texture --------------------------------------------
+   The Lifted backdrop pattern. .lds-grid = ruled lines; .lds-grid-dots = dot
+   matrix; add .lds-grid--brand to tint to the active accent; .lds-grid--fade
+   vignettes it (use behind heroes/covers). Pair with .lds-ambient for glow.
+   Grid images live at :root (--grid-img*) so --fade can repaint them on a
+   masked ::after LAYER — the mask never touches content (headlines stay crisp). */
+.lds-grid {
+  background-image: var(--grid-img);
+  background-size: var(--grid-size) var(--grid-size);
+}
+.lds-grid-lg { background-size: var(--grid-size-lg) var(--grid-size-lg); }
+.lds-grid-dots {
+  background-image: var(--grid-img-dots);
+  background-size: var(--grid-size) var(--grid-size);
+}
+.lds-grid--brand { background-image: var(--grid-img-brand); }
+/* Fade: move the grid onto a masked background layer so content stays unmasked. */
+.lds-grid--fade {
+  position: relative;
+  background-image: none !important;
+}
+.lds-grid--fade::after {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image: var(--grid-img);
+  background-size: var(--grid-size) var(--grid-size);
+  -webkit-mask-image: radial-gradient(120% 90% at 50% -10%, #000, transparent 75%);
+          mask-image: radial-gradient(120% 90% at 50% -10%, #000, transparent 75%);
+}
+.lds-grid-lg.lds-grid--fade::after { background-size: var(--grid-size-lg) var(--grid-size-lg); }
+.lds-grid--brand.lds-grid--fade::after { background-image: var(--grid-img-brand); }
+.lds-grid--fade > * { position: relative; z-index: 1; }
+
+/* ---- HUD corner-brackets — the Lifted signature framing -------------------
+   Add .lds-hud to any element for four thin brand corner ticks (echoes the
+   wireframe globe + the Button treatment). .lds-hud--2 = top-left + bottom-right
+   only. Keep on hero/KPI/feature surfaces — not everywhere. */
+.lds-hud { position: relative; }
+.lds-hud > * { position: relative; z-index: 1; }
+.lds-hud::before, .lds-hud::after {
+  content: ""; position: absolute; width: 10px; height: 10px; pointer-events: none;
+  border: 1.5px solid var(--brand); opacity: .55; z-index: 0;
+}
+.lds-hud::before { top: 8px; left: 8px; border-right: none; border-bottom: none; }
+.lds-hud::after { bottom: 8px; right: 8px; border-left: none; border-top: none; }
+.lds-hud--2::before { top: 8px; left: 8px; }
+
+/* ---- Top progress bar (signer / multi-step flows) ------------------------- */
+.lds-progress {
+  position: fixed; top: 0; left: 0; height: 2px; z-index: 60;
+  background: var(--brand);
+  transition: width var(--dur-slow) var(--ease-out);
+}
+
+/* ---- Brand-gradient text + fill helpers ---------------------------------- */
+.lds-grad-text {
+  background: var(--grad-brand);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.lds-grad-fill { background: var(--grad-brand); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lds-progress { transition: none; }
+}

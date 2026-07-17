@@ -1,0 +1,3 @@
+# Downloadable SDK/scripts must stay Unix line endings (LF) — a CRLF shell
+# script breaks on Linux/macOS with ": command not found".
+* text eol=lf

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Disconnected error state">
+  <!-- soft ground line -->
+  <path d="M40 150 H200" opacity="0.25" stroke-dasharray="2 8"/>
+
+  <!-- left plug body -->
+  <rect x="58" y="76" width="34" height="28" rx="6" opacity="0.9"/>
+  <path d="M92 84 h12 M92 96 h12"/>
+  <!-- left cable, drooping (disconnected) -->
+  <path d="M58 90 C42 90 34 100 34 116 C34 130 44 138 52 140" opacity="0.8"/>
+
+  <!-- right plug body -->
+  <rect x="148" y="76" width="34" height="28" rx="6" opacity="0.9"/>
+  <path d="M136 84 h12 M136 96 h12"/>
+  <!-- right cable, drooping (disconnected) -->
+  <path d="M182 90 C198 90 206 100 206 116 C206 130 196 138 188 140" opacity="0.8"/>
+
+  <!-- the break / gap between the two connectors -->
+  <path d="M112 78 L116 86 L112 94" opacity="0.6"/>
+  <path d="M128 78 L124 86 L128 94" opacity="0.6"/>
+
+  <!-- gentle spark marks at the gap -->
+  <path d="M120 60 v8" opacity="0.5"/>
+  <path d="M108 66 l5 5" opacity="0.45"/>
+  <path d="M132 66 l-5 5" opacity="0.45"/>
+</svg>

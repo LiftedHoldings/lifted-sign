@@ -1,0 +1,1413 @@
+<!doctype html>
+<html lang="en" data-brand="sign">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign · LiftedSign</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='%232E6BFF' stroke-width='2.4' stroke-linecap='round'><circle cx='20' cy='20' r='16.5'/><line x1='3.5' y1='20' x2='36.5' y2='20'/><ellipse cx='20' cy='20' rx='16.5' ry='7.4'/><ellipse cx='20' cy='20' rx='8' ry='16.5'/></svg>">
+<!-- Lifted Design System foundation (vendored) — tokens + the app/admin kit.
+     data-brand="sign" (blue) retints --brand and friends; every page-specific
+     rule below builds ON these tokens (no parallel palette). -->
+<link rel="stylesheet" href="/static/ds/styles.css">
+<link rel="stylesheet" href="/static/ds/appkit/_appkit.css">
+<script src="/static/ds/assets/lds-globe.js" defer></script>
+<style>
+  /* ============================================================================
+     PUBLIC SIGNER · /sign/{token} — rebuilt on the Lifted DS (_appkit + tokens).
+     data-brand="sign" retints --brand (blue). All page-specific rules below use
+     DS tokens only; ap-* components carry the cards/buttons/badges/fields. Every
+     id + class hook the signer script toggles is preserved verbatim.
+     ============================================================================ */
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--void);
+     color:var(--text-body);font-family:var(--font-sans);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{position:relative;isolation:isolate;
+     background:
+       radial-gradient(900px 520px at 84% -8%,color-mix(in srgb,var(--brand) 14%,transparent),transparent 62%),
+       radial-gradient(760px 480px at 6% 2%,color-mix(in srgb,var(--brand-grad-to) 8%,transparent),transparent 60%),
+       linear-gradient(180deg,var(--void) 0%,var(--ink-900) 56%,var(--void) 100%);
+     background-attachment:fixed}
+  /* ambient — the canonical blueprint grid, masked + calm (core Lifted texture) */
+  body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+     background-image:var(--grid-img);background-size:var(--grid-size) var(--grid-size);
+     -webkit-mask-image:radial-gradient(120% 80% at 50% -4%,#000,transparent 76%);
+             mask-image:radial-gradient(120% 80% at 50% -4%,#000,transparent 76%);opacity:.55}
+  a{color:var(--brand);text-decoration:none}
+  a:hover{color:var(--brand-bright)}
+  svg{flex-shrink:0}
+  /* the icon() helper emits <svg class="ico">; size it globally so it never balloons
+     (context rules like .doctool .dt-ico svg / .done-screen .ck svg override this). */
+  svg.ico{width:16px;height:16px}
+  .mini svg.ico{width:15px;height:15px}
+  .btn svg.ico{width:17px;height:17px}
+  .ico{display:inline-flex;align-items:center;justify-content:center;line-height:0;vertical-align:middle}
+  ::selection{background:color-mix(in srgb,var(--brand) 26%,transparent);color:#fff}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-thumb{background:var(--surface-raised);border-radius:999px;border:3px solid transparent;background-clip:padding-box}
+  ::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--brand) 38%,var(--surface-raised));background-clip:padding-box;border:3px solid transparent}
+  *{scrollbar-color:var(--surface-raised) transparent;scrollbar-width:thin}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .reveal{animation:rise .5s var(--ease-out) both}
+
+  /* top progress bar */
+  #bar{position:fixed;top:0;left:0;height:2px;width:0;z-index:60;
+       background:var(--grad-brand);box-shadow:0 0 14px color-mix(in srgb,var(--brand) 55%,transparent);transition:width var(--dur-slow) var(--ease-out)}
+  header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:18px;padding:0 24px;height:60px;
+         background:color-mix(in srgb,var(--void) 80%,transparent);
+         backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);
+         border-bottom:1px solid var(--border-subtle)}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+    background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--brand) 55%,transparent) 18%,color-mix(in srgb,var(--brand-grad-to) 55%,transparent) 82%,transparent);opacity:.5}
+  .brand{display:inline-flex;align-items:center;gap:11px;white-space:nowrap}
+  .brand .lds-globe{color:var(--brand)}
+  .brand-word{position:relative;font-family:var(--font-display);font-weight:800;font-size:18px;letter-spacing:-.022em;line-height:1}
+  .brand-word .l{color:var(--text-strong)}
+  .brand-word .s{color:var(--brand)}
+  .hdr-div{width:1px;height:24px;background:var(--border-default);flex-shrink:0}
+  .hdr-doc{display:flex;flex-direction:column;min-width:0;gap:1px}
+  .hdr-doc .ey{font-family:var(--font-mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint)}
+  .doc-name{font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:34vw}
+  .spacer{flex:1}
+  .prog{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--text-muted);white-space:nowrap}
+  .prog .ring{--p:0;width:32px;height:32px;border-radius:50%;
+    background:conic-gradient(var(--brand) calc(var(--p)*1%),var(--surface-raised) 0);display:grid;place-items:center;transition:background var(--dur-slow) var(--ease-out);
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 14%,transparent)}
+  .prog .ring i{width:23px;height:23px;border-radius:50%;background:var(--void);display:grid;place-items:center;font-size:9.5px;color:var(--text-strong);font-weight:700;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-style:normal}
+  .signer-pill{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;padding:5px 13px 5px 6px;border-radius:999px;
+    background:var(--ink-800);border:1px solid var(--border-default);color:var(--text-body);max-width:240px;overflow:hidden;white-space:nowrap}
+  .signer-pill .av{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:9.5px;
+    background:var(--grad-brand);color:var(--brand-contrast)}
+  .signer-pill .nm{overflow:hidden;text-overflow:ellipsis}
+  .wrap{max-width:1380px;margin:0 auto;padding:30px 18px 200px}
+  .wrap > .banner,.wrap > .doctool{max-width:900px;margin-left:auto;margin-right:auto}
+
+  /* intro banner — an ap-card with a brand top edge */
+  .banner{position:relative;overflow:hidden;background:var(--glass-fill);border:1px solid var(--glass-border);border-radius:var(--radius-xl);
+          padding:24px 26px;margin-bottom:24px;box-shadow:var(--glass-shadow);
+          -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.25);backdrop-filter:blur(var(--glass-blur)) saturate(1.25)}
+  .banner::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;border-radius:var(--radius-xl) var(--radius-xl) 0 0;background:var(--grad-brand)}
+  .banner .eyb{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--brand);margin-bottom:11px}
+  .banner .eyb::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--grad-brand);box-shadow:0 0 12px color-mix(in srgb,var(--brand) 55%,transparent)}
+  .banner h1{margin:0 0 7px;font-family:var(--font-display);font-weight:700;font-size:23px;letter-spacing:-.02em;color:var(--text-strong)}
+  .banner p{margin:0;color:var(--text-muted);font-size:14px;line-height:1.6;max-width:62ch}
+  .banner .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;position:relative;z-index:2}
+  /* .mini == ap-btn ap-btn--ghost ap-btn--sm sized */
+  .mini{font-size:12.5px;font-weight:600;padding:9px 15px;border-radius:var(--radius-md);border:1px solid var(--border-default);
+    background:var(--ink-800);color:var(--text-strong);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:border-color var(--dur-base) var(--ease-out),color var(--dur-base) var(--ease-out),background var(--dur-base) var(--ease-out)}
+  .mini:hover{border-color:var(--brand);color:var(--brand)}
+  .mini .ico svg{width:15px;height:15px}
+  .mini.danger:hover{border-color:color-mix(in srgb,var(--error) 55%,transparent);color:var(--error);background:color-mix(in srgb,var(--error) 10%,transparent)}
+
+  /* document toolbar — sticky glass chrome above the paper */
+  .doctool{position:sticky;top:60px;z-index:30;display:flex;align-items:center;gap:12px;margin:0 auto 18px;padding:10px 14px;
+    border:1px solid var(--glass-border);border-radius:var(--radius-lg);background:var(--glass-fill);box-shadow:var(--glass-shadow);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.25);backdrop-filter:blur(var(--glass-blur)) saturate(1.25)}
+  .doctool .dt-ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;
+    background:var(--brand-tint);border:1px solid color-mix(in srgb,var(--brand) 25%,transparent);color:var(--brand)}
+  .doctool .dt-ico svg{width:16px;height:16px}
+  .doctool .dt-meta{display:flex;flex-direction:column;min-width:0;gap:1px;line-height:1.2}
+  .doctool .dt-name{font-family:var(--font-display);font-weight:600;font-size:13.5px;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:42vw}
+  .doctool .dt-sub{font-size:11px;color:var(--text-faint);font-family:var(--font-mono);letter-spacing:.04em}
+  .doctool .dt-acts{margin-left:auto;display:flex;align-items:center;gap:6px}
+  .zoomgrp{display:inline-flex;align-items:center;gap:1px;border:1px solid var(--border-default);border-radius:var(--radius-md);overflow:hidden;background:var(--ink-900)}
+  .zoomgrp button{border:none;background:transparent;color:var(--text-body);width:30px;height:30px;cursor:pointer;display:grid;place-items:center;transition:var(--dur-base) var(--ease-out);font-family:var(--font-mono)}
+  .zoomgrp button:hover{background:var(--brand-tint);color:var(--brand)}
+  .zoomgrp button svg{width:15px;height:15px}
+  .zoomgrp .zlbl{min-width:46px;text-align:center;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);user-select:none}
+  .dt-dl{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:7px 12px;border-radius:var(--radius-md);
+    border:1px solid var(--border-default);background:var(--ink-800);color:var(--text-strong);cursor:pointer;transition:border-color var(--dur-base) var(--ease-out),color var(--dur-base) var(--ease-out)}
+  .dt-dl:hover{border-color:var(--brand);color:var(--brand)}
+  .dt-dl svg{width:15px;height:15px}
+
+  /* the paper column — pages float as a paper stack in designed dark space */
+  .paper{margin:0 auto;transition:max-width .2s var(--ease-out)}
+  .pagewrap{position:relative;margin:0 auto 26px;border-radius:6px;overflow:hidden;background:#fff;
+            box-shadow:0 2px 4px rgba(0,0,0,.4),0 30px 70px -28px rgba(0,0,0,.85),
+                       0 0 0 1px rgba(255,255,255,.06),0 0 0 8px color-mix(in srgb,var(--void) 32%,transparent)}
+  .pagewrap::after{content:attr(data-pglabel);position:absolute;left:50%;bottom:-22px;transform:translateX(-50%);
+    font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--text-faint);white-space:nowrap;pointer-events:none;opacity:.85}
+  .pagewrap:last-child{margin-bottom:8px}
+  .pagewrap img{display:block;width:100%}
+  .field{position:absolute;border:1.6px dashed var(--brand);background:color-mix(in srgb,var(--brand) 10%,transparent);border-radius:var(--radius-sm);
+         cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:visible;
+         transition:transform .15s,box-shadow .2s,background .15s}
+  .field:hover{background:color-mix(in srgb,var(--brand) 20%,transparent)}
+  .field.optional{border-style:solid;border-color:var(--border-strong);background:color-mix(in srgb,var(--mist-300) 9%,transparent)}
+  .field.optional .lbl{color:var(--text-muted)}
+  .field.done{border-style:solid;border-color:var(--brand);background:color-mix(in srgb,var(--brand) 10%,transparent)}
+  .field.current{animation:pulse 1.7s var(--ease-in-out) infinite;z-index:5}
+  .field.locked{cursor:default;opacity:.55;filter:grayscale(.3)}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--brand) 50%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
+  .field .lbl{pointer-events:none;font-weight:700;color:var(--brand-deep);text-transform:uppercase;letter-spacing:.05em;font-size:9.5px;display:flex;align-items:center;gap:5px;text-align:center;line-height:1.1}
+  .field .lbl .ico svg{width:13px;height:13px}
+  .field.done .lbl{display:none}
+  .field img{width:100%;height:100%;object-fit:contain;padding:2px}
+  .field .val{color:#0b0d12;font-size:14px;padding:0 5px;white-space:nowrap;overflow:hidden;max-width:100%;display:flex;align-items:center;gap:4px}
+  .field .val .ico svg{width:16px;height:16px;color:var(--brand-deep)}
+  .field .here{position:absolute;left:50%;top:-34px;transform:translateX(-50%) translateY(4px);
+       background:var(--grad-brand);color:var(--brand-contrast);
+       font-size:10px;font-weight:800;letter-spacing:.02em;padding:6px 11px;border-radius:var(--radius-sm);white-space:nowrap;display:inline-flex;align-items:center;gap:5px;
+       box-shadow:0 10px 22px -6px color-mix(in srgb,var(--brand) 60%,transparent);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
+  .field .here svg{width:12px;height:12px}
+  .field.current .here{opacity:1;transform:translateX(-50%) translateY(0)}
+  .field .here::after{content:"";position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--brand-deep)}
+  /* inline overlay input (replaces prompt) */
+  .field .ovl{position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:var(--radius-sm);
+       background:#fff;color:#0b0d12;font-family:var(--font-sans);font-weight:600;padding:0 6px;
+       box-shadow:0 0 0 2px var(--brand),0 12px 32px -6px rgba(0,0,0,.45);z-index:9;resize:none}
+  .field textarea.ovl{padding:5px 6px;line-height:1.25}
+  .field .ovl:focus{outline:none}
+  .field .ovlcal{position:absolute;left:0;top:100%;margin-top:4px;z-index:10;width:100%;min-width:150px}
+
+  /* floating action dock (glass) */
+  .fab{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:50;display:flex;gap:16px;align-items:center;
+       background:var(--glass-fill);border:1px solid var(--glass-border);border-radius:var(--radius-xl);box-shadow:var(--glass-shadow);
+       -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.25);backdrop-filter:blur(var(--glass-blur)) saturate(1.25);
+       padding:13px 18px;max-width:94vw}
+  .fab .hint{font-size:12.5px;color:var(--text-muted);max-width:320px;line-height:1.4}
+  .fab .hint b{color:var(--text-strong)}
+  /* .btn == ap-btn family (primary/ghost/danger) at the dock size */
+  .btn{border:1px solid transparent;border-radius:var(--radius-md);padding:13px 24px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:var(--font-display);white-space:nowrap;display:inline-flex;align-items:center;gap:8px;transition:transform var(--dur-fast) var(--ease-out),background var(--dur-base) var(--ease-out),border-color var(--dur-base) var(--ease-out)}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--brand);color:var(--brand-contrast)}
+  .btn.primary:hover{background:var(--brand-bright)}
+  .btn.primary:disabled{opacity:.4;cursor:not-allowed}
+  .btn.ghost{background:var(--ink-800);color:var(--text-strong);border-color:var(--border-default)}
+  .btn.ghost:hover{border-color:var(--brand);color:var(--brand)}
+  .btn.danger{background:color-mix(in srgb,var(--error) 16%,transparent);color:var(--error);border-color:color-mix(in srgb,var(--error) 40%,transparent)}
+  .btn.danger:hover{border-color:var(--error);color:#fff;background:color-mix(in srgb,var(--error) 24%,transparent)}
+  .btn .arrow{display:inline-flex;transition:transform .2s}
+  .btn:hover .arrow{transform:translateX(3px)}
+  .btn .ico svg{width:17px;height:17px}
+
+  /* in-page toast */
+  #toast{position:fixed;left:50%;top:72px;transform:translateX(-50%) translateY(-16px);z-index:90;
+     background:var(--glass-fill);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);
+     backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);
+     border-radius:var(--radius-md);padding:12px 18px;font-size:13.5px;font-weight:600;color:var(--text-strong);
+     opacity:0;pointer-events:none;transition:.25s;max-width:90vw}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.err{border-color:color-mix(in srgb,var(--error) 50%,transparent);color:#ffc9c9}
+  #toast.ok{border-color:color-mix(in srgb,var(--brand) 50%,transparent);color:var(--text-strong)}
+
+  /* overlays / modals (glass) */
+  .overlay{position:fixed;inset:0;background:rgba(4,7,11,.66);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:70;padding:16px;overflow-y:auto}
+  .overlay.show{display:flex}
+  .modal{background:var(--glass-fill);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);
+    backdrop-filter:blur(var(--glass-blur)) saturate(1.25);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.25);
+    border-radius:var(--radius-xl);padding:24px;width:min(580px,96vw);margin:auto}
+  .modal h3{margin:0 0 5px;font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:-.02em;color:var(--text-strong);display:flex;align-items:center;gap:9px}
+  .modal .sub{color:var(--text-muted);font-size:12.5px;margin:0 0 18px;line-height:1.55}
+  .tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--ink-900);padding:5px;border-radius:var(--radius-md);border:1px solid var(--border-default)}
+  .tabs button{flex:1;padding:9px;border-radius:8px;border:none;background:transparent;color:var(--text-muted);font-weight:600;cursor:pointer;font-family:var(--font-sans);transition:.15s;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+  .tabs button .ico svg{width:15px;height:15px}
+  .tabs button.on{background:var(--brand);color:var(--brand-contrast)}
+  .padwrap{position:relative;border-radius:var(--radius-md);overflow:hidden;background:#fff;box-shadow:inset 0 0 0 1px var(--border-default)}
+  #pad{display:block;width:100%;height:200px;touch-action:none;cursor:crosshair}
+  .padwrap .baseline{position:absolute;left:24px;right:24px;bottom:46px;border-bottom:2px dotted #c9ccd6;pointer-events:none}
+  .padwrap .xmark{position:absolute;left:24px;bottom:38px;color:#aeb2bf;font-size:20px;font-weight:700;pointer-events:none}
+  .padwrap .hint{position:absolute;right:16px;top:12px;color:#b9bdca;font-size:11px;pointer-events:none}
+  .typed-input{width:100%;padding:11px 13px;border-radius:var(--radius-md);border:1px solid var(--border-default);background:var(--ink-900);color:var(--text-strong);font-size:15px;margin-bottom:12px;font-family:inherit;transition:border-color var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out)}
+  .typed-input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--ring)}
+  .fonts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .font-opt{background:#fff;color:#0b0d12;border:2px solid transparent;border-radius:var(--radius-md);height:64px;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;overflow:hidden;padding:0 8px;transition:border-color var(--dur-base) var(--ease-out)}
+  .font-opt.on{border-color:var(--brand)}
+  .f0{font-family:'Brush Script MT','Segoe Script',cursive;font-style:italic}
+  .f1{font-family:'Snell Roundhand','Apple Chancery','URW Chancery L',cursive}
+  .f2{font-family:'Segoe Script','Bradley Hand',cursive}
+  .f3{font-family:Georgia,'Times New Roman',serif;font-style:italic}
+  .uploadpane{text-align:center}
+  .dropzone{border:2px dashed var(--border-strong);border-radius:var(--radius-md);background:var(--ink-900);padding:28px;cursor:pointer;transition:border-color var(--dur-base) var(--ease-out),color var(--dur-base) var(--ease-out),background var(--dur-base) var(--ease-out);color:var(--text-muted)}
+  .dropzone:hover,.dropzone.over{border-color:var(--brand);color:var(--text-strong);background:var(--brand-tint)}
+  .dropzone .upico{display:inline-flex;margin-bottom:8px;color:var(--brand)}
+  .dropzone .upico svg{width:26px;height:26px}
+  .uppreview{margin-top:14px;background:#fff;border-radius:var(--radius-md);padding:10px;min-height:90px;display:flex;align-items:center;justify-content:center}
+  .uppreview img{max-width:100%;max-height:130px}
+  .intent{margin-top:16px;font-size:11.5px;color:var(--text-muted);line-height:1.55;background:var(--ink-900);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:12px 14px}
+  .intent b{color:var(--text-strong)}
+  .modal-foot{display:flex;justify-content:space-between;gap:10px;margin-top:20px;flex-wrap:wrap}
+  .modal-foot .right{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+
+  /* consent (ERSD) — ap-badge-styled tag + disclosure */
+  .ersd-badge{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:5px 11px;border-radius:999px;background:var(--brand-tint);color:var(--brand);border:1px solid color-mix(in srgb,var(--brand) 30%,transparent);margin-bottom:15px;text-transform:uppercase;font-family:var(--font-mono)}
+  .ersd-badge .ico svg{width:13px;height:13px}
+  .disc{background:var(--ink-900);border:1px solid var(--border-subtle);border-radius:var(--radius-md);margin-bottom:14px;overflow:hidden}
+  .disc summary{cursor:pointer;padding:13px 15px;font-weight:600;font-size:13px;list-style:none;display:flex;align-items:center;justify-content:space-between;color:var(--text-body)}
+  .disc summary::-webkit-details-marker{display:none}
+  .disc summary .chev{transition:transform var(--dur-base) var(--ease-out);color:var(--text-muted);display:inline-flex}
+  .disc summary .chev svg{width:18px;height:18px}
+  .disc[open] summary .chev{transform:rotate(180deg)}
+  .disc .body{padding:0 15px 15px;font-size:12.5px;color:var(--text-muted);line-height:1.7;max-height:340px;overflow-y:auto;white-space:pre-wrap}
+  .disc .body h4{color:var(--text-strong);font-size:12.5px;margin:14px 0 4px}
+  .reqlist{display:grid;gap:9px;margin:0 0 16px}
+  .reqlist .ri{display:flex;gap:12px;align-items:flex-start;font-size:12.5px;color:var(--text-muted);background:var(--ink-900);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:12px 14px;line-height:1.55}
+  .reqlist .ri .ic{color:var(--brand);line-height:1;flex-shrink:0;display:inline-flex;margin-top:1px}
+  .reqlist .ri .ic svg{width:16px;height:16px}
+  .reqlist .ri b{color:var(--text-strong);font-weight:600}
+  .consent-check{display:flex;align-items:flex-start;gap:12px;font-size:13px;color:var(--text-strong);cursor:pointer;background:var(--ink-900);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:14px;margin-bottom:6px;line-height:1.5;transition:border-color var(--dur-base) var(--ease-out)}
+  .consent-check:hover{border-color:var(--border-default)}
+  .consent-check input{width:19px;height:19px;accent-color:var(--brand);flex-shrink:0;margin-top:1px}
+  .scrollnote{font-size:11.5px;color:var(--warning);margin:0 0 12px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .scrollnote .ico{display:inline-flex}.scrollnote .ico svg{width:15px;height:15px}
+  .scrollnote.ok{color:var(--success)}
+  /* sender access-lock challenge gate — framed "paper" answer card on glass */
+  .chal-modal{width:min(500px,96vw)}
+  .chal-paper{position:relative;background:#fff;border-radius:var(--radius-md);padding:20px 18px;margin:2px 0 16px;
+    box-shadow:0 2px 4px rgba(0,0,0,.35),0 24px 60px -28px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.06),0 0 0 7px color-mix(in srgb,var(--void) 30%,transparent)}
+  .chal-paper::before{content:"";position:absolute;left:18px;right:18px;top:0;height:3px;border-radius:0 0 3px 3px;background:var(--grad-brand)}
+  .chal-q{display:block;font-family:var(--font-display);font-weight:700;font-size:15.5px;letter-spacing:-.01em;color:#0d141b;margin:4px 0 12px;line-height:1.4}
+  .chal-input{width:100%;padding:13px 15px;border-radius:var(--radius-sm);border:1.6px solid #d6dde4;background:#fbfdfe;color:#0b0d12;
+    font-family:var(--font-sans);font-size:16px;font-weight:600;letter-spacing:.01em;transition:border-color var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out);-webkit-appearance:none}
+  .chal-input::placeholder{color:#9aa6b1;font-weight:500}
+  .chal-input:focus{outline:none;border-color:var(--brand-deep);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 22%,transparent)}
+  .chal-input.bad{border-color:var(--error);box-shadow:0 0 0 3px color-mix(in srgb,var(--error) 18%,transparent)}
+  .chal-input:disabled{opacity:.6;cursor:not-allowed}
+  .chal-msg{min-height:17px;margin:9px 1px 0;font-size:12.5px;line-height:1.45;color:#8a96a1;font-weight:600}
+  .chal-msg.err{color:#d6453f}
+  .chal-msg.locked{color:#b87708}
+  .chal-note{display:flex;align-items:flex-start;gap:9px;font-size:11.5px;color:var(--text-muted);line-height:1.5;margin:0 2px 4px}
+  .chal-note .ico{color:var(--brand);flex-shrink:0;margin-top:1px}
+  .chal-note .ico svg{width:15px;height:15px}
+  /* decline / withdraw forms */
+  .ta{width:100%;min-height:96px;padding:11px 13px;border-radius:var(--radius-md);border:1px solid var(--border-default);background:var(--ink-900);color:var(--text-strong);font-size:14px;font-family:inherit;resize:vertical;transition:border-color var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out)}
+  .ta:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--ring)}
+  /* done / error (ceremonial seal) */
+  .done-screen{text-align:center;padding:72px 20px;position:relative}
+  .done-screen::before{content:"";position:absolute;left:50%;top:60px;width:360px;height:360px;transform:translate(-50%,-40%);
+     background:radial-gradient(circle,color-mix(in srgb,var(--brand) 16%,transparent),transparent 64%);filter:blur(20px);pointer-events:none;z-index:-1}
+  .done-screen .ck{position:relative;width:88px;height:88px;border-radius:50%;
+     background:radial-gradient(circle at 32% 28%,color-mix(in srgb,var(--brand) 26%,transparent),color-mix(in srgb,var(--brand) 6%,transparent));
+     border:1.5px solid color-mix(in srgb,var(--brand) 45%,transparent);margin:0 auto 24px;
+     display:flex;align-items:center;justify-content:center;color:var(--brand);
+     box-shadow:0 18px 50px -14px color-mix(in srgb,var(--brand) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.12);animation:pop .55s cubic-bezier(.2,1.4,.4,1)}
+  .done-screen .ck::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:1px solid color-mix(in srgb,var(--brand) 25%,transparent);animation:ring 1.8s var(--ease-out) infinite}
+  .done-screen .ck.warn::after,.done-screen .ck.bad::after{display:none}
+  @keyframes ring{0%{transform:scale(.9);opacity:.7}100%{transform:scale(1.35);opacity:0}}
+  .done-screen .ck svg{width:40px;height:40px}
+  .done-screen .ck.warn{background:radial-gradient(circle at 32% 28%,color-mix(in srgb,var(--warning) 22%,transparent),transparent);border-color:color-mix(in srgb,var(--warning) 40%,transparent);color:var(--warning);box-shadow:0 18px 50px -16px color-mix(in srgb,var(--warning) 40%,transparent)}
+  .done-screen .ck.bad{background:radial-gradient(circle at 32% 28%,color-mix(in srgb,var(--error) 22%,transparent),transparent);border-color:color-mix(in srgb,var(--error) 40%,transparent);color:var(--error);box-shadow:0 18px 50px -16px color-mix(in srgb,var(--error) 40%,transparent)}
+  @keyframes pop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .done-screen h2{font-family:var(--font-display);font-weight:700;font-size:26px;letter-spacing:-.02em;margin:0 0 8px;color:var(--text-strong)}
+  .done-screen p{color:var(--text-muted);max-width:450px;margin:0 auto 8px;line-height:1.6}
+  .nextcard{max-width:470px;margin:26px auto 0;background:var(--ink-900);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:22px;text-align:left}
+  .nextcard h4{margin:0 0 14px;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-faint);font-weight:700;font-family:var(--font-mono)}
+  .nextcard .step{display:flex;gap:12px;align-items:flex-start;margin-bottom:13px;font-size:13.5px;line-height:1.5;color:var(--text-body)}
+  .nextcard .step:last-child{margin-bottom:0}
+  .nextcard .step .n{width:22px;height:22px;border-radius:50%;background:var(--brand-tint);color:var(--brand);font-size:11px;font-weight:800;display:grid;place-items:center;flex-shrink:0;font-family:var(--font-mono)}
+  .done-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  .done-note{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text-muted);text-align:left;line-height:1.45;
+    background:var(--brand-tint);border:1px solid color-mix(in srgb,var(--brand) 22%,transparent);border-radius:var(--radius-md);padding:11px 16px;max-width:430px}
+  .done-note svg.ico{color:var(--brand);width:16px;height:16px}
+  .err{text-align:center;padding:90px 20px;color:var(--text-muted)}
+  .err .ic{display:inline-flex;margin-bottom:16px;color:var(--warning)}
+  .err .ic svg{width:46px;height:46px}
+  .err h2{font-family:var(--font-display);font-weight:700;color:var(--text-strong);margin:0 0 8px}
+  .err p{max-width:430px;margin:0 auto;line-height:1.6}
+  .spin{width:34px;height:34px;border:3px solid var(--surface-raised);border-top-color:var(--brand);border-radius:50%;animation:sp 1s linear infinite;margin:90px auto}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  @media(max-width:560px){
+    header{padding:0 14px;gap:10px;height:56px}
+    .wrap{padding:22px 12px 210px}
+    .fab{flex-direction:column;align-items:stretch;gap:10px;left:10px;right:10px;transform:none;max-width:none;bottom:max(12px,env(safe-area-inset-bottom))}
+    .fab .hint{max-width:none;text-align:center}
+    .fab .btn{justify-content:center}
+    .prog .ring{display:none}.doc-name{max-width:32vw}
+    .hdr-doc .ey{display:none}
+    .signer-pill .nm{display:none}.signer-pill{padding:6px;border-radius:50%}
+    .modal{padding:20px;border-radius:var(--radius-lg)}
+    .banner{padding:20px}
+    .doctool{top:56px;padding:9px 11px;gap:9px}
+    .doctool .dt-name{max-width:38vw}
+    .doctool .dt-sub{display:none}
+    /* Keep the zoom control on phones — a signer must be able to enlarge a dense
+       contract to read/verify it (WCAG 1.4.4). Compact it so it + Download fit the
+       toolbar; the dt-meta (min-width:0) ellipsis-shrinks the name before anything
+       overflows the body. Download becomes icon-only (its aria-label still names it). */
+    .zoomgrp button{width:34px;height:34px}
+    .zoomgrp .zlbl{min-width:34px}
+    .dt-dl span{display:none}
+    .dt-dl{padding:8px 9px}
+    .pagewrap::after{display:none}
+    .banner h1{font-size:20px}
+    .banner .acts{gap:8px}
+    .banner .acts .mini{flex:1 1 auto;justify-content:center;min-width:128px}
+    .done-screen{padding:54px 16px}
+    .done-acts{flex-direction:column;align-items:stretch}
+    .done-acts .btn,.done-note{width:100%;justify-content:center;max-width:none;box-sizing:border-box}
+    .nextcard{padding-left:16px;padding-right:16px}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<header>
+  <span class="brand">
+    <span class="lds-globe" data-size="30" aria-hidden="true"></span>
+    <span class="brand-word"><span class="l">Lifted</span><span class="s">Sign</span></span>
+  </span>
+  <span class="hdr-div" aria-hidden="true"></span>
+  <span class="hdr-doc"><span class="ey">Document</span><span class="doc-name" id="docName">Loading…</span></span>
+  <span class="spacer"></span>
+  <span class="prog" id="prog" style="display:none"><span class="ring" id="ring"><i id="ringTxt">0/0</i></span><span id="progTxt"></span></span>
+  <span class="signer-pill" id="signerPill"></span>
+</header>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div class="wrap" id="main"><div class="spin" aria-label="Loading"></div></div>
+
+<div class="fab" id="fab" style="display:none">
+  <span class="hint" id="fabHint"></span>
+  <button class="btn primary" id="actionBtn" type="button">Start <span class="arrow"></span></button>
+</div>
+
+<!-- sender access-lock challenge gate (verified BEFORE the document/consent) -->
+<div class="overlay" id="challengeOverlay" role="dialog" aria-modal="true" aria-labelledby="challengeTitle">
+  <div class="modal chal-modal">
+    <span class="ersd-badge"><span class="ico" data-svg="lock"></span> SENDER ACCESS CHECK</span>
+    <h3 id="challengeTitle">Verify it's you</h3>
+    <p class="sub" id="challengeSub">The sender protected this document with an access check. Enter the requested information to continue.</p>
+    <div class="chal-paper">
+      <label class="chal-q" id="challengePrompt" for="challengeInput">Enter the access code</label>
+      <input id="challengeInput" class="chal-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="text" aria-describedby="challengeMsg">
+      <p class="chal-msg" id="challengeMsg" role="status" aria-live="polite"></p>
+    </div>
+    <p class="chal-note"><span class="ico" data-svg="shield"></span><span>Your answer is checked securely and never shown to anyone. The document stays hidden until it matches.</span></p>
+    <div class="modal-foot">
+      <div class="right" style="margin-left:auto">
+        <button class="btn primary" type="button" id="challengeSubmit">Unlock document <span class="arrow"></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ESIGN consent (ERSD) gate -->
+<div class="overlay" id="consentOverlay" role="dialog" aria-modal="true" aria-labelledby="consentTitle">
+  <div class="modal">
+    <span class="ersd-badge"><span class="ico" data-svg="lock"></span> ELECTRONIC RECORDS &amp; SIGNATURES</span>
+    <h3 id="consentTitle">Agree to sign electronically</h3>
+    <p class="sub">Before you begin, please review and accept how we use electronic records and signatures. Your acceptance is recorded with a timestamp for your protection.</p>
+    <div class="reqlist" id="ersdSummary"></div>
+    <p class="scrollnote" id="scrollNote"><span class="ico" data-svg="target"></span><span>Loading the document for your review…</span></p>
+    <details class="disc" id="ersdDetails">
+      <summary>Read the full disclosure <span class="chev" data-svg="chevron-down"></span></summary>
+      <div class="body" id="ersdText"></div>
+    </details>
+    <label class="consent-check"><input type="checkbox" id="consentBox">
+      <span id="consentLabel">I agree to use electronic records and signatures, and I confirm I can access this document electronically.</span></label>
+    <div class="modal-foot">
+      <button class="btn ghost" type="button" id="consentDecline">Decline</button>
+      <div class="right">
+        <button class="btn primary" type="button" id="consentAgree" disabled>I Agree <span class="arrow"></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- signature adoption modal -->
+<div class="overlay" id="sigOverlay" role="dialog" aria-modal="true" aria-labelledby="sigTitle">
+  <div class="modal">
+    <h3 id="sigTitle">Adopt your signature</h3>
+    <p class="sub">Draw it, type your name, or upload an image. This becomes your legal electronic signature.</p>
+    <div class="tabs">
+      <button id="tabDraw" class="on" type="button" data-tab="draw"><span class="ico" data-svg="pen"></span> Draw</button>
+      <button id="tabType" type="button" data-tab="type"><span class="ico" data-svg="keyboard"></span> Type</button>
+      <button id="tabUpload" type="button" data-tab="upload"><span class="ico" data-svg="upload"></span> Upload</button>
+    </div>
+    <div id="drawPane">
+      <div class="padwrap"><canvas id="pad" width="1040" height="400"></canvas>
+        <div class="baseline"></div><div class="xmark">×</div><div class="hint">draw above the line</div></div>
+    </div>
+    <div id="typePane" style="display:none">
+      <input id="typed" class="typed-input" placeholder="Type your full name" autocomplete="name">
+      <div class="fonts" id="fonts"></div>
+    </div>
+    <div id="uploadPane" class="uploadpane" style="display:none">
+      <div class="dropzone" id="dropzone">
+        <div class="upico" data-svg="upload"></div>
+        <div style="font-weight:700;color:var(--text-strong)">Click to upload or drag an image</div>
+        <div style="font-size:11.5px;margin-top:4px">PNG or JPG of your signature on white paper works best</div>
+      </div>
+      <input type="file" id="upInput" accept="image/png,image/jpeg" class="vh">
+      <div class="uppreview" id="upPreview" style="display:none"></div>
+    </div>
+    <div class="intent" id="sigIntent"><b>By clicking Adopt and Sign,</b> I agree this is my legal electronic signature and that it carries the same legal effect as my handwritten signature.</div>
+    <div class="modal-foot">
+      <button class="btn ghost" type="button" id="sigClear">Clear</button>
+      <div class="right">
+        <button class="btn ghost" type="button" id="sigCancel">Cancel</button>
+        <button class="btn primary" type="button" id="sigAdopt">Adopt &amp; Sign <span class="arrow"></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- decline modal -->
+<div class="overlay" id="declineOverlay" role="dialog" aria-modal="true" aria-labelledby="declineTitle">
+  <div class="modal">
+    <h3 id="declineTitle">Decline to sign</h3>
+    <p class="sub">If you decline, the sender is notified and the document will not be completed. You can optionally tell them why.</p>
+    <label class="vh" for="declineReason">Reason for declining</label>
+    <textarea id="declineReason" class="ta" placeholder="Reason (optional)"></textarea>
+    <div class="modal-foot">
+      <button class="btn ghost" type="button" id="declineCancel">Go back</button>
+      <div class="right">
+        <button class="btn danger" type="button" id="declineConfirm">Decline to sign</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- withdraw-consent modal -->
+<div class="overlay" id="withdrawOverlay" role="dialog" aria-modal="true" aria-labelledby="withdrawTitle">
+  <div class="modal">
+    <h3 id="withdrawTitle">Withdraw electronic-records consent</h3>
+    <p class="sub">You may withdraw your consent to use electronic records and signatures. If this document is not yet completed, withdrawing will stop the electronic signing process; the sender will be notified and can arrange a paper copy.</p>
+    <label class="vh" for="withdrawReason">Reason for withdrawing</label>
+    <textarea id="withdrawReason" class="ta" placeholder="Reason (optional)"></textarea>
+    <div class="modal-foot">
+      <button class="btn ghost" type="button" id="withdrawCancel">Cancel</button>
+      <div class="right">
+        <button class="btn danger" type="button" id="withdrawConfirm">Withdraw consent</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* LiftedSign — public signer experience.
+ * Consumes the signing_payload + token endpoints exactly per the e-sign contract:
+ *   GET  /api/sign/token/{token}                 -> signing_payload (Section 2)
+ *   GET  /api/sign/token/{token}/page/{n}        -> page PNG
+ *   POST /api/sign/token/{token}/consent         -> ESIGN consent capture
+ *   POST /api/sign/token/{token}/submit          -> submit values + field_meta
+ *   POST /api/sign/token/{token}/decline         -> decline with reason
+ *   GET  /api/sign/token/{token}/download         -> sealed copy (post-complete)
+ *   POST /api/sign/token/{token}/withdraw-consent -> withdraw consent
+ * No prompt()/confirm()/alert() for data capture. No secrets handled client-side. */
+(function () {
+  "use strict";
+
+  var token = location.pathname.split("/").filter(Boolean).pop() || "";
+  var qs = new URLSearchParams(location.search);
+  var WANT_WITHDRAW = qs.get("withdraw") === "1";
+
+  var DATA = null;
+  var values = {};                 // field_id -> text or dataURL
+  var fieldMeta = {};              // field_id -> {adopted_at, method}
+  var adopted = { signature: null, initials: null };  // reusable adopted images
+  var curField = null;             // field being signed in the sig modal
+  var consentGiven = false;        // server-confirmed (consumer) or checkbox (b2b)
+  var completed = false;
+
+  /* =====================================================================================
+     KEEP IN SYNC with web/envelope.html — the core UI helpers below ($/el/esc, the SVG
+     icon set + icon(), toast(), and friends) are duplicated across both
+     signer pages. There is no shared module yet, so any fix here must be mirrored in
+     web/envelope.html (and vice-versa). Dedupe into a build-time shared module is a
+     follow-up; until then, edit both files together.
+     ===================================================================================== */
+  var $ = function (id) { return document.getElementById(id); };
+  function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+
+  /* ---------------- inline SVG icon set (1.5px stroke, currentColor) ---------------- */
+  // No emoji anywhere — these replace the legacy emoji map across the page.
+  var S = function (paths, extra) {
+    return '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" ' +
+           'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (extra || "") + '>' + paths + '</svg>';
+  };
+  var SVG_ICONS = {
+    signature: S('<path d="M3 17c3 0 4-10 7-10s2 8 4 8 2-4 4-4"/><path d="M3 21h18"/>'),
+    initials:  S('<path d="M5 7h6M8 7v10"/><path d="M14 17V7l5 10V7"/>'),
+    date:      S('<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>'),
+    name:      S('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>'),
+    email:     S('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+    title:     S('<path d="M6 3h9l3 3v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M9 10h6M9 14h6"/>'),
+    company:   S('<path d="M3 21h18M5 21V5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v16M14 21V9h4a1 1 0 0 1 1 1v11"/><path d="M8 8h2M8 12h2M8 16h2"/>'),
+    text:      S('<path d="M4 7V5h16v2M9 5v14M9 19h2"/>'),
+    checkbox:  S('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/>'),
+    check:     S('<path d="M5 13l4 4L19 7"/>'),
+    checksm:   S('<path d="M5 12l4 4L19 6"/>'),
+    x:         S('<path d="M6 6l12 12M18 6L6 18"/>'),
+    bang:      S('<path d="M12 8v5"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/>'),
+    warn:      S('<path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/>'),
+    doc:       S('<path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 14h6M9 17h4"/>'),
+    download:  S('<path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/>'),
+    lock:      S('<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'),
+    pen:       S('<path d="M3 17c3 0 4-10 7-10s2 8 4 8 2-4 4-4"/><path d="M3 21h18"/>'),
+    keyboard:  S('<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/>'),
+    upload:    S('<path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M5 20h14"/>'),
+    undo:      S('<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>'),
+    monitor:   S('<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>'),
+    target:    S('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>'),
+    chevdown:  S('<path d="m6 9 6 6 6-6"/>'),
+    shield:    S('<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/>'),
+    zoomin:    S('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/>'),
+    zoomout:   S('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/>'),
+    arrow:     S('<path d="M5 12h13M13 6l6 6-6 6"/>', ' width="16" height="16"')
+  };
+  function icon(name) { return SVG_ICONS[name] || SVG_ICONS.text; }
+  function iconSpan(name) { var s = el("span", "ico"); s.innerHTML = icon(name); return s; }
+  // Hydrate any markup placeholders that requested an icon by name.
+  function hydrateIcons(root) {
+    (root || document).querySelectorAll("[data-svg]").forEach(function (n) {
+      var k = n.getAttribute("data-svg");
+      var map = { lock: "lock", target: "target", "chevron-down": "chevdown", upload: "upload",
+                  pen: "pen", keyboard: "keyboard" };
+      n.innerHTML = icon(map[k] || k);
+    });
+    // arrows inside buttons
+    (root || document).querySelectorAll(".btn .arrow:empty").forEach(function (n) { n.innerHTML = icon("arrow"); });
+  }
+
+  /* ---------------- toast ---------------- */
+  var toastT = null;
+  function toast(msg, kind) {
+    var t = $("toast"); t.textContent = msg; t.className = "show " + (kind || "");
+    clearTimeout(toastT); toastT = setTimeout(function () { t.className = ""; }, kind === "err" ? 5200 : 3200);
+  }
+
+  /* ---------------- load ---------------- */
+  async function load() {
+    var r;
+    try { r = await fetch("/api/sign/token/" + token).then(function (x) { return x.json(); }); }
+    catch (e) { return showErr("Connection problem", "We couldn't reach the signing service. Check your connection and reload."); }
+    if (!r) return showErr();
+    // sender access-lock challenge gate (CHAL-4): backend withholds the document until verified.
+    if (!r.ok && r.challenge_required) return showChallenge(r);
+    if (r.error || !r.ok) return resolveError(r);
+    DATA = normalize(r);
+    $("docName").textContent = DATA.agreement.name || "Document";
+    setSignerPill(DATA.signer);
+
+    var st = (DATA.agreement.status || "").toLowerCase();
+    var ss = (DATA.signer.status || "").toLowerCase();
+    if (st === "voided" || st === "void") return showStateErr("warn", "This document was voided", "The sender voided this envelope, so it can no longer be signed.");
+    if (st === "declined" || ss === "declined") return showStateErr("bad", "Signing was declined", "This signing request was declined and is no longer active. Contact the sender if this is unexpected.");
+    if (st === "expired") return showStateErr("warn", "This link has expired", "This signing link is no longer valid. Please ask the sender to send a new invitation.");
+    if (ss === "signed" || st === "completed") {
+      completed = (st === "completed");
+      return showDone(true, "You already signed this document.");
+    }
+
+    if (WANT_WITHDRAW && DATA.withdraw_url) return openWithdraw();
+    render();
+  }
+
+  function resolveError(r) {
+    var m = (r && r.error || "").toLowerCase();
+    if (m.indexOf("expired") >= 0) return showStateErr("warn", "This link has expired", "Please ask the sender to send a new invitation.");
+    if (m.indexOf("void") >= 0) return showStateErr("warn", "This document was voided", "It can no longer be signed.");
+    if (m.indexOf("declined") >= 0) return showStateErr("bad", "Signing was declined", "This request is no longer active.");
+    return showErr("Link not available", r && r.error ? null : "This signing link is invalid, expired, or already completed.", r && r.error);
+  }
+
+  // Fill in defaults for any keys the backend might omit so the page never breaks.
+  function normalize(r) {
+    r.agreement = r.agreement || {};
+    r.signer = r.signer || {};
+    r.pages = r.pages || [];
+    r.fields = r.fields || [];
+    r.brand = r.brand || {};
+    r.disclosure = r.disclosure || {};
+    if (r.consent_required == null) r.consent_required = !r.signer.consent;
+    if (r.decline_allowed == null) r.decline_allowed = true;
+    r.download_url = r.download_url || ("/api/sign/token/" + token + "/download");
+    r.consent_url = r.consent_url || ("/api/sign/token/" + token + "/consent");
+    r.withdraw_url = r.withdraw_url || ("/api/sign/token/" + token + "/withdraw-consent");
+    return r;
+  }
+
+  function setSignerPill(s) {
+    var pill = $("signerPill"); pill.textContent = "";
+    if (!s || (!s.name && !s.email)) { pill.style.display = "none"; return; }
+    pill.style.display = "inline-flex";
+    var nm = s.name || s.email || "";
+    var inits = (s.name || s.email || "?").split(/[\s@.]+/).filter(Boolean).map(function (w) { return (w[0] || "").toUpperCase(); }).join("").slice(0, 2) || "?";
+    var av = el("span", "av", inits); av.setAttribute("aria-hidden", "true");
+    var label = el("span", "nm", nm);
+    pill.appendChild(av); pill.appendChild(label);
+    pill.setAttribute("title", nm + (s.email && s.email !== nm ? " · " + s.email : ""));
+    pill.setAttribute("aria-label", "Signing as " + nm);
+  }
+
+  /* ---------------- terminal screens ---------------- */
+  function clearMain() { var m = $("main"); m.textContent = ""; return m; }
+  function hideChrome() { $("fab").style.display = "none"; $("prog").style.display = "none"; }
+
+  function showErr(title, body, raw) {
+    hideChrome(); var m = clearMain(); var d = el("div", "err");
+    var ic = el("div", "ic"); ic.innerHTML = icon("warn"); d.appendChild(ic);
+    d.appendChild(el("h2", null, title || "Link not available"));
+    d.appendChild(el("p", null, body || "This signing link is invalid, expired, or already completed."));
+    if (raw) { var s = el("p", null, raw); s.style.fontSize = "11.5px"; s.style.opacity = ".6"; s.style.marginTop = "8px"; d.appendChild(s); }
+    m.appendChild(d);
+  }
+  function showStateErr(kind, title, body) {
+    hideChrome(); var m = clearMain(); var d = el("div", "done-screen reveal");
+    var ck = el("div", "ck " + (kind === "bad" ? "bad" : "warn"));
+    ck.innerHTML = icon(kind === "bad" ? "x" : "bang");
+    d.appendChild(ck);
+    d.appendChild(el("h2", null, title));
+    d.appendChild(el("p", null, body));
+    m.appendChild(d); $("bar").style.width = "100%";
+  }
+
+  function showDone(already, msg) {
+    hideChrome(); var m = clearMain(); var d = el("div", "done-screen reveal");
+    var sealed = !!completed;                     // is the WHOLE envelope finished/sealed? (not just this signer)
+    var first = (DATA && DATA.signer && DATA.signer.name) ? DATA.signer.name.split(/\s+/)[0] : "";
+    var ck = el("div", "ck"); ck.innerHTML = icon("check"); d.appendChild(ck);  // their signature did succeed
+    d.appendChild(el("h2", null, sealed ? "Signed & sealed" : already ? "You've already signed" : "Your signature is in"));
+    var sub = sealed ? "Every party — including you — receives the completed, sealed document and Certificate of Completion by email."
+            : already ? "Your signature is already on file. The document isn't sealed yet — it's waiting on the other signer(s)."
+            : ("Thanks" + (first ? ", " + first : "") + " — your part is complete. The document isn't sealed yet because it's waiting on the other signer(s).");
+    d.appendChild(el("p", null, sub));
+
+    var nc = el("div", "nextcard");
+    nc.appendChild(el("h4", null, "What happens next"));
+    var steps = sealed
+      ? [["1", "The completed, sealed PDF is on its way by email to every party, including you."],
+         ["2", "A Certificate of Completion (identities, timestamps, IP, and document hash) is attached as legal proof."],
+         ["3", "You can download your copy below at any time."]]
+      : [["1", "Your signature and consent are recorded now with a timestamped, IP-stamped audit entry."],
+         ["2", "The remaining signer(s) are asked to sign — the sender has been notified."],
+         ["3", "Once everyone signs, the sealed PDF + Certificate of Completion are emailed to all parties, and your copy appears here."]];
+    steps.forEach(function (s) {
+      var row = el("div", "step"); row.appendChild(el("span", "n", s[0])); row.appendChild(el("span", null, s[1])); nc.appendChild(row);
+    });
+    d.appendChild(nc);
+
+    var acts = el("div", "done-acts");
+    if (sealed) {
+      var dl = el("a", "btn primary");
+      dl.innerHTML = icon("download") + " Download signed copy";
+      dl.href = DATA && DATA.download_url ? DATA.download_url : "#"; dl.target = "_blank"; dl.rel = "noopener";
+      dl.addEventListener("click", function (ev) {
+        if (!DATA || !DATA.download_url) { ev.preventDefault(); toast("Your copy will appear here shortly.", "ok"); }
+      });
+      acts.appendChild(dl);
+    } else {
+      var note = el("div", "done-note"); note.innerHTML = icon("lock") + "<span>We'll email your sealed copy the moment everyone has signed.</span>";
+      acts.appendChild(note);
+    }
+    if (DATA && DATA.signer && DATA.signer.is_consumer && DATA.withdraw_url) {
+      var wd = el("button", "btn ghost", "Withdraw consent");
+      wd.type = "button"; wd.addEventListener("click", openWithdraw); acts.appendChild(wd);
+    }
+    d.appendChild(acts);
+    m.appendChild(d); $("bar").style.width = "100%";
+  }
+
+  /* ---------------- main render ---------------- */
+  var ZOOM = 1, paperEl = null;
+  var ZW = { 1: 900, 1.25: 1120, 1.5: 1340, 0.85: 760 };
+  function render() {
+    var m = clearMain();
+
+    // 1 — intro banner (staggered reveal)
+    var b = el("div", "banner reveal"); b.style.animationDelay = "0ms";
+    b.appendChild(el("div", "eyb", "Review & sign"));
+    b.appendChild(el("h1", null, DATA.agreement.name || "Document"));
+    b.appendChild(el("p", null, DATA.agreement.message || "Review the document below and complete the highlighted fields, then sign. Your identity, timestamps, and consent are recorded for a legally binding, tamper-evident record."));
+    var acts = el("div", "acts");
+    var view = el("a", "mini"); view.innerHTML = icon("doc") + " View document"; view.href = "#main";
+    view.addEventListener("click", function (e) { e.preventDefault(); scrollToDoc(); });
+    acts.appendChild(view);
+    if (DATA.decline_allowed) {
+      var dec = el("button", "mini danger"); dec.type = "button"; dec.innerHTML = icon("x") + " Decline to sign";
+      dec.addEventListener("click", openDecline); acts.appendChild(dec);
+    }
+    if (DATA.signer.is_consumer && DATA.withdraw_url) {
+      var wd = el("button", "mini"); wd.type = "button"; wd.innerHTML = icon("undo") + " Withdraw consent";
+      wd.addEventListener("click", openWithdraw); acts.appendChild(wd);
+    }
+    b.appendChild(acts);
+    m.appendChild(b);
+
+    // 2 — sticky document toolbar (reveal)
+    var n = DATA.pages.length;
+    var tool = el("div", "doctool reveal"); tool.style.animationDelay = "70ms";
+    var tic = el("span", "dt-ico"); tic.innerHTML = icon("doc"); tic.setAttribute("aria-hidden", "true"); tool.appendChild(tic);
+    var meta = el("div", "dt-meta");
+    meta.appendChild(el("span", "dt-name", DATA.agreement.name || "Document"));
+    meta.appendChild(el("span", "dt-sub", n + (n === 1 ? " page" : " pages")));
+    tool.appendChild(meta);
+    var tacts = el("div", "dt-acts");
+    var zg = el("span", "zoomgrp"); zg.setAttribute("role", "group"); zg.setAttribute("aria-label", "Zoom document");
+    var zout = el("button", null); zout.type = "button"; zout.innerHTML = icon("zoomout"); zout.setAttribute("aria-label", "Zoom out");
+    var zlbl = el("span", "zlbl", "100%"); zlbl.id = "zoomLbl";
+    var zin = el("button", null); zin.type = "button"; zin.innerHTML = icon("zoomin"); zin.setAttribute("aria-label", "Zoom in");
+    zout.addEventListener("click", function () { setZoom(ZOOM <= 1 ? 0.85 : ZOOM === 1.25 ? 1 : 1.25); });
+    zin.addEventListener("click", function () { setZoom(ZOOM < 1 ? 1 : ZOOM === 1 ? 1.25 : 1.5); });
+    zg.appendChild(zout); zg.appendChild(zlbl); zg.appendChild(zin);
+    tacts.appendChild(zg);
+    var dl = el("button", "dt-dl"); dl.type = "button"; dl.innerHTML = icon("download") + "<span>Download</span>";
+    dl.setAttribute("aria-label", "Download a copy of this document");
+    dl.addEventListener("click", function () {
+      if (completed && DATA.download_url) { window.open(DATA.download_url, "_blank", "noopener"); }
+      else { toast("The signed PDF will be available to download once all signers finish.", "ok"); }
+    });
+    tacts.appendChild(dl);
+    tool.appendChild(tacts);
+    m.appendChild(tool);
+
+    // 3 — paper column (the document as a paper stack)
+    var paper = el("div", "paper reveal"); paper.style.animationDelay = "140ms";
+    paper.style.maxWidth = ZW[ZOOM] + "px"; paperEl = paper;
+    DATA.pages.forEach(function (pg, i) {
+      var pw = el("div", "pagewrap"); pw.dataset.page = i;
+      pw.setAttribute("data-pglabel", "Page " + (i + 1) + " of " + n);
+      var img = document.createElement("img");
+      img.src = "/api/sign/token/" + token + "/page/" + i; img.draggable = false; img.alt = "Page " + (i + 1) + " of " + n;
+      pw.appendChild(img); paper.appendChild(pw);
+      img.onload = function () { placeFields(pw, i); markRecordsAccessed(); };
+    });
+    m.appendChild(paper);
+
+    $("fab").style.display = "flex";
+    $("prog").style.display = "flex";
+    updateProgress();
+
+    // ESIGN consent gate: must accept BEFORE any field is fillable.
+    if (DATA.consent_required && !DATA.signer.consent) openConsent();
+    else { consentGiven = true; }
+  }
+  function setZoom(z) {
+    if (!ZW[z]) return; ZOOM = z;
+    if (paperEl) paperEl.style.maxWidth = ZW[z] + "px";
+    var l = $("zoomLbl"); if (l) l.textContent = Math.round(z * 100) + "%";
+  }
+  function scrollToDoc() { var p = document.querySelector(".pagewrap"); if (p) p.scrollIntoView({ behavior: "smooth", block: "start" }); }
+
+  function placeFields(pw, pageIndex) {
+    DATA.fields.filter(function (f) { return f.page === pageIndex; }).forEach(function (f) {
+      if (f._el) return;  // already placed (re-onload guard)
+      var fe = el("div", "field"); fe.dataset.fid = f.id;
+      fe.style.left = (f.x * 100) + "%"; fe.style.top = (f.y * 100) + "%";
+      fe.style.width = (f.w * 100) + "%"; fe.style.height = (f.h * 100) + "%";
+      fe.setAttribute("role", "button"); fe.setAttribute("tabindex", "0");
+      fe.setAttribute("aria-label", labelFor(f) + (isRequired(f) ? " (required)" : " (optional)"));
+      var lbl = el("span", "lbl");
+      lbl.appendChild(iconSpan(iconKey(f.type)));
+      lbl.appendChild(el("span", null, f.placeholder || labelFor(f)));
+      fe.appendChild(lbl);
+      var here = el("div", "here");
+      var hereTxt = f.type === "signature" ? "Sign here" : (f.type === "initials" ? "Initial" : "Fill");
+      here.innerHTML = icon(iconKey(f.type)) + "<span>" + esc(hereTxt) + "</span>";
+      fe.appendChild(here);
+      if (!isRequired(f)) { fe.classList.add("optional"); here.innerHTML = icon(iconKey(f.type)) + "<span>Optional</span>"; }
+      fe.addEventListener("click", function () { fillField(f, fe); });
+      fe.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); fillField(f, fe); } });
+      pw.appendChild(fe); f._el = fe;
+
+      // sender prefill wins; else smart defaults for date/name/email.
+      if (f.value != null && f.value !== "") {
+        if (f.type === "checkbox") { setCheckbox(f, fe, true); }
+        else if (f.type === "signature" || f.type === "initials") { setImg(f, fe, f.value, "reuse"); }
+        else { setVal(f, fe, f.value, "type"); }
+      } else if (f.type === "date") { setVal(f, fe, todayISO(), "type"); }
+      // Auto-fill name/email ONLY when we actually have the value. A nameless signer (added by
+      // email only) must NOT get an empty field marked "done" — that would let them Finish while
+      // the server (which requires every required field) rejects the blank. Leave it unfilled +
+      // clickable so the guided flow prompts them to type it.
+      else if (f.type === "name" && (DATA.signer.name || "").trim()) { setVal(f, fe, DATA.signer.name, "type"); }
+      else if (f.type === "email" && (DATA.signer.email || "").trim()) { setVal(f, fe, DATA.signer.email, "type"); }
+    });
+    updateProgress();
+  }
+
+  // map field type -> icon key (no emoji)
+  function iconKey(t) { return ({ signature: "signature", initials: "initials", date: "date", name: "name", email: "email", title: "title", company: "company", text: "text", checkbox: "checkbox" })[t] || "text"; }
+  function labelFor(f) { return ({ signature: "Signature", initials: "Initials", date: "Date", name: "Name", email: "Email", title: "Title", company: "Company", text: "Text", checkbox: "Checkbox" })[f.type] || "Field"; }
+  function isRequired(f) { return !(f.required === 0 || f.required === false); }
+  // LOCAL calendar date (YYYY-MM-DD). Never toISOString() — that is UTC, so a signer
+  // in a US evening would auto-fill TOMORROW's date on a legally-dated document.
+  function todayISO() {
+    var d = new Date();
+    function p(n) { return (n < 10 ? "0" : "") + n; }
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }
+
+  function recordMeta(f, method) { fieldMeta[f.id] = { adopted_at: Date.now() / 1000, method: method || "type" }; }
+  function setVal(f, fe, v, method) {
+    values[f.id] = v; recordMeta(f, method);
+    fe.classList.add("done"); var l = fe.querySelector(".lbl"); if (l) l.remove();
+    var s = fe.querySelector(".val"); if (!s) { s = el("span", "val"); fe.appendChild(s); } s.textContent = v;
+    updateProgress();
+  }
+  function setImg(f, fe, u, method) {
+    values[f.id] = u; recordMeta(f, method);
+    fe.classList.add("done"); var l = fe.querySelector(".lbl"); if (l) l.remove();
+    var im = fe.querySelector("img"); if (!im) { im = document.createElement("img"); fe.appendChild(im); } im.src = u;
+    updateProgress();
+  }
+  function setCheckbox(f, fe, on) {
+    values[f.id] = on ? "x" : ""; recordMeta(f, "type");
+    fe.classList.toggle("done", on);
+    var s = fe.querySelector(".val"); if (!s) { s = el("span", "val"); fe.appendChild(s); }
+    s.innerHTML = on ? '<span class="ico">' + icon("checksm") + '</span>' : "";
+    if (on) { var l = fe.querySelector(".lbl"); if (l) l.remove(); }
+    updateProgress();
+  }
+
+  /* ---------------- guided flow / progress ---------------- */
+  // Required + actionable fields the signer must personally touch.
+  function actionable() {
+    // Include name/email/date so a required one left empty (e.g. a nameless signer) is caught by
+    // nextUnfilled() and gates Finish — the client no longer says "all set" then the server 400s.
+    return DATA.fields.filter(function (f) {
+      return ["signature", "initials", "text", "title", "company", "checkbox", "name", "email", "date"].indexOf(f.type) >= 0 && isRequired(f);
+    });
+  }
+  function nextUnfilled() {
+    var a = actionable();
+    return a.find(function (f) { return !values[f.id]; }) || null;
+  }
+  function allRequiredDone() { return !nextUnfilled(); }
+
+  function updateProgress() {
+    var a = actionable();
+    var done = a.filter(function (f) { return values[f.id]; }).length;
+    var pct = a.length ? Math.round(done / a.length * 100) : 100;
+    $("ring").style.setProperty("--p", pct);
+    $("ringTxt").textContent = done + "/" + a.length;
+    $("progTxt").textContent = done < a.length ? "to complete" : "all set";
+    $("bar").style.width = (a.length ? (done / a.length * 100) : (consentGiven ? 100 : 0)) + "%";
+    document.querySelectorAll(".field.current").forEach(function (e) { e.classList.remove("current"); });
+
+    var btn = $("actionBtn"), hint = $("fabHint");
+    if (DATA.consent_required && !consentGiven) {
+      hint.innerHTML = "<b>Action required:</b> agree to electronic signing to begin.";
+      btn.innerHTML = 'Review &amp; agree <span class="arrow">' + icon("arrow") + '</span>';
+      btn.disabled = false; btn.onclick = openConsent; return;
+    }
+    var nxt = nextUnfilled();
+    if (nxt) {
+      hint.innerHTML = "<b>" + done + " of " + a.length + "</b> required fields done.";
+      btn.innerHTML = (done === 0 ? "Start signing" : ("Next: " + esc(nxt.placeholder || nxt.type))) + ' <span class="arrow">' + icon("arrow") + '</span>';
+      btn.disabled = false; btn.onclick = function () { focusField(nxt); };
+    } else {
+      hint.innerHTML = "All required fields complete. <b>By signing, this becomes your legal electronic signature.</b>";
+      btn.innerHTML = 'Finish &amp; Sign <span class="arrow">' + icon("arrow") + '</span>';
+      btn.disabled = false; btn.onclick = finish;
+    }
+  }
+
+  function focusField(f) {
+    if (!f || !f._el) return;
+    f._el.classList.add("current");
+    f._el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(function () { fillField(f, f._el); }, 460);
+  }
+  function advance() {
+    var n = nextUnfilled();
+    if (n && n._el) setTimeout(function () {
+      n._el.classList.add("current");
+      n._el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 240);
+  }
+
+  /* ---------------- field capture ---------------- */
+  function fillField(f, fe) {
+    if (DATA.consent_required && !consentGiven) { openConsent(); return; }
+    if (f.type === "signature" || f.type === "initials") {
+      if (adopted[f.type]) { setImg(f, fe, adopted[f.type], "reuse"); advance(); return; }
+      curField = f; openSig(f.type);
+    } else if (f.type === "checkbox") {
+      setCheckbox(f, fe, !values[f.id]); advance();
+    } else if (f.type === "date") {
+      openOverlay(f, fe, { type: "date" });
+    } else if (f.type === "email") {
+      openOverlay(f, fe, { type: "email" });
+    } else {
+      openOverlay(f, fe, { type: f.w * 100 > 26 && f.h * 100 > 6 ? "multiline" : "text" });
+    }
+  }
+
+  // Inline overlay input positioned exactly over the field rect — replaces prompt().
+  function openOverlay(f, fe, opt) {
+    // tear down any existing overlay first
+    document.querySelectorAll(".field .ovl").forEach(function (n) { n.remove(); });
+    var multiline = opt.type === "multiline";
+    var input = document.createElement(multiline ? "textarea" : "input");
+    input.className = "ovl"; input.value = values[f.id] != null ? values[f.id] : defaultFor(f);
+    var hpx = fe.offsetHeight || 22;
+    input.style.fontSize = Math.max(11, Math.min(22, Math.round(hpx * (multiline ? 0.5 : 0.62)))) + "px";
+    if (!multiline) {
+      if (opt.type === "date") { input.type = "text"; input.inputMode = "numeric"; input.placeholder = "YYYY-MM-DD"; }
+      else if (opt.type === "email") { input.type = "email"; input.placeholder = f.placeholder || "name@example.com"; }
+      else { input.type = "text"; input.placeholder = f.placeholder || ""; }
+    } else { input.placeholder = f.placeholder || ""; }
+
+    var cal = null;
+    if (opt.type === "date") {
+      cal = document.createElement("input"); cal.type = "date"; cal.className = "ovlcal typed-input";
+      cal.style.cssText += ";position:absolute;left:0;top:100%;margin-top:4px;width:auto;color-scheme:dark";
+      cal.value = /^\d{4}-\d{2}-\d{2}$/.test(input.value) ? input.value : todayISO();
+      cal.addEventListener("input", function () { input.value = cal.value; });
+    }
+
+    function commit() {
+      var v = (input.value || "").trim();
+      if (opt.type === "email" && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { toast("Enter a valid email address", "err"); input.focus(); return false; }
+      if (opt.type === "date" && v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) { toast("Use date format YYYY-MM-DD", "err"); input.focus(); return false; }
+      if (isRequired(f) && !v) { toast("This field is required", "err"); input.focus(); return false; }
+      cleanup();
+      if (v) { setVal(f, fe, v, "type"); advance(); } else { updateProgress(); }
+      return true;
+    }
+    function cleanup() { input.remove(); if (cal) cal.remove(); document.removeEventListener("keydown", onKey, true); }
+    function onKey(ev) {
+      if (ev.key === "Escape") { ev.preventDefault(); cleanup(); }
+      else if (ev.key === "Enter" && !multiline) { ev.preventDefault(); commit(); }
+    }
+    // Commit on blur, but never when focus is moving between the input and its own
+    // date-picker companion. FocusEvent.relatedTarget tells us the next focus target
+    // synchronously — no fragile setTimeout/activeElement timing race (L-35).
+    input.addEventListener("blur", function (ev) { if (ev.relatedTarget !== cal) commit(); });
+    if (cal) cal.addEventListener("blur", function (ev) { if (ev.relatedTarget !== input) commit(); });
+    document.addEventListener("keydown", onKey, true);
+
+    fe.appendChild(input);
+    if (cal) fe.appendChild(cal);
+    // iOS: ensure the field is visible above the keyboard.
+    fe.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(function () { input.focus(); if (input.select) input.select(); }, 90);
+  }
+  function defaultFor(f) {
+    if (f.type === "date") return todayISO();
+    if (f.type === "name") return DATA.signer.name || "";
+    if (f.type === "email") return DATA.signer.email || "";
+    return "";
+  }
+
+  /* ---------------- signature adoption modal ---------------- */
+  var pad, ctx, drawing = false, last = null, prevMid = null, hasInk = false;
+  var mode = "draw", fontSel = 0, sigKind = "signature", uploadURL = null;
+
+  function initialsOf(n) { return (n || "").split(/\s+/).filter(Boolean).map(function (w) { return (w[0] || "").toUpperCase(); }).join("").slice(0, 4) || "YN"; }
+  function defaultText() { return sigKind === "initials" ? initialsOf(DATA && DATA.signer && DATA.signer.name) : ((DATA && DATA.signer && DATA.signer.name) || "Your Name"); }
+
+  function openSig(type) {
+    sigKind = type === "initials" ? "initials" : "signature";
+    uploadURL = null; $("upPreview").style.display = "none"; $("upPreview").textContent = "";
+    $("sigTitle").textContent = type === "initials" ? "Adopt your initials" : "Adopt your signature";
+    $("sigAdopt").innerHTML = (type === "initials" ? "Adopt &amp; Initial" : "Adopt &amp; Sign") + ' <span class="arrow">' + icon("arrow") + '</span>';
+    showOverlay("sigOverlay"); sigTab("draw");
+    pad = $("pad"); ctx = pad.getContext("2d"); clearSig();
+    $("typed").value = defaultText(); renderFonts();
+  }
+  function closeSig() { hideOverlay("sigOverlay"); }
+  function sigTab(t) {
+    mode = t;
+    ["draw", "type", "upload"].forEach(function (n) {
+      $("tab" + n[0].toUpperCase() + n.slice(1)).classList.toggle("on", t === n);
+      $(n + "Pane").style.display = t === n ? "block" : "none";
+    });
+  }
+  function clearSig() {
+    if (ctx) ctx.clearRect(0, 0, pad.width, pad.height);
+    last = null; prevMid = null; hasInk = false;
+    uploadURL = null; $("upPreview").style.display = "none"; $("upPreview").textContent = "";
+    if ($("upInput")) $("upInput").value = "";
+    renderFonts();
+  }
+  function ppos(e) {
+    var r = pad.getBoundingClientRect(); var t = e.touches ? e.touches[0] : e;
+    return [(t.clientX - r.left) * pad.width / r.width, (t.clientY - r.top) * pad.height / r.height];
+  }
+  function dStart(e) { drawing = true; last = ppos(e); prevMid = last; e.preventDefault(); }
+  function dMove(e) {
+    if (!drawing) return; var p = ppos(e); var mid = [(last[0] + p[0]) / 2, (last[1] + p[1]) / 2];
+    ctx.strokeStyle = "#0d1018"; ctx.lineWidth = 3.5; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(prevMid[0], prevMid[1]); ctx.quadraticCurveTo(last[0], last[1], mid[0], mid[1]); ctx.stroke();
+    prevMid = mid; last = p; hasInk = true; e.preventDefault();
+  }
+  function dEnd() { drawing = false; }
+
+  function renderFonts() {
+    var name = ($("typed").value || defaultText());
+    var box = $("fonts"); box.textContent = "";
+    ["f0", "f1", "f2", "f3"].forEach(function (cls, i) {
+      var o = el("div", "font-opt " + cls + (i === fontSel ? " on" : ""), name);
+      o.addEventListener("click", function () { fontSel = i; renderFonts(); });
+      box.appendChild(o);
+    });
+  }
+
+  function handleUpload(file) {
+    if (!file) return;
+    if (!/^image\/(png|jpe?g)$/.test(file.type)) { toast("Please upload a PNG or JPG image", "err"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast("Image is too large (max 5 MB)", "err"); return; }
+    var rd = new FileReader();
+    rd.onload = function () {
+      // Re-encode to PNG via canvas so the backend always gets a clean dataURL.
+      var img = new Image();
+      img.onload = function () {
+        var c = document.createElement("canvas"); var max = 1040;
+        var scale = Math.min(1, max / img.width); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        var cx = c.getContext("2d"); cx.drawImage(img, 0, 0, c.width, c.height);
+        uploadURL = c.toDataURL("image/png");
+        var prev = $("upPreview"); prev.style.display = "flex"; prev.textContent = "";
+        var pim = document.createElement("img"); pim.src = uploadURL; prev.appendChild(pim);
+      };
+      img.onerror = function () { toast("Couldn't read that image", "err"); };
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(file);
+  }
+
+  function adoptSig() {
+    var url, method;
+    if (mode === "type") {
+      var name = ($("typed").value || "").trim() || defaultText();
+      var c = document.createElement("canvas"); c.width = 1040; c.height = 360; var cx = c.getContext("2d");
+      var fonts = ["italic 150px 'Brush Script MT','Segoe Script',cursive", "150px 'Snell Roundhand','Apple Chancery',cursive",
+                   "140px 'Segoe Script','Bradley Hand',cursive", "italic 140px Georgia,serif"];
+      cx.fillStyle = "#0d1018"; cx.font = fonts[fontSel]; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(name, 520, 180);
+      url = c.toDataURL("image/png"); method = "type";
+    } else if (mode === "upload") {
+      if (!uploadURL) { toast("Upload an image of your signature first", "err"); return; }
+      url = uploadURL; method = "draw"; // contract methods: draw|type|reuse; an uploaded image is a drawn mark
+    } else {
+      if (!hasInk) { toast("Draw your signature first", "err"); return; }
+      url = pad.toDataURL("image/png"); method = "draw";
+    }
+    adopted[curField.type] = url;
+    setImg(curField, curField._el, url, method);
+    closeSig(); advance();
+  }
+
+  /* ---------------- sender access-lock challenge gate ---------------- */
+  // The sender may require an identity check (access code / Q&A / DOB / last-4 SSN)
+  // BEFORE any document content is returned. We never see the expected answer; we
+  // post the entered value to /challenge and only reveal the doc on {ok:true}.
+  var challengeBusy = false;
+  // Per-type input affordances (mobile-perfect, no autofill leakage of secrets).
+  // KEEP IN SYNC with web/envelope.html:challengeMeta — the per-challenge-type input
+  // affordance/prompt maps are duplicated across both signer pages; edit both together.
+  var CHAL_INPUT = {
+    code:      { placeholder: "Enter the access code",       inputmode: "text",    type: "text",     maxlen: 64 },
+    text:      { placeholder: "Type your answer",             inputmode: "text",    type: "text",     maxlen: 200 },
+    dob:       { placeholder: "MM/DD/YYYY",                   inputmode: "numeric", type: "text",     maxlen: 10 },
+    ssn_last4: { placeholder: "Last 4 digits",               inputmode: "numeric", type: "text",     maxlen: 4 },
+    ssn:       { placeholder: "Social Security number",       inputmode: "numeric", type: "password", maxlen: 11 }
+  };
+
+  function showChallenge(r) {
+    hideChrome();
+    var type = (r && r.challenge_type) || "code";
+    var cfg = CHAL_INPUT[type] || CHAL_INPUT.code;
+    var defPrompt = ({ code: "Enter the access code", text: "Answer the security question",
+      dob: "Enter your date of birth", ssn_last4: "Last 4 digits of your SSN",
+      ssn: "Enter your Social Security number" })[type] || "Enter the access code";
+    $("challengePrompt").textContent = (r && r.challenge_prompt) || defPrompt;
+    var inp = $("challengeInput");
+    inp.value = "";
+    inp.type = cfg.type;
+    inp.placeholder = cfg.placeholder;
+    inp.setAttribute("inputmode", cfg.inputmode);
+    inp.maxLength = cfg.maxlen;
+    inp.disabled = false;
+    inp.classList.remove("bad");
+    var sub = $("challengeSub");
+    if (sub) sub.textContent = "The sender protected this document with an access check. Enter the requested information to continue — the document stays hidden until it matches.";
+    setChalMsg("", null);
+    var btn = $("challengeSubmit"); btn.disabled = false;
+    btn.innerHTML = 'Unlock document <span class="arrow">' + icon("arrow") + '</span>';
+    challengeBusy = false;
+    // The challenge gate is modal-only and cannot be dismissed without passing — no Esc, no backdrop close.
+    showOverlay("challengeOverlay");
+    setTimeout(function () { inp.focus(); }, 120);
+    $("bar").style.width = "20%";
+  }
+
+  function setChalMsg(msg, kind) {
+    var m = $("challengeMsg");
+    m.textContent = msg || "";
+    m.className = "chal-msg" + (kind ? " " + kind : "");
+  }
+
+  function lockChallenge(retryAfter) {
+    // Soft client-side cooldown mirror so we don't hammer the backend while locked.
+    // Drive the cooldown from the server's retry_after (seconds) so we re-enable in
+    // step with the actual lock window — not a hardcoded guess (mirrors envelope.html).
+    var inp = $("challengeInput"), btn = $("challengeSubmit");
+    inp.disabled = true; btn.disabled = true; challengeBusy = true;
+    var secs = (typeof retryAfter === "number" && retryAfter > 0) ? retryAfter : 900;
+    setTimeout(function () {
+      // Re-enable so the signer can try again once the coarse lock window has elapsed.
+      inp.disabled = false; btn.disabled = false; challengeBusy = false;
+      btn.innerHTML = 'Try again <span class="arrow">' + icon("arrow") + '</span>';
+    }, secs * 1000);
+  }
+
+  async function submitChallenge() {
+    if (challengeBusy) return;
+    var inp = $("challengeInput");
+    var v = (inp.value || "").trim();
+    if (!v) { inp.classList.add("bad"); setChalMsg("Please enter the requested information.", "err"); inp.focus(); return; }
+    inp.classList.remove("bad");
+    challengeBusy = true;
+    var btn = $("challengeSubmit"); btn.disabled = true; var prev = btn.innerHTML; btn.textContent = "Checking…";
+    setChalMsg("", null);
+    var r;
+    try { r = await fetch("/api/sign/token/" + token + "/challenge", json({ value: v })).then(function (x) { return x.json(); }); }
+    catch (e) { r = null; }
+    // SECURITY: the value is sent once over TLS and discarded locally; never stored or logged.
+    inp.value = "";
+    if (r && r.ok) {
+      btn.innerHTML = '<span class="ico">' + icon("check") + '</span> Unlocked';
+      setChalMsg("Verified — opening your document…", null);
+      inp.disabled = true;
+      // Re-fetch the now-unlocked signing payload and proceed through the normal flow.
+      setTimeout(function () { hideOverlay("challengeOverlay"); challengeBusy = false; clearMain().appendChild(el("div", "spin")); load(); }, 650);
+      return;
+    }
+    challengeBusy = false;
+    inp.classList.add("bad"); inp.focus();
+    btn.disabled = false; btn.innerHTML = prev;
+    if (r && r.locked) {
+      // Coarse lockout — never reveal the answer or precise timing (CHAL-5/RL-1).
+      setChalMsg("Too many attempts. For security, please wait a few minutes and try again.", "locked");
+      lockChallenge(r.retry_after);
+    } else if (r && typeof r.attempts_remaining === "number") {
+      var n = r.attempts_remaining;
+      setChalMsg("That didn't match. " + (n > 0 ? (n + (n === 1 ? " attempt left." : " attempts left.")) : "Please try again."), "err");
+      if (n <= 0) lockChallenge();
+    } else {
+      // Generic — no field/value/existence oracle.
+      setChalMsg("That didn't match. Please try again.", "err");
+    }
+  }
+
+  /* ---------------- ESIGN consent (ERSD) gate ---------------- */
+  var recordsAccessed = false;
+  function markRecordsAccessed() {
+    if (recordsAccessed) return;
+    recordsAccessed = true;
+    var note = $("scrollNote");
+    if (note) {
+      note.className = "scrollnote ok";
+      note.innerHTML = '<span class="ico">' + icon("checksm") + '</span><span>You can access this document electronically.</span>';
+    }
+    refreshConsentGate();
+  }
+  // Also count an intentional scroll/open of the details as access demonstration.
+  function refreshConsentGate() {
+    var box = $("consentBox"), agree = $("consentAgree");
+    agree.disabled = !(box.checked && recordsAccessed);
+  }
+
+  function buildErsd() {
+    var d = DATA.disclosure || {};
+    var consumer = !!d.consumer;
+    var summary = $("ersdSummary"); summary.textContent = "";
+    var items = consumer ? [
+      ["doc", "Right to a paper copy", "You may request a paper copy of this record; any fee is described in the full disclosure."],
+      ["undo", "Right to withdraw consent", "You can withdraw your consent to sign electronically at any time, with the consequences described below."],
+      ["monitor", "Hardware &amp; software", esc(d.hardware_software) || "A current web browser, a PDF reader, internet access, an email account, and a device able to view and download files."],
+      ["check", "You can access this record", "By opening this document electronically you confirm you can receive records in this format."]
+    ] : [
+      ["signature", "Electronic signatures", "Your electronic signature has the same legal effect as a handwritten one (ESIGN Act &amp; UETA)."],
+      ["doc", "Electronic records", "You agree to receive and review this record electronically rather than on paper."],
+      ["monitor", "What you need", esc(d.hardware_software) || "A current web browser, a PDF reader, internet access, and an email account."]
+    ];
+    items.forEach(function (it) {
+      var ri = el("div", "ri");
+      var ic = el("span", "ic"); ic.innerHTML = icon(it[0]); ri.appendChild(ic);
+      var tx = el("span"); tx.innerHTML = "<b>" + it[1] + "</b> — " + it[2]; ri.appendChild(tx); summary.appendChild(ri);
+    });
+    // full disclosure text (verbatim from backend — used for the hash)
+    $("ersdText").textContent = d.text || "Electronic Records and Signatures Disclosure.\n\nBy proceeding you agree to conduct this transaction electronically and that your electronic signature is legally binding.";
+    $("consentLabel").textContent = consumer
+      ? "I have read the disclosure. I consent to use electronic records and signatures, and I confirm I can access and retain this document electronically."
+      : "I agree to use electronic records and signatures (ESIGN/UETA) — this will be my legal signature.";
+  }
+
+  function openConsent() {
+    if (DATA.signer.consent) { consentGiven = true; updateProgress(); return; }
+    buildErsd();
+    var box = $("consentBox"); box.checked = false;
+    // If the document already loaded/visible, treat as accessible.
+    if (document.querySelector(".pagewrap img") && document.querySelector(".pagewrap img").complete) markRecordsAccessed();
+    refreshConsentGate();
+    showOverlay("consentOverlay");
+  }
+
+  async function submitConsent() {
+    var d = DATA.disclosure || {};
+    var body = {
+      agreed: true,
+      disclosure_version: d.version || (DATA.signer && DATA.signer.consent_version) || "",
+      disclosure_text_hash: d.text_hash || "",
+      access_demonstrated: !!recordsAccessed,
+      access_method: "viewed_pdf_in_browser"
+    };
+    var btn = $("consentAgree"); btn.disabled = true; var prev = btn.innerHTML; btn.textContent = "Recording…";
+    var r;
+    try { r = await fetch(DATA.consent_url, json(body)).then(function (x) { return x.json(); }); }
+    catch (e) { r = null; }
+    if (r && r.ok) {
+      consentGiven = true; DATA.signer.consent = true;
+      hideOverlay("consentOverlay"); toast("Consent recorded — you can now sign.", "ok");
+      updateProgress();
+      var n = nextUnfilled(); if (n) focusField(n);
+    } else {
+      btn.disabled = false; btn.innerHTML = prev;
+      toast((r && r.error) || "Could not record consent. Please try again.", "err");
+    }
+  }
+
+  /* ---------------- decline ---------------- */
+  function openDecline() { $("declineReason").value = ""; showOverlay("declineOverlay"); setTimeout(function () { $("declineReason").focus(); }, 80); }
+  async function submitDecline() {
+    var reason = $("declineReason").value.trim();
+    var btn = $("declineConfirm"); btn.disabled = true; var prev = btn.textContent; btn.textContent = "Declining…";
+    var r;
+    try { r = await fetch("/api/sign/token/" + token + "/decline", json({ reason: reason })).then(function (x) { return x.json(); }); }
+    catch (e) { r = null; }
+    btn.disabled = false; btn.textContent = prev;
+    if (r && r.ok) { hideOverlay("declineOverlay"); showStateErr("warn", "You declined to sign", "The sender has been notified. No signature was recorded. You may close this window."); }
+    else { toast((r && r.error) || "Could not record your decline. Please try again.", "err"); }
+  }
+
+  /* ---------------- withdraw consent ---------------- */
+  function openWithdraw() { $("withdrawReason").value = ""; showOverlay("withdrawOverlay"); setTimeout(function () { $("withdrawReason").focus(); }, 80); }
+  async function submitWithdraw() {
+    var reason = $("withdrawReason").value.trim();
+    var btn = $("withdrawConfirm"); btn.disabled = true; var prev = btn.textContent; btn.textContent = "Withdrawing…";
+    var r;
+    try { r = await fetch(DATA.withdraw_url, json({ reason: reason })).then(function (x) { return x.json(); }); }
+    catch (e) { r = null; }
+    btn.disabled = false; btn.textContent = prev;
+    if (r && r.ok) { hideOverlay("withdrawOverlay"); showStateErr("warn", "Consent withdrawn", "You have withdrawn your consent to use electronic records and signatures. The sender has been notified and can arrange a paper copy."); }
+    else { toast((r && r.error) || "Could not withdraw consent. Please try again.", "err"); }
+  }
+
+  /* ---------------- finish & sign ---------------- */
+  async function finish() {
+    if (DATA.consent_required && !consentGiven) { openConsent(); return; }
+    var miss = nextUnfilled();
+    if (miss) { toast("Please complete all required fields first.", "err"); focusField(miss); return; }
+    var btn = $("actionBtn"); btn.disabled = true; var prev = btn.innerHTML; btn.textContent = "Signing…";
+    var body = { values: values, consent: true, field_meta: fieldMeta };
+    var r;
+    try { r = await fetch("/api/sign/token/" + token + "/submit", json(body)).then(function (x) { return x.json(); }); }
+    catch (e) { r = null; }
+    if (r && r.ok) { completed = !!r.completed; showDone(false); }
+    else {
+      btn.disabled = false; btn.innerHTML = prev;
+      var em = r && r.error || "Could not submit your signature.";
+      if (/consent/i.test(em)) { toast("Please accept the electronic-records disclosure first.", "err"); openConsent(); }
+      else { toast(em, "err"); updateProgress(); }
+    }
+  }
+
+  /* ---------------- overlay helpers ---------------- */
+  // Focus management for the modal overlays (consent, signature, decline, withdraw,
+  // challenge). Overlays are role="dialog" aria-modal="true"; without a trap, keyboard
+  // and screen-reader users can Tab out to the page behind a legally-binding step.
+  // The trap only intercepts the Tab key — it never touches pointer/touch events, and
+  // the signature canvas (#pad) is not tab-focusable, so drawing/typing/adopting is
+  // unaffected. Focusables are recomputed on every Tab so hidden panes (display:none)
+  // and freshly-enabled buttons (e.g. "I Agree") are always handled correctly.
+  var lastFocus = null, trapId = null;
+  var FOCUS_SEL = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  function focusables(root) {
+    return Array.prototype.filter.call(root.querySelectorAll(FOCUS_SEL), function (n) {
+      // Skip anything not laid out (inside a display:none pane / a hidden overlay).
+      return n.offsetWidth > 0 || n.offsetHeight > 0 || n === document.activeElement;
+    });
+  }
+  function showOverlay(id) {
+    lastFocus = document.activeElement;
+    var ov = $(id); ov.classList.add("show"); document.body.style.overflow = "hidden";
+    trapId = id;
+    var f = focusables(ov);
+    if (f.length) { try { f[0].focus(); } catch (e) {} }
+  }
+  function hideOverlay(id) {
+    $(id).classList.remove("show"); document.body.style.overflow = "";
+    if (trapId === id) trapId = null;
+    if (lastFocus && lastFocus.focus) try { lastFocus.focus(); } catch (e) {}
+  }
+  // Wrap Tab / Shift+Tab within the active overlay (first <-> last).
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Tab" || !trapId) return;
+    var ov = $(trapId);
+    if (!ov || !ov.classList.contains("show")) { trapId = null; return; }
+    var f = focusables(ov);
+    if (!f.length) { ev.preventDefault(); return; }
+    var first = f[0], last = f[f.length - 1], a = document.activeElement;
+    if (!ov.contains(a)) { ev.preventDefault(); first.focus(); return; }
+    if (ev.shiftKey && a === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && a === last) { ev.preventDefault(); first.focus(); }
+  }, true);
+  function json(b) { return { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) }; }
+
+  /* ---------------- wiring ---------------- */
+  function wire() {
+    hydrateIcons(document);
+
+    // signature pad
+    var p = $("pad");
+    p.addEventListener("mousedown", dStart); p.addEventListener("mousemove", dMove); window.addEventListener("mouseup", dEnd);
+    p.addEventListener("touchstart", dStart, { passive: false }); p.addEventListener("touchmove", dMove, { passive: false }); p.addEventListener("touchend", dEnd);
+
+    // sig modal tabs + buttons
+    document.querySelectorAll("#sigOverlay .tabs button").forEach(function (b) { b.addEventListener("click", function () { sigTab(b.dataset.tab); }); });
+    $("typed").addEventListener("input", renderFonts);
+    $("sigClear").addEventListener("click", clearSig);
+    $("sigCancel").addEventListener("click", closeSig);
+    $("sigAdopt").addEventListener("click", adoptSig);
+
+    // upload
+    var dz = $("dropzone"), upi = $("upInput");
+    dz.addEventListener("click", function () { upi.click(); });
+    upi.addEventListener("change", function () { handleUpload(upi.files && upi.files[0]); });
+    ["dragover", "dragenter"].forEach(function (ev) { dz.addEventListener(ev, function (e) { e.preventDefault(); dz.classList.add("over"); }); });
+    ["dragleave", "drop"].forEach(function (ev) { dz.addEventListener(ev, function (e) { e.preventDefault(); dz.classList.remove("over"); }); });
+    dz.addEventListener("drop", function (e) { handleUpload(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
+
+    // sender access-lock challenge
+    $("challengeSubmit").addEventListener("click", submitChallenge);
+    $("challengeInput").addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") { ev.preventDefault(); submitChallenge(); }
+    });
+    $("challengeInput").addEventListener("input", function () { $("challengeInput").classList.remove("bad"); });
+
+    // consent
+    $("consentBox").addEventListener("change", refreshConsentGate);
+    $("ersdDetails").addEventListener("toggle", function () { if ($("ersdDetails").open) markRecordsAccessed(); });
+    $("consentAgree").addEventListener("click", submitConsent);
+    $("consentDecline").addEventListener("click", function () { hideOverlay("consentOverlay"); openDecline(); });
+
+    // decline / withdraw
+    $("declineCancel").addEventListener("click", function () { hideOverlay("declineOverlay"); });
+    $("declineConfirm").addEventListener("click", submitDecline);
+    $("withdrawCancel").addEventListener("click", function () { hideOverlay("withdrawOverlay"); });
+    $("withdrawConfirm").addEventListener("click", submitWithdraw);
+
+    // Esc closes the top-most non-consent modal (consent must be accepted/declined explicitly).
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key !== "Escape") return;
+      ["sigOverlay", "declineOverlay", "withdrawOverlay"].forEach(function (id) {
+        if ($(id).classList.contains("show")) hideOverlay(id);
+      });
+    });
+  }
+
+  wire();
+  load();
+})();
+
+</script>
+</body>
+</html>
