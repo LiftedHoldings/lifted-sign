@@ -268,6 +268,44 @@ export class LiftedSign {
   }
 
   /**
+   * Poll {@link LiftedSign#get} until the envelope reaches a terminal state, then
+   * resolve with the final agreement — or throw if it ends in failure or the
+   * `timeout` elapses first. Note that `"signed"` is a per-signer status, not a
+   * terminal one: an envelope only finishes once every signer is done and the
+   * envelope-level status becomes `"completed"`, which is what this helper waits for.
+   *
+   * @param {(string|number)} aid Envelope id.
+   * @param {Object} [options]
+   * @param {number} [options.timeout=600000] Maximum time to wait, in milliseconds,
+   *   before giving up and throwing.
+   * @param {number} [options.interval=5000] Delay between polls, in milliseconds.
+   * @returns {Promise<Object>} The final agreement, once its status is `"completed"`.
+   * @throws {LiftedSignError} If the envelope ends as `"voided"`, `"declined"`,
+   *   `"expired"`, or `"cancelled"` (the final agreement is attached as `body`), or
+   *   if `timeout` milliseconds elapse before completion (ditto).
+   * @example
+   * await ls.send(env.id);
+   * const done = await ls.waitForCompletion(env.id);
+   * await ls.download(env.id, "signed.pdf");
+   */
+  async waitForCompletion(aid, { timeout = 600000, interval = 5000 } = {}) {
+    const deadline = performance.now() + timeout;
+    for (;;) {
+      const agreement = await this.get(aid);
+      const status = agreement && agreement.status;
+      if (status === "completed") return agreement;
+      if (status === "voided" || status === "declined" || status === "expired" || status === "cancelled") {
+        throw new LiftedSignError(`Agreement ${aid} ended as '${status}' before completion`, { body: agreement });
+      }
+      const remaining = deadline - performance.now();
+      if (remaining <= 0) {
+        throw new LiftedSignError(`Timed out after ${timeout} ms waiting for agreement ${aid} (last status: '${status}')`, { body: agreement });
+      }
+      await new Promise((resolve) => setTimeout(resolve, Math.min(interval, remaining)));
+    }
+  }
+
+  /**
    * Permanently delete a draft envelope.
    *
    * @param {(string|number)} aid Envelope id.
