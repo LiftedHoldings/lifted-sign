@@ -75,6 +75,7 @@ import json
 import mimetypes
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 import uuid
@@ -294,6 +295,57 @@ class LiftedSign:
             The agreement as a dict.
         """
         return self._request("GET", f"/api/mysign/agreements/{aid}")
+
+    def wait_for_completion(
+        self, aid: int, *, timeout: float = 600, interval: float = 5
+    ) -> Dict[str, Any]:
+        """Poll :meth:`get` until the agreement reaches a terminal status.
+
+        Blocks the calling thread, sleeping ``interval`` seconds between polls,
+        until the agreement is ``completed`` (returned) or reaches a failed
+        terminal state — ``voided``/``declined``/``expired``/``cancelled``
+        (raises) — or until ``timeout`` seconds elapse.
+
+        Note: ``completed`` is the terminal status of the *agreement*. Individual
+        signers carry a ``signed`` status, but the agreement itself only becomes
+        ``completed`` once every signer has signed — so this polls for
+        ``completed``, not ``signed``.
+
+        Args:
+            aid: The integer envelope id returned by :meth:`create_agreement`.
+            timeout: Maximum seconds to wait before giving up.
+            interval: Seconds to sleep between polls.
+
+        Returns:
+            The final agreement dict once it is completed.
+
+        Raises:
+            LiftedSignError: If the agreement reaches a failed terminal state
+                (voided, declined, expired, or cancelled). The final agreement
+                dict is attached as ``body``.
+            TimeoutError: If ``timeout`` elapses before a terminal status.
+        """
+        deadline = time.monotonic() + timeout
+        agreement = self.get(aid)
+        status = str(agreement.get("status", "")).lower()
+        while True:
+            if status == "completed":
+                return agreement
+            if status in ("voided", "declined", "expired", "cancelled"):
+                raise LiftedSignError(
+                    f"Agreement {aid} reached terminal status '{status}'",
+                    status=None,
+                    body=agreement,
+                )
+            now = time.monotonic()
+            if now >= deadline:
+                raise TimeoutError(
+                    f"Agreement {aid} did not reach a terminal status within {timeout}s "
+                    f"(last observed status: '{status}')"
+                )
+            time.sleep(min(interval, deadline - now))
+            agreement = self.get(aid)
+            status = str(agreement.get("status", "")).lower()
 
     def delete(self, aid: int) -> Dict[str, Any]:
         """Permanently delete a draft agreement.
