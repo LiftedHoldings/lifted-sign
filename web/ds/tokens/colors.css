@@ -77,8 +77,12 @@
   /* Text */
   --text-strong:      var(--mist-100);
   --text-body:        var(--mist-300);
-  --text-muted:       var(--slate-400);
-  --text-faint:       var(--slate-500);
+  /* muted/faint informational text must clear WCAG AA (4.5:1) on the tightest
+     dark surface, the ink-800 card. The old ramp values (slate-400 ~4.0:1,
+     slate-500 ~2.4:1) failed, so these are nudged one step lighter in the same
+     blue-grey family. Contrast on #141D31: muted 5.45:1, faint 4.60:1. */
+  --text-muted:       #8493B3;
+  --text-faint:       #77879F;
   --text-on-brand:    var(--white);
 
   /* Borders */

@@ -389,7 +389,7 @@ def _send_email_otp(signer_id: int, to: str) -> dict:
     h = hmac.new(webauth._secret(), (salt + code).encode("utf-8"), hashlib.sha256).hexdigest()
     db.set_setting(_eotp_key(signer_id), {"h": h, "salt": salt, "exp": time.time() + _EOTP_TTL})
     text = (
-        f"Your LiftedSign verification code is {code}\n\n"
+        f"Your Lifted Sign verification code is {code}\n\n"
         "It expires in 10 minutes. If you didn't request this, you can ignore this email."
     )
     try:
@@ -398,7 +398,7 @@ def _send_email_otp(signer_id: int, to: str) -> dict:
         html = ""
     r = integrations.send_email(
         to,
-        "Your LiftedSign verification code",
+        "Your Lifted Sign verification code",
         text,
         html=html,
         from_addr=_email_otp_from(),

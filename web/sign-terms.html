@@ -158,7 +158,7 @@ a:focus-visible,button:focus-visible,.btn:focus-visible{outline:2px solid var(--
 
   <!-- SELF-HOSTER TEMPLATE NOTE — delete this block on your published copy. -->
   <div style="max-width:820px;margin:0 auto 10px;padding:12px 16px;border:1px dashed var(--border-strong,#33415a);border-radius:10px;background:rgba(46,107,255,.06);font-size:13.5px;line-height:1.55;color:var(--text-muted,#8b97ab)">
-    <b style="color:var(--text,#eef3fb)">Self-hosters:</b> replace the bracketed placeholders (<code>{{LEGAL_ENTITY}}</code>) with your own legal entity before publishing. Only the operator identity is parameterized — the ESIGN/UETA substance below is ready to use as-is.
+    <b style="color:var(--text,#eef3fb)">Self-hoster &amp; template note.</b> Replace the bracketed placeholder (<code>{{LEGAL_ENTITY}}</code>) with your own legal entity before you publish — only the operator identity is parameterized; the ESIGN/UETA substance below is written to be a solid starting point. <b style="color:var(--text,#eef3fb)">This document is a template, not legal advice.</b> It ships as-is under the project's open-source license. Before you rely on it for a live service, have your own qualified counsel review and adapt it for your jurisdiction, your business, and your risk tolerance.
   </div>
 
   <div class="doc-grid">
@@ -167,18 +167,20 @@ a:focus-visible,button:focus-visible,.btn:focus-visible{outline:2px solid var(--
       <div class="toc-nav">
         <a href="#acceptance">1. Acceptance</a>
         <a href="#service">2. The service</a>
-        <a href="#accounts">3. Accounts</a>
-        <a href="#use">4. Acceptable use</a>
-        <a href="#content">5. Your content</a>
-        <a href="#esign">6. E-signature &amp; legal effect</a>
-        <a href="#fees">7. Fees</a>
-        <a href="#disclaimers">8. Disclaimers</a>
-        <a href="#liability">9. Limitation of liability</a>
-        <a href="#indemnity">10. Indemnity</a>
-        <a href="#termination">11. Termination</a>
-        <a href="#law">12. Governing law</a>
-        <a href="#changes">13. Changes</a>
-        <a href="#contact">14. Contact</a>
+        <a href="#beta">3. Beta service</a>
+        <a href="#accounts">4. Accounts</a>
+        <a href="#use">5. Acceptable &amp; fair use</a>
+        <a href="#content">6. Your content</a>
+        <a href="#esign">7. Electronic records &amp; signatures</a>
+        <a href="#ip">8. Intellectual property</a>
+        <a href="#fees">9. Fees</a>
+        <a href="#disclaimers">10. Disclaimers</a>
+        <a href="#liability">11. Limitation of liability</a>
+        <a href="#indemnity">12. Indemnification</a>
+        <a href="#termination">13. Termination</a>
+        <a href="#law">14. Governing law &amp; disputes</a>
+        <a href="#changes">15. Changes</a>
+        <a href="#contact">16. Contact</a>
       </div>
     </nav>
 
@@ -186,95 +188,129 @@ a:focus-visible,button:focus-visible,.btn:focus-visible{outline:2px solid var(--
 
       <section id="acceptance">
         <h2><span class="num">01</span> Acceptance</h2>
-        <p>By accessing or using Lifted Sign, creating an account, or electronically signing a document through the service, you agree to be bound by these Terms of Service and our <a class="inline" href="/privacy">Privacy Policy</a>. If you are using Lifted Sign on behalf of an organization, you represent that you have authority to bind that organization to these terms. If you do not agree, do not use the service.</p>
+        <p>These Terms of Service (the "Terms") are a binding agreement between you and <b>{{LEGAL_ENTITY}}</b> ("we," "us," or the "operator"), who operates the Lifted Sign electronic-signature service available at <a class="inline" href="{{PUBLIC_BASE_URL}}">{{PUBLIC_HOST}}</a> (the "Service"). By accessing or using the Service, creating an account, sending a document for signature, or electronically signing a document through the Service, you agree to be bound by these Terms and by our <a class="inline" href="/privacy">Privacy Policy</a>, which is incorporated here by reference.</p>
+        <p>If you are using Lifted Sign on behalf of a company or other organization, you represent that you are authorized to bind that organization, and "you" refers to that organization. You must be at least 18 years old and legally able to enter into contracts to use the Service. <b>If you do not agree to these Terms, do not use the Service.</b></p>
       </section>
 
       <section id="service">
         <h2><span class="num">02</span> The service</h2>
-        <p>Lifted Sign lets you upload documents, place fields, route them to signers, capture electronic signatures, and receive a tamper-evident, AES-256 / PAdES sealed document with a Certificate of Completion.</p>
-        <p>An electronic signature captured through Lifted Sign is intended to be legally binding under the U.S. federal ESIGN Act and the Uniform Electronic Transactions Act (UETA) when the required consent and intent are captured.</p>
-        <div class="callout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg><p><b>You are responsible for your documents.</b> Lifted Sign is a signing tool, not a law firm. Whether a given document is valid, enforceable, and appropriate for electronic signature in your jurisdiction and for your transaction is your responsibility. Some documents (for example certain wills, court filings, or notarized instruments) may not be eligible for electronic signature under applicable law. This is not legal advice.</p></div>
+        <p>Lifted Sign is a tool for preparing, sending, and executing documents electronically. It lets you upload documents, place signature and data fields, route them to one or more signers, capture electronic signatures, and receive a tamper-evident, AES-256 / PAdES-sealed final document together with a <b>Certificate of Completion</b> that records the audit trail.</p>
+        <p>Signers you designate receive a unique, single-purpose link by email to review and sign the document you send them; they do not need their own account to sign. An electronic signature captured through Lifted Sign is intended to be legally binding under the U.S. federal ESIGN Act and the Uniform Electronic Transactions Act (UETA) when the required consent and intent are captured (see <a class="inline" href="#esign">Section 7</a>).</p>
+        <div class="callout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg><p><b>You are responsible for your documents.</b> Lifted Sign is a signing tool, not a law firm, and is not a party to the agreements you execute through it. Whether a given document is valid, enforceable, and appropriate for electronic signature in your jurisdiction and for your transaction is your responsibility. Some records — for example certain wills, testamentary trusts, court filings, notices of default or foreclosure, and instruments requiring notarization — may be excluded from electronic signature under applicable law. This is not legal advice.</p></div>
+      </section>
+
+      <section id="beta">
+        <h2><span class="num">03</span> Beta service</h2>
+        <p>Lifted Sign is currently offered as a <b>beta</b> release. That has real consequences you should understand and accept before you rely on it:</p>
+        <ul>
+          <li><b>Provided "as is" during beta.</b> The Service is made available on an "as is" and "as available" basis while in beta, and may contain defects, incomplete features, or behavior that changes without notice.</li>
+          <li><b>It may change or be interrupted.</b> We may add, modify, suspend, or remove features, and the Service may experience downtime, maintenance windows, or interruptions at any time.</li>
+          <li><b>No service-level agreement.</b> We make no uptime, availability, or support commitment (no SLA) during beta.</li>
+          <li><b>No fee today.</b> The Service is provided free of charge during beta, with no payment method collected (see <a class="inline" href="#fees">Section 9</a>).</li>
+          <li><b>Keep your own copies.</b> Because the Service is in beta, you should download and retain your own copies of important completed documents and Certificates of Completion rather than relying on Lifted Sign as your sole system of record.</li>
+        </ul>
+        <p>Notwithstanding the beta status, a document you complete through the Service is still a real, binding agreement between its signers; "beta" describes the software, not the legal weight of what you sign with it.</p>
       </section>
 
       <section id="accounts">
-        <h2><span class="num">03</span> Accounts</h2>
+        <h2><span class="num">04</span> Accounts</h2>
         <ul>
           <li><b>Accurate information.</b> You agree to provide accurate account information and keep it current.</li>
-          <li><b>Security.</b> You are responsible for safeguarding your credentials and for all activity under your account. Enable two-factor authentication where offered, and notify us promptly of any unauthorized use.</li>
+          <li><b>Security.</b> You are responsible for safeguarding your credentials and for all activity under your account. Enable two-factor authentication where offered, and notify us promptly at the support contact below of any suspected unauthorized use.</li>
           <li><b>One person or entity.</b> An account is for a single person or organization. You may not share credentials or let others sign in as you.</li>
-          <li><b>Sign-in.</b> You may authenticate with Google or with an email and password, plus optional SMS two-factor authentication.</li>
+          <li><b>Sign-in.</b> Depending on how this install is configured, you may authenticate with Google, with an email sign-in link, with an email and password, or with a phone number and one-time code, and you may add an authenticator-app (TOTP) second factor.</li>
+          <li><b>Eligibility.</b> You must be at least 18 and legally capable of entering into binding contracts.</li>
         </ul>
       </section>
 
       <section id="use">
-        <h2><span class="num">04</span> Acceptable use</h2>
+        <h2><span class="num">05</span> Acceptable &amp; fair use</h2>
         <p>You agree not to use Lifted Sign to:</p>
         <ul>
           <li>Send, request, or store documents that are <b>illegal, fraudulent, or deceptive</b>.</li>
           <li><b>Impersonate</b> any person or entity, or misrepresent who is sending or signing a document.</li>
           <li><b>Forge a signature</b>, sign on behalf of someone without their authorization, or obtain a signature through coercion or deception.</li>
-          <li>Upload malware, attempt to breach or overload the service, or interfere with anyone else's use of it.</li>
-          <li>Violate the intellectual-property, privacy, or other rights of any third party.</li>
+          <li>Upload malware, attempt to breach, probe, or overload the Service, circumvent authentication or rate limits, or interfere with anyone else's use of it.</li>
+          <li>Send unsolicited bulk messages (spam), harvest signer contact details, or violate the intellectual-property, privacy, or other rights of any third party.</li>
+          <li>Resell, sublicense, or provide the hosted Service to third parties as your own product without our written agreement.</li>
         </ul>
-        <p>We may suspend or terminate access for conduct that violates these rules or that we reasonably believe is harmful to the service or its users.</p>
+        <h3>Fair use of the hosted tier</h3>
+        <p>On the hosted Service, "unlimited" documents are offered subject to good-faith, <b>fair use</b>. The allowance is intended for normal individual and business signing, not for automated bulk generation, load testing, denial-of-service, cryptocurrency or storage abuse, or volumes that place a disproportionate burden on shared infrastructure. If your usage materially threatens the stability, security, or cost of the Service for others, we may contact you, apply reasonable rate limits, or suspend the account. Running your own instance under the project's open-source license is always available as an alternative.</p>
+        <p>We may suspend or terminate access for conduct that violates these rules or that we reasonably believe is harmful to the Service or its users.</p>
       </section>
 
       <section id="content">
-        <h2><span class="num">05</span> Your content</h2>
-        <p><b>You own your documents.</b> Lifted Sign claims no ownership of the content you upload or the agreements you execute. As between you and us, your documents are yours.</p>
-        <p>To operate the service, you grant {{LEGAL_ENTITY}} a limited, non-exclusive license to host, store, process, transmit, seal, and deliver your documents and related data — solely as needed to provide the signing service to you and the signers you designate. This license exists only to run the service and ends when your content is deleted, except for records we must retain as part of a completed agreement's audit trail or as required by law.</p>
+        <h2><span class="num">06</span> Your content</h2>
+        <p><b>You own your documents.</b> Lifted Sign claims no ownership of the content you upload or the agreements you execute. As between you and us, your documents and data are yours, and you are responsible for having the rights and permissions needed to upload them and to add each signer you designate.</p>
+        <p>To operate the Service, you grant {{LEGAL_ENTITY}} a limited, non-exclusive, worldwide, royalty-free license to host, store, process, transmit, render, seal, and deliver your documents and related data — solely as needed to provide the signing service to you and the signers you designate, and to keep the records described in these Terms and our Privacy Policy. This license exists only to run the Service. It ends when your content is deleted, except for records we must retain as part of a completed agreement's audit trail, to resolve disputes, or as required by law. We do not use your documents to build advertising profiles or to train unrelated machine-learning models.</p>
       </section>
 
       <section id="esign">
-        <h2><span class="num">06</span> E-signature consent &amp; legal effect</h2>
-        <p>Before signing, each signer is asked to consent to conduct the transaction electronically. That consent, together with the signer's intent to sign, is captured and bound into the record along with identity, timestamps, and IP address.</p>
-        <p>When completed this way, an electronic signature carries the same legal effect as a handwritten one under ESIGN and UETA. Signers may have the right to receive records in non-electronic form or to withdraw consent as described at signing time; withdrawing consent does not affect the validity of documents already signed. You remain responsible for ensuring electronic signature is appropriate for your specific document and jurisdiction.</p>
+        <h2><span class="num">07</span> Electronic records &amp; signatures</h2>
+        <p>This section is your consent to do business electronically through Lifted Sign, as contemplated by the U.S. federal Electronic Signatures in Global and National Commerce Act (<b>ESIGN</b>, <a class="inline" href="https://www.govinfo.gov/link/uscode/15/7001" target="_blank" rel="noopener">15 U.S.C. § 7001</a> et seq.) and the Uniform Electronic Transactions Act (<b>UETA</b>) as adopted in most U.S. states.</p>
+        <h3>Consent to transact electronically</h3>
+        <p>Before signing, each signer is presented with a consent disclosure and asked to agree to use electronic records and signatures for the transaction. That consent, together with the signer's affirmative act of signing (their intent to sign), is captured and bound into the record along with the signer's name, email, IP address, and event timestamps.</p>
+        <h3>Legal effect</h3>
+        <p>When completed this way, an electronic signature and record have the same legal effect as a handwritten signature and a paper record, and will not be denied legal effect solely because they are electronic. You agree that a completed document, its Certificate of Completion, and the associated audit trail may be used as evidence of the agreement and of each signer's assent.</p>
+        <h3>Right to paper &amp; to withdraw consent</h3>
+        <p>Consent to sign electronically is voluntary. Before completing a signature, a signer may decline to proceed electronically and, where applicable, request a paper or non-electronic copy of the record from the sender. A signer may also withdraw consent to future electronic transactions by declining to sign or by contacting the sending party. <b>Withdrawing consent, or requesting paper, does not affect the legal validity of documents already completed and signed electronically.</b> Because the sender — not the operator — controls the underlying transaction, requests for paper copies or to withdraw from a specific transaction should be directed to the party who sent the document.</p>
+        <h3>Hardware &amp; software you need</h3>
+        <p>To access, sign, and retain electronic records through Lifted Sign, you need: a device with internet access; a current, standards-compliant web browser; a valid email account able to receive messages from the sender and the Service; the ability to view, download, and print or save PDF files; and enough storage or a printer to retain copies of the records for your files. If these requirements change in a way that affects your ability to access records, the change will be reflected here. By continuing to use the Service you confirm you can access records in these formats.</p>
+        <p>You remain responsible for ensuring that electronic signature is appropriate and permitted for your specific document, parties, and jurisdiction.</p>
+      </section>
+
+      <section id="ip">
+        <h2><span class="num">08</span> Intellectual property</h2>
+        <p>The Lifted Sign software is open-source and licensed under its published license (the GNU Affero General Public License); your rights in the software itself are governed by that license. These Terms govern your use of the <b>hosted Service</b> operated by {{LEGAL_ENTITY}}, not the underlying source code.</p>
+        <p>As between you and us, we and our licensors retain all rights in the Service and its associated software, interfaces, and content, other than your documents and data. The "Lifted Sign" name and any operator names, logos, and branding are the property of their respective owners and are not licensed to you except as needed to use the Service normally. We welcome feedback; if you send us suggestions, you agree we may use them to improve the Service without obligation to you.</p>
       </section>
 
       <section id="fees">
-        <h2><span class="num">07</span> Fees</h2>
+        <h2><span class="num">09</span> Fees</h2>
         <ul>
-          <li><b>Free during beta.</b> Lifted Sign is currently free — unlimited documents, no credit card required.</li>
-          <li><b>Planned pricing.</b> We plan a flat rate of <b>$29.99/month</b> when the service leaves beta. This is a stated plan, not a current charge.</li>
-          <li><b>No surprise charges.</b> We will not charge you without your consent, and we will give clear, advance notice before any paid plan begins. No card is held on file during beta.</li>
+          <li><b>Free during beta.</b> Lifted Sign is currently free — subject to fair use, with no credit card required and no payment method collected anywhere in the product.</li>
+          <li><b>Planned pricing.</b> We anticipate a simple flat rate of <b>$29.99 / month</b> for the hosted tier when the Service leaves beta. This is a stated plan, not a current charge, and it may change before launch.</li>
+          <li><b>No surprise charges.</b> We will not charge you without your affirmative consent, and we will give clear, advance notice — and a chance to decline — before any paid plan begins. No card is held on file during beta.</li>
         </ul>
       </section>
 
       <section id="disclaimers">
-        <h2><span class="num">08</span> Disclaimers</h2>
-        <p class="legal-note">Lifted Sign is provided <b>"as is" and "as available,"</b> without warranties of any kind, whether express or implied, including implied warranties of merchantability, fitness for a particular purpose, and non-infringement, to the fullest extent permitted by law.</p>
-        <p class="legal-note">Lifted Sign is a <b>tool</b>, not a party to your agreements. We are not a law firm and do not provide legal advice. We do not guarantee that any document you create, send, or sign is legally valid or enforceable — that depends on your document, the parties, and the law that applies to you. We do not warrant that the service will be uninterrupted or error-free.</p>
+        <h2><span class="num">10</span> Disclaimers</h2>
+        <p class="legal-note">The Service is provided <b>"as is" and "as available,"</b> without warranties of any kind, whether express, implied, or statutory, including implied warranties of merchantability, fitness for a particular purpose, title, and non-infringement, to the fullest extent permitted by law.</p>
+        <p class="legal-note">Lifted Sign is a <b>tool</b>, not a party to your agreements. We are not a law firm and do not provide legal advice. We do not guarantee that any document you create, send, or sign is legally valid, enforceable, admissible, or suitable for your purpose — that depends on your document, the parties, and the law that applies to you. We do not warrant that the Service will be uninterrupted, timely, secure, or error-free, or that defects will be corrected. Any material you rely on is accessed at your own discretion and risk.</p>
       </section>
 
       <section id="liability">
-        <h2><span class="num">09</span> Limitation of liability</h2>
-        <p class="legal-note">To the maximum extent permitted by law, {{LEGAL_ENTITY}} and its affiliates will not be liable for any indirect, incidental, special, consequential, or punitive damages, or for any loss of profits, revenue, data, or goodwill, arising out of or relating to your use of Lifted Sign.</p>
-        <p class="legal-note">To the maximum extent permitted by law, our total aggregate liability for any claim relating to the service will not exceed the greater of the amount you paid us for the service in the twelve months before the claim, or <b>USD $100</b>. Some jurisdictions do not allow certain limitations, so some of the above may not apply to you.</p>
+        <h2><span class="num">11</span> Limitation of liability</h2>
+        <p class="legal-note">To the maximum extent permitted by law, {{LEGAL_ENTITY}}, its affiliates, and its contributors will not be liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, or for any loss of profits, revenue, data, business, or goodwill, arising out of or relating to your use of or inability to use the Service, even if advised of the possibility of such damages.</p>
+        <p class="legal-note">To the maximum extent permitted by law, our total aggregate liability for all claims relating to the Service will not exceed the greater of the amount you paid us for the Service in the twelve months before the event giving rise to the claim, or <b>USD $100</b>. Some jurisdictions do not allow the exclusion or limitation of certain damages, so some of the above may not apply to you; in that case our liability is limited to the smallest amount permitted by law.</p>
       </section>
 
       <section id="indemnity">
-        <h2><span class="num">10</span> Indemnity</h2>
-        <p>You agree to indemnify and hold harmless {{LEGAL_ENTITY}} and its affiliates from any claims, damages, liabilities, and expenses (including reasonable legal fees) arising out of your documents, your use of the service, or your violation of these terms or of any law or third-party right.</p>
+        <h2><span class="num">12</span> Indemnification</h2>
+        <p>You agree to indemnify, defend, and hold harmless {{LEGAL_ENTITY}} and its affiliates, officers, and contributors from and against any claims, damages, liabilities, losses, and expenses (including reasonable legal fees) arising out of or related to your documents, your use of the Service, your violation of these Terms, or your violation of any law or of any third-party right. We may assume the exclusive defense of any matter subject to indemnification, in which case you agree to cooperate with us.</p>
       </section>
 
       <section id="termination">
-        <h2><span class="num">11</span> Termination</h2>
-        <p>You may stop using Lifted Sign and delete your account at any time from within the app. We may suspend or terminate your access if you breach these terms, if we're required to by law, or if we discontinue the service. Completed documents and their Certificates of Completion may be retained as part of the durable record of an agreement. Provisions that by their nature should survive termination — including content licenses needed for completed records, disclaimers, limitation of liability, and indemnity — will survive.</p>
+        <h2><span class="num">13</span> Termination</h2>
+        <p>You may stop using Lifted Sign and delete your account at any time from within the app. We may suspend or terminate your access if you breach these Terms, if we are required to by law, to protect the Service or its users, or if we discontinue the Service. Where reasonable and lawful, we will try to give notice before terminating an account in good standing so you can export your records.</p>
+        <p>On termination, your right to use the Service ends. Completed documents and their Certificates of Completion may be retained as part of the durable, tamper-evident record of an agreement, and copies you or your signers downloaded remain unaffected. Provisions that by their nature should survive termination — including content licenses needed for completed records, intellectual-property terms, disclaimers, limitation of liability, indemnification, and governing law — will survive.</p>
       </section>
 
       <section id="law">
-        <h2><span class="num">12</span> Governing law</h2>
-        <p>These terms are governed by the laws of the United States and, as applicable, the state in which {{LEGAL_ENTITY}} operates, without regard to conflict-of-laws principles. You agree that any dispute relating to Lifted Sign will be resolved in the courts located there, unless applicable law provides otherwise.</p>
+        <h2><span class="num">14</span> Governing law &amp; disputes</h2>
+        <p>These Terms are governed by the laws of the United States and, as applicable, the state or jurisdiction in which {{LEGAL_ENTITY}} is established, without regard to conflict-of-laws principles and excluding the U.N. Convention on Contracts for the International Sale of Goods.</p>
+        <p><b>Informal resolution first.</b> If you have a dispute with us, contact us first through the support option below; most concerns can be resolved quickly. If we cannot resolve it within 30 days, you and we agree that any dispute relating to the Service will be brought exclusively in the courts located in the operator's jurisdiction, and you consent to their jurisdiction and venue — except that either party may bring an individual claim in small-claims court, and nothing here prevents either party from seeking injunctive relief for misuse or infringement. Where applicable law gives you rights that cannot be waived, nothing in these Terms limits those rights.</p>
       </section>
 
       <section id="changes">
-        <h2><span class="num">13</span> Changes</h2>
-        <p>We may update these terms as the service evolves. When we make a material change, we'll update the "Last updated" date above and, where appropriate, notify you. Continuing to use Lifted Sign after an update means you accept the revised terms.</p>
+        <h2><span class="num">15</span> Changes</h2>
+        <p>We may update these Terms as the Service evolves. When we make a material change, we will update the "Last updated" date above and, where appropriate, notify you through the Service or by email. Continuing to use Lifted Sign after an update takes effect means you accept the revised Terms. If you do not agree to a change, stop using the Service and, if you wish, delete your account.</p>
       </section>
 
       <section id="contact">
-        <h2><span class="num">14</span> Contact</h2>
-        <p>Lifted Sign is operated by <b>{{LEGAL_ENTITY}}</b>. Questions about these terms? Reach us through the support option inside the app. You can also review our <a class="inline" href="/privacy">Privacy Policy</a>.</p>
+        <h2><span class="num">16</span> Contact</h2>
+        <p>Lifted Sign is operated by <b>{{LEGAL_ENTITY}}</b> at <a class="inline" href="{{PUBLIC_BASE_URL}}">{{PUBLIC_HOST}}</a>. Questions about these Terms? Reach us through the support option inside the app. You can also review our <a class="inline" href="/privacy">Privacy Policy</a>.</p>
       </section>
 
     </div>
@@ -287,7 +323,7 @@ a:focus-visible,button:focus-visible,.btn:focus-visible{outline:2px solid var(--
     <a href="/">Lifted Sign</a>
     <a href="/terms">Terms</a>
     <a href="/privacy">Privacy</a>
-    <a href="https://example.com/" target="_blank" rel="noopener">{{LEGAL_ENTITY}}</a>
+    <a href="{{OPERATOR_URL}}" target="_blank" rel="noopener">{{LEGAL_ENTITY}}</a>
   </span>
   <span>{{PUBLIC_HOST}}</span>
 </div></div></footer>

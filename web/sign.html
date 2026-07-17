@@ -357,9 +357,11 @@
   <span class="signer-pill" id="signerPill"></span>
 </header>
 
+<h1 class="vh">Review and sign your document</h1>
+
 <div id="toast" role="status" aria-live="polite"></div>
 
-<div class="wrap" id="main"><div class="spin" aria-label="Loading"></div></div>
+<main class="wrap" id="main"><div class="spin" aria-label="Loading"></div></main>
 
 <div class="fab" id="fab" style="display:none">
   <span class="hint" id="fabHint"></span>
@@ -414,20 +416,20 @@
   <div class="modal">
     <h3 id="sigTitle">Adopt your signature</h3>
     <p class="sub">Draw it, type your name, or upload an image. This becomes your legal electronic signature.</p>
-    <div class="tabs">
-      <button id="tabDraw" class="on" type="button" data-tab="draw"><span class="ico" data-svg="pen"></span> Draw</button>
-      <button id="tabType" type="button" data-tab="type"><span class="ico" data-svg="keyboard"></span> Type</button>
-      <button id="tabUpload" type="button" data-tab="upload"><span class="ico" data-svg="upload"></span> Upload</button>
+    <div class="tabs" role="tablist" aria-label="Signature input method">
+      <button id="tabDraw" class="on" type="button" role="tab" aria-selected="true" aria-controls="drawPane" data-tab="draw"><span class="ico" data-svg="pen"></span> Draw</button>
+      <button id="tabType" type="button" role="tab" aria-selected="false" aria-controls="typePane" data-tab="type"><span class="ico" data-svg="keyboard"></span> Type</button>
+      <button id="tabUpload" type="button" role="tab" aria-selected="false" aria-controls="uploadPane" data-tab="upload"><span class="ico" data-svg="upload"></span> Upload</button>
     </div>
-    <div id="drawPane">
-      <div class="padwrap"><canvas id="pad" width="1040" height="400"></canvas>
+    <div id="drawPane" role="tabpanel" aria-labelledby="tabDraw">
+      <div class="padwrap"><canvas id="pad" width="1040" height="400" aria-label="Signature drawing area — draw your signature above the line"></canvas>
         <div class="baseline"></div><div class="xmark">×</div><div class="hint">draw above the line</div></div>
     </div>
-    <div id="typePane" style="display:none">
+    <div id="typePane" role="tabpanel" aria-labelledby="tabType" style="display:none">
       <input id="typed" class="typed-input" placeholder="Type your full name" autocomplete="name">
       <div class="fonts" id="fonts"></div>
     </div>
-    <div id="uploadPane" class="uploadpane" style="display:none">
+    <div id="uploadPane" class="uploadpane" role="tabpanel" aria-labelledby="tabUpload" style="display:none">
       <div class="dropzone" id="dropzone">
         <div class="upico" data-svg="upload"></div>
         <div style="font-weight:700;color:var(--text-strong)">Click to upload or drag an image</div>
@@ -1008,7 +1010,9 @@
   function sigTab(t) {
     mode = t;
     ["draw", "type", "upload"].forEach(function (n) {
-      $("tab" + n[0].toUpperCase() + n.slice(1)).classList.toggle("on", t === n);
+      var tabBtn = $("tab" + n[0].toUpperCase() + n.slice(1));
+      tabBtn.classList.toggle("on", t === n);
+      tabBtn.setAttribute("aria-selected", t === n ? "true" : "false");
       $(n + "Pane").style.display = t === n ? "block" : "none";
     });
   }

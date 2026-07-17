@@ -26,7 +26,7 @@ that keep the project clean and self-contained.
 Requires Python 3.11 or 3.12.
 
 ```bash
-git clone https://github.com/Lifted-Holdings/lifted-sign.git
+git clone https://github.com/LiftedHoldings/lifted-sign.git
 cd lifted-sign
 
 python -m venv .venv

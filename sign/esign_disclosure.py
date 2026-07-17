@@ -36,7 +36,7 @@ HARDWARE_SOFTWARE = (
 
 ERSD_B2B = (
     "ELECTRONIC RECORDS & SIGNATURES DISCLOSURE AND CONSENT\n"
-    f'{COMPANY} ("LiftedSign") — Version ' + VERSION + "\n\n"
+    f'{COMPANY} ("Lifted Sign") — Version ' + VERSION + "\n\n"
     'By selecting "I agree to use electronic records and signatures" and proceeding, '
     "you agree that this transaction may be conducted electronically, that your "
     "electronic signature on the document(s) presented to you is the legal equivalent "
@@ -51,7 +51,7 @@ ERSD_B2B = (
 
 ERSD_CONSUMER = (
     "ELECTRONIC RECORDS & SIGNATURES DISCLOSURE AND CONSENT (CONSUMER)\n"
-    f'{COMPANY} ("LiftedSign") — Version ' + VERSION + "\n\n"
+    f'{COMPANY} ("Lifted Sign") — Version ' + VERSION + "\n\n"
     "Please read this disclosure carefully and keep a copy for your records. Federal "
     "law (the Electronic Signatures in Global and National Commerce Act, 15 U.S.C. "
     "§7001) requires that we obtain your consent to provide certain records to you "

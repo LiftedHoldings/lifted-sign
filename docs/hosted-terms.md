@@ -1,9 +1,13 @@
 # Hosted service terms (summary)
 
-These terms apply **only** to the managed, paid Lifted Sign service operated at
+These terms apply **only** to the managed Lifted Sign service operated at
 **[sign.liftedholdings.com](https://sign.liftedholdings.com)**. They do **not** apply to
 the open-source software when you self-host it — self-hosting is governed solely by the
 [AGPL-3.0 license](../LICENSE), and nothing here restricts how you run your own copy.
+
+> **The managed service is in beta and free** — no card, no checkout, no payment is
+> collected. The pricing below is the planned post-beta price; we'll give notice before any
+> paid plan begins.
 
 > This document is a plain-language summary for the repository. The binding Terms of
 > Service and Privacy Policy for the hosted service are published on the service itself.
@@ -13,8 +17,9 @@ the open-source software when you self-host it — self-hosting is governed sole
 - **Self-host (free, AGPL-3.0).** Run the software on your own infrastructure. You handle
   the server, database, email, and TLS. There are **no usage limits, no volume policing,
   and no fees** from us — the license is the only agreement.
-- **Hosted ($29.99/month).** We run all the infrastructure — updates, backups, email
-  delivery, storage, and TLS. You get a ready-to-use account with nothing to operate.
+- **Hosted (free during beta; $29.99/month planned after beta).** We run all the
+  infrastructure — updates, backups, email delivery, storage, and TLS. You get a
+  ready-to-use account with nothing to operate. No payment is collected during beta.
 
 ## Fair use (hosted only)
 

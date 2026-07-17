@@ -274,20 +274,20 @@ def send_verify_email(acct: dict) -> None:
     base = config.PUBLIC_BASE_URL
     link = f"{base.rstrip('/')}/api/sign-portal/verify-email?token={tok}"
     text = (
-        "Confirm your LiftedSign email to start sending documents:\n\n"
+        "Confirm your Lifted Sign email to start sending documents:\n\n"
         f"{link}\n\nThis link expires in 7 days. If you didn't sign up, you can ignore this email."
     )
     html = (
         '<div style="font-family:system-ui,Segoe UI,sans-serif;max-width:480px;margin:0 auto">'
         '<h2 style="color:#2E6BFF">Confirm your email</h2>'
-        "<p>Tap below to verify your LiftedSign account and start sending documents.</p>"
+        "<p>Tap below to verify your Lifted Sign account and start sending documents.</p>"
         f'<p><a href="{link}" style="display:inline-block;background:#2E6BFF;color:#fff;'
         'padding:12px 22px;border-radius:9px;text-decoration:none;font-weight:600">Verify email</a></p>'
         '<p style="color:#6b7280;font-size:12px">This link expires in 7 days. If you didn\'t sign up, ignore this email.</p></div>'
     )
     try:
         integrations.send_email(
-            acct["email"], "Confirm your LiftedSign email", text, html=html, from_addr=_reset_from()
+            acct["email"], "Confirm your Lifted Sign email", text, html=html, from_addr=_reset_from()
         )
     except Exception:
         pass
@@ -359,13 +359,13 @@ def send_magic_link(email: str, name: str = "") -> None:
     base = config.PUBLIC_BASE_URL
     link = f"{base.rstrip('/')}/api/sign-portal/auth/magic/verify?token={tok}"
     text = (
-        "Here's your LiftedSign sign-in link:\n\n"
+        "Here's your Lifted Sign sign-in link:\n\n"
         f"{link}\n\nIt expires in 15 minutes and can only be used from this email. "
         "If you didn't request it, you can ignore this message."
     )
     html = (
         '<div style="font-family:system-ui,Segoe UI,sans-serif;max-width:480px;margin:0 auto">'
-        '<h2 style="color:#2E6BFF">Sign in to LiftedSign</h2>'
+        '<h2 style="color:#2E6BFF">Sign in to Lifted Sign</h2>'
         "<p>Tap below to sign in. No password needed.</p>"
         f'<p><a href="{link}" style="display:inline-block;background:#2E6BFF;color:#fff;'
         'padding:12px 22px;border-radius:9px;text-decoration:none;font-weight:600">Sign in</a></p>'
@@ -374,7 +374,7 @@ def send_magic_link(email: str, name: str = "") -> None:
     )
     try:
         integrations.send_email(
-            em, "Your LiftedSign sign-in link", text, html=html, from_addr=_reset_from()
+            em, "Your Lifted Sign sign-in link", text, html=html, from_addr=_reset_from()
         )
     except Exception:
         pass

@@ -17,8 +17,19 @@ body {
 
 ::selection { background: var(--brand-tint-strong); color: var(--text-strong); }
 
-a { color: var(--brand); text-decoration: none; }
-a:hover { color: var(--brand-bright); }
+/* Keyboard focus — one global ring so buttons, links, tabs and any custom
+   control show a visible focus outline (inputs already carry their own ring).
+   Scoped to :focus-visible so it appears only for keyboard/AT users. */
+:focus-visible { outline: 2px solid var(--brand-bright); outline-offset: 2px; }
+
+/* Inline links. On the dark product surfaces the plain --brand blue (#2E6BFF)
+   lands at ~3.7:1 on an ink-800 card — below WCAG AA — so default to the
+   brighter accent (~6.7:1). Light theme re-points below, where the bright blue
+   would be too pale on white. */
+a { color: var(--brand-bright); text-decoration: none; }
+a:hover { color: color-mix(in srgb, var(--brand-bright) 82%, #fff); }
+[data-theme="light"] a { color: var(--brand-deep); }        /* blue-700 ~6.7:1 on white */
+[data-theme="light"] a:hover { color: var(--brand); }        /* blue ~4.5:1 on white */
 
 /* ---- Named text styles --------------------------------------------------- */
 .t-display  { font-size: var(--fs-display);  line-height: var(--lh-display);  letter-spacing: var(--ls-display);  font-weight: var(--fw-bold); color: var(--text-strong); }

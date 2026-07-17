@@ -2,7 +2,7 @@
 
 # Lifted Sign
 
-**The open, self-hostable e-signature server — ESIGN/UETA compliant, a DocuSign alternative.**
+**Legally-binding e-signatures you host yourself — a self-hostable DocuSign alternative that runs on nothing but SQLite.**
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-2E6BFF.svg)](./LICENSE)
 [![Version](https://img.shields.io/badge/version-0.1.0-2E6BFF.svg)](./CHANGELOG.md)
@@ -16,27 +16,50 @@
 
 </div>
 
-Lifted Sign is a complete e-signature service you run yourself: upload a PDF, add
-signers, place fields by anchor, and send single-use signing links. Every completed
-document is sealed and ships with a Certificate of Completion — the audit trail of
-signer identities, timestamps, IP addresses, and consent records that ESIGN and UETA
-call for.
+Upload a PDF, place fields, add signers, and send single-use signing links. Every
+completed document is cryptographically sealed and ships with a **Certificate of
+Completion** — the audit trail of signer identities, timestamps, IP addresses, and
+consent records that ESIGN and UETA call for. Run it on your own hardware in one command,
+or let us host it.
 
 <div align="center">
 <img src="docs/images/dashboard.png" alt="Your documents — the Lifted Sign dashboard" width="100%" />
 </div>
 
-## Why Lifted Sign
+## What makes it different
 
-- **Self-host in one command** — `docker compose up`, or `pip install -e . && python -m sign`.
-- **SQLite by default** — zero-config storage out of the box; switch to Postgres by setting one env var.
-- **Real PAdES sealing** — completed PDFs get PKCS#7/PAdES certification signatures (falls back to a tamper-evident AES-integrity seal when you have no cert yet).
-- **Developer API + SDKs** — a REST API with vendored Python and Node clients and an OpenAPI spec, so integrations are a copy-paste away.
+Plenty of tools send e-signatures. Lifted Sign is the one you can **own**:
+
+- **🏠 Self-hostable, for real.** Your documents, signers, and audit trail live on *your*
+  infrastructure — not a vendor's cloud. Data residency and air-gapped deploys are the
+  default, not an enterprise upsell.
+- **🪶 SQLite by default — no database to run.** It boots with zero external services.
+  One secret, and you're signing. Point it at Postgres with a single env var when you
+  outgrow a file.
+- **🔏 Real PAdES certification — not a flattened image.** Completed PDFs get a
+  PKCS#7/PAdES digital signature that any PDF reader can verify and that breaks visibly
+  if the file is altered. (No cert yet? It falls back to a tamper-evident AES-integrity
+  seal, so you're never unsealed.)
+- **⚙️ Developer-first.** A clean REST API, an OpenAPI spec, and vendored
+  **Python + Node SDKs** — integrations are a copy-paste away, not a sales call.
+- **🔓 AGPL-3.0, free forever when self-hosted.** No seat limits, no volume policing, no
+  "contact us." The license is the only agreement.
+
+See the [full comparison vs DocuSign, Dropbox Sign, and Documenso →](./docs/comparison.md)
+
+## How it works
+
+1. **Upload & prepare.** Drop in a PDF, place signature/date/text fields by anchor, and
+   add one or more signers.
+2. **Send.** Each signer gets a single-use link. They review, consent (ESIGN/UETA gate),
+   and sign in the browser — no account required.
+3. **Seal.** Once everyone signs, the PDF is sealed with a PAdES certification signature
+   and a Certificate of Completion. Download both, or pull them via the API.
 
 ## Quickstart
 
 ```bash
-git clone https://github.com/Lifted-Holdings/lifted-sign.git
+git clone https://github.com/LiftedHoldings/lifted-sign.git
 cd lifted-sign
 cp .env.example .env
 
@@ -56,6 +79,19 @@ Then open **http://localhost:8080**.
 > `SIGN_SECRET` is the one required setting. All login sessions, signer-access cookies,
 > and one-time codes are keyed off it, so the server fails closed and loud if it is
 > missing, too short, or a placeholder.
+
+## Features
+
+- **ESIGN/UETA compliance** — explicit consent gate, and a Certificate of Completion
+  capturing identities, timestamps, IPs, and consent for every envelope.
+- **PAdES/PKCS#7 sealing** with a tamper-evident AES-integrity fallback.
+- **Anchor-based field placement** — signature, initials, date, text, and checkbox fields.
+- **Single-use signer links** — no account required for signers.
+- **Flexible sign-in** — passwordless email magic-link out of the box; Google SSO and
+  phone OTP optional.
+- **SQLite or Postgres**, console or SMTP email — switch by env var.
+- **REST API + OpenAPI spec + Python/Node SDKs.**
+- **Reminders, voiding, and re-download** of sealed PDFs and certificates.
 
 ## Configuration
 
@@ -92,24 +128,51 @@ Point either client's `base_url` / `baseUrl` at your own install to drive your
 self-hosted server. The SDKs are **MIT-licensed** (see below) so integrating against
 Lifted Sign never touches your application's licensing.
 
-## Tiers
+## Self-host vs hosted
 
 | | Self-host | Hosted |
 |---|---|---|
-| **Price** | Free (AGPL-3.0) | $29.99/mo |
+| **Price** | Free forever (AGPL-3.0) | **Free during beta** |
 | **Where** | Your infrastructure | [sign.liftedholdings.com](https://sign.liftedholdings.com) |
 | **You run** | The server, DB, email, TLS | Nothing — fully managed |
 | **Best for** | Full control, data residency, air-gapped | No infra to run, instant setup |
 
-Self-hosting is free forever under the AGPL — run any volume you like on your own
-hardware, no strings. The hosted tier is the same software, managed for you — updates,
-backups, email delivery, and TLS handled, with no infra to operate.
+**Self-hosting is GA and free forever** under the AGPL — run any volume you like on your
+own hardware, no strings.
 
-> **Hosted fair use.** The $29.99/mo hosted plan is sized for a typical small business.
-> We reserve the right to suspend, rate-limit, or require a higher plan for any hosted
-> account whose volume appears abusive or materially exceeds ordinary small-business use.
-> This applies **only** to the managed service — if you self-host, there are no such
-> limits. See [`docs/hosted-terms.md`](./docs/hosted-terms.md).
+**The hosted service is in open beta and free** while we build it out — no card, no
+checkout, nothing to pay. It's the same software, managed for you: updates, backups,
+email delivery, and TLS handled, with no infra to operate. Paid plans will arrive after
+beta; we'll announce pricing well ahead of any change, and self-hosting stays free
+regardless. See [`docs/hosted-terms.md`](./docs/hosted-terms.md) for the managed-service
+terms.
+
+## Contributing
+
+This is a debut open-source project, and contributors are what turn it into a community.
+Bug reports, docs, tests, and code are all welcome — start with a
+[**good first issue**](https://github.com/LiftedHoldings/lifted-sign/labels/good%20first%20issue),
+or read [`CONTRIBUTING.md`](./CONTRIBUTING.md) to get a dev environment running. Found a
+security issue? Please report it privately — see [`SECURITY.md`](./SECURITY.md).
+
+<a id="tests"></a>
+
+## Tests
+
+```bash
+pip install -e '.[dev]'
+pytest -q
+```
+
+## Support
+
+- **Self-hosting questions / bugs** — open an [issue](https://github.com/LiftedHoldings/lifted-sign/issues).
+- **Hosted service** ([sign.liftedholdings.com](https://sign.liftedholdings.com)) — email
+  [support@liftedholdings.com](mailto:support@liftedholdings.com).
+- **Security** — see [`SECURITY.md`](./SECURITY.md) (private disclosure).
+
+Lifted Sign is built by [Lifted Holdings](https://liftedholdings.com) — see also
+[Lifted Payments](https://liftedholdings.com/payments), 3-D Secure card processing for developers.
 
 ## License
 

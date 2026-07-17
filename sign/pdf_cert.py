@@ -572,13 +572,13 @@ def _footer(c, i: int, total: int, env: str) -> None:
     """Repeating footer drawn at render time (needs the final page count)."""
     _do_line(c, _M, _H - 40, _W - _M, _H - 40, _LINE, 0.6, 0)
     _do_text(c, _M, _H - 26, f"Envelope {env}", 7.5, _GREY, "helv", None, None)
-    _brand = "LiftedSign" + (f" · {config.LEGAL_ENTITY}" if config.LEGAL_ENTITY else "")
+    _brand = "Lifted Sign" + (f" · {config.LEGAL_ENTITY}" if config.LEGAL_ENTITY else "")
     _do_text(c, _M, _H - 16, _brand, 6.8, _GREY2, "helv", None, None)
     _do_text(
         c,
         _W - _M - 170,
         _H - 26,
-        f"Secured by LiftedSign · page {i + 1} of {total}",
+        f"Secured by Lifted Sign · page {i + 1} of {total}",
         7.5,
         _GREY,
         "helv",

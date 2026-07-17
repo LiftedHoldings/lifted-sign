@@ -220,7 +220,7 @@ def send_html(
 # --- branded e-sign templates ----------------------------------------------------
 # LIGHT-DEFAULT, bulletproof transactional email. The composition is deliberate and
 # centered: a 600px white card centered on a neutral page, a dark brand header band
-# carrying the centered LiftedSign wordmark, a clear headline hierarchy, a single
+# carrying the centered Lifted Sign wordmark, a clear headline hierarchy, a single
 # prominent centered emerald CTA, the document chip, an optional quote block, and a
 # refined footer with the ESIGN/UETA line + envelope id. Every colored region sets
 # BOTH a bgcolor= attribute and a CSS background, and every text color sits on an
@@ -651,7 +651,7 @@ def reminder_html(
 def completed_html(
     doc_name: str, env_id: str, envelope_url: str = "", seal_method: str = "pades"
 ) -> str:
-    """All-parties-signed confirmation. The sealed, fully-executed PDF + the LiftedSign
+    """All-parties-signed confirmation. The sealed, fully-executed PDF + the Lifted Sign
     Certificate of Completion are attached by the caller; this message announces it and
     carries the envelope id for the audit trail. `envelope_url` (optional) adds a CTA to the
     signer's secure verified-access envelope page to re-download / track anytime.
@@ -670,7 +670,7 @@ def completed_html(
       {
         _lead(
             f"All parties have signed <b style='color:{_INK}'>{escape(doc_name)}</b>. The "
-            f"fully-executed copy, sealed and bundled with the LiftedSign "
+            f"fully-executed copy, sealed and bundled with the Lifted Sign "
             f"<b style='color:{_INK}'>Certificate of Completion</b>, is attached to this email "
             f"for your records."
         )

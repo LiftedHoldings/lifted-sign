@@ -201,6 +201,14 @@ section{padding:96px 0;position:relative;z-index:1}
 .pcard .pnote{font-size:12.5px;color:var(--text-faint);margin-top:12px;text-align:center}
 .pcard .pnote a{color:var(--text-muted);text-decoration:underline;text-underline-offset:2px}
 .pcard .pnote a:hover{color:var(--brand)}
+/* BETA badge — subtle but unmistakable; sets expectations for the managed service */
+.beta-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--brand);background:var(--brand-tint);border:1px solid color-mix(in srgb,var(--brand) 40%,var(--glass-border));border-radius:var(--radius-full);padding:3px 9px;line-height:1;white-space:nowrap}
+.beta-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--brand);box-shadow:0 0 8px var(--brand);flex:none;animation:pulse 1.8s infinite}
+/* tier header row: tier name + optional badge on one line */
+.pcard .phead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+/* future/planned price — clearly secondary to the beta headline */
+.pcard .price-planned{font-family:var(--font-mono);font-size:12.5px;color:var(--text-faint);margin-top:8px}
+.pcard .price-planned b{color:var(--text-muted);font-weight:600}
 
 /* ---- steps ---- */
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
@@ -335,7 +343,7 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
   <canvas class="lds-particles" data-density="0.7" data-links="0" aria-hidden="true"></canvas>
   <div class="wrap"><div class="hero-grid">
   <div>
-    <a class="pill reveal" href="#self-host"><span class="live"></span> <b style="color:var(--text-strong);font-weight:700">Open source · AGPL-3.0</b>&nbsp;— self-host it, or use the managed cloud&nbsp;→</a>
+    <a class="pill reveal" href="#pricing"><span class="live"></span> <b style="color:var(--text-strong);font-weight:700">Open source · AGPL-3.0</b>&nbsp;— self-host it free, or use the managed cloud (free in beta)&nbsp;→</a>
     <h1 class="reveal">E-signatures that hold up.<br><span class="grad">On your own servers.</span></h1>
     <p class="lead reveal">Lifted Sign turns any PDF into a legally-binding agreement — drag-and-drop fields, multi-signer routing, and ESIGN/UETA consent, sealed with a PAdES/PKCS#7 certification signature and a full Certificate of Completion. Open source under AGPL-3.0: run it on your own infrastructure, or let us host it for you. No third party, no redirect.</p>
     <div class="cta reveal">
@@ -558,7 +566,7 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
   <div class="sec-head reveal" style="text-align:center;margin-inline:auto"><span class="eyebrow" style="justify-content:center">Pricing</span><h2>One product. <span class="gradem">Two ways to run it.</span></h2><p style="margin-inline:auto;max-width:54ch">Self-host the whole server for free under AGPL-3.0, or let us run a fully-managed instance for you. Same fields, same PAdES seal, same Certificate of Completion either way.</p></div>
   <div class="price-grid">
     <div class="pcard reveal" id="self-host">
-      <span class="ptag">Self-hosted</span>
+      <div class="phead"><span class="ptag">Self-hosted</span><span class="beta-badge" style="color:var(--text-muted);background:transparent;border-color:var(--border-strong)"><span class="dot" style="background:var(--text-muted);box-shadow:none;animation:none"></span> Free forever</span></div>
       <div class="price gradem">$0</div>
       <div class="per">open source · AGPL-3.0, forever</div>
       <p class="pdesc">The complete Lifted Sign server, source-available and yours to run. Deploy on your own infrastructure with full data residency — no seats, no per-envelope fees, no vendor lock-in.</p>
@@ -572,21 +580,21 @@ html[data-theme="light"] body.mk{--text-faint:#5C6B87}
         <p class="pnote">AGPL-3.0 · your servers, your data.</p></div>
     </div>
     <div class="pcard feat reveal">
-      <span class="ptag">Fully managed</span>
-      <div class="price">$29.99<span style="font-size:.4em;font-weight:600;color:var(--text-faint)"> /mo</span></div>
-      <div class="per">hosted &amp; maintained for you</div>
-      <p class="pdesc">We run Lifted Sign so you don't have to — provisioning, the signing certificate, upgrades, backups, and email delivery. You send and sign; we keep the lights on.</p>
+      <div class="phead"><span class="ptag">Hosted &amp; managed</span><span class="beta-badge"><span class="dot"></span> Beta</span></div>
+      <div class="price gradem">Free</div>
+      <div class="per">during beta · no card, no checkout</div>
+      <p class="pdesc">We run Lifted Sign at {{PUBLIC_HOST}} so you don't have to — provisioning, the signing certificate, upgrades, backups, and email delivery. It's free while we're in beta: you send and sign, we keep the lights on.</p>
       <ul>
         <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Everything in self-host, zero ops</li>
         <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Managed PAdES signing certificate</li>
         <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Email delivery, reminders &amp; tracking</li>
         <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Automatic upgrades &amp; backups</li>
       </ul>
-      <div class="pfoot"><a class="btn primary lg" href="/signapp" style="width:100%;justify-content:center"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-1 4-6 6-6s2 3 4 3 3-4 5-4"/><path d="M3 21h18"/></svg> Get started</a>
-        <p class="pnote">Free while in beta — no card required.</p></div>
+      <div class="pfoot"><a class="btn primary lg" href="/signapp" style="width:100%;justify-content:center"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-1 4-6 6-6s2 3 4 3 3-4 5-4"/><path d="M3 21h18"/></svg> Start free</a>
+        <p class="price-planned">Planned pricing <b>$29.99/mo</b> after beta — we'll give clear notice first.</p></div>
     </div>
   </div>
-  <p class="price-fine reveal">Self-host is free under AGPL-3.0, forever. The managed plan is subject to a reasonable <a href="/terms" style="color:var(--text-muted);text-decoration:underline;text-underline-offset:2px">fair-use policy</a> — and we'll always give clear notice before any change to billing.</p>
+  <p class="price-fine reveal">Self-host is free under AGPL-3.0, forever. The hosted service is in beta and free right now — no card, no checkout. Planned pricing is $29.99/mo once it leaves beta, subject to a reasonable <a href="/terms" style="color:var(--text-muted);text-decoration:underline;text-underline-offset:2px">fair-use policy</a>; we'll always give clear notice before any charge begins.</p>
 </div></section>
 
 <!-- CTA BAND -->

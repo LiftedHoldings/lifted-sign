@@ -27,12 +27,13 @@ Instead, report privately by either of:
 - **GitHub Security Advisories** — open a private advisory from the repository's
   **Security → Report a vulnerability** tab (preferred; keeps the report attached to
   the code).
-- **Email** — `security@example.com`.
+- **Email** — `security@liftedholdings.com` (for the canonical project); general product
+  questions go to `support@liftedholdings.com`.
 
-> **Operators:** replace `security@example.com` with an address that reaches your
-> team, and set `SUPPORT_EMAIL` in your environment for the separate, user-facing
-> support contact. The two are intentionally distinct: one receives coordinated
-> disclosures, the other answers ordinary product questions.
+> **Operators / forks:** if you run your own deployment, use your own monitored security
+> address here and set `SUPPORT_EMAIL` in your environment for the user-facing support
+> contact. The two are intentionally distinct: one receives coordinated disclosures, the
+> other answers ordinary product questions.
 
 Please include as much of the following as you can:
 

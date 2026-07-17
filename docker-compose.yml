@@ -15,8 +15,12 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      # SQLite database and sealed PDFs persist here across restarts.
-      - ./data:/app/data
+      # SQLite database and sealed PDFs persist here across restarts. A NAMED volume
+      # (not a ./data bind mount) so it inherits the image's /app/data ownership — the
+      # container runs as non-root uid 10001, and a fresh host bind mount would be created
+      # root-owned and the app couldn't write it (EACCES). Back up with `docker run --rm
+      # -v lifted-sign_signdata:/data -v $PWD:/backup alpine tar czf /backup/data.tgz /data`.
+      - signdata:/app/data
     restart: unless-stopped
     # To run against Postgres, uncomment this and the `postgres` service below,
     # and set DATABASE_URL=postgresql://sign:sign@postgres:5432/liftedsign in .env.
@@ -45,5 +49,6 @@ services:
   #     retries: 10
   #   restart: unless-stopped
 
-# volumes:
-#   pgdata:
+volumes:
+  signdata:
+  # pgdata:   # uncomment with the postgres service above

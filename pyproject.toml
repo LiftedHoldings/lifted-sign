@@ -39,7 +39,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://sign.liftedholdings.com"
-Repository = "https://github.com/Lifted-Holdings/lifted-sign"
+Repository = "https://github.com/LiftedHoldings/lifted-sign"
 
 [project.scripts]
 lifted-sign = "sign.__main__:main"
