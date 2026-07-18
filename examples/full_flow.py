@@ -59,7 +59,8 @@ def main():
 
         # 2. Create the envelope from the local PDF.
         env = ls.create_agreement(
-            pdf_path, name="Full-flow example: " + os.path.basename(pdf_path)
+            pdf_path,
+            name="Full-flow example: " + os.path.basename(pdf_path),
         )
         env_id = env["id"]
         print(f"1. created envelope {env_id}")
