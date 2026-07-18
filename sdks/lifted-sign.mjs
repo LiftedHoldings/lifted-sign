@@ -258,6 +258,22 @@ export class LiftedSign {
   }
 
   /**
+   * Iterate over ALL agreements, transparently fetching pages as needed.
+   * Usage: for await (const agreement of client.iterateAgreements()) { ... }
+   * @param {{pageSize?: number}} [opts] pageSize is per-request page size (server clamps to 1..200).
+   */
+  async *iterateAgreements({ pageSize = 50 } = {}) {
+    let offset = 0;
+    for (;;) {
+      const page = await this.listAgreements({ limit: pageSize, offset });
+      const items = Array.isArray(page?.agreements) ? page.agreements : [];
+      for (const item of items) yield item;
+      if (!page?.has_more || items.length === 0) break;
+      offset += items.length;
+    }
+  }
+
+  /**
    * Fetch a single envelope by id — use it to poll status (e.g. who has signed).
    *
    * @param {(string|number)} aid Envelope id.
