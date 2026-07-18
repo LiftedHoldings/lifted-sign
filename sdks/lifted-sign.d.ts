@@ -159,8 +159,9 @@ export class LiftedSign {
   /** Re-send the signing email to signers who have not finished yet. */
   remind(aid: string | number): Promise<unknown>;
 
-  /** Void a sent envelope so it can no longer be signed. */
-  void(aid: string | number): Promise<unknown>;
+  /** Void a sent envelope so it can no longer be signed. `reason` is recorded
+   * on the audit trail and shown to signers. */
+  void(aid: string | number, reason?: string): Promise<unknown>;
 
   /** Download the sealed, signed PDF to `outPath`; resolves with the written path. */
   download(aid: string | number, outPath: string): Promise<string>;
