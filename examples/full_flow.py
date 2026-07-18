@@ -100,11 +100,11 @@ def main():
         # is a per-signer state, not the envelope's overall state.
         try:
             final = ls.wait_for_completion(env_id, timeout=600, interval=5)
-            print(f"5. envelope completed: {final.get('state')}")
+            print(f"5. envelope completed: {final.get('status')}")
         except LiftedSignError as e:
             # Terminal FAILURE state: voided / declined / expired / cancelled.
-            state = e.body.get("state") if isinstance(e.body, dict) else None
-            print(f"error: envelope failed ({e}); state={state}", file=sys.stderr)
+            status = e.body.get("status") if isinstance(e.body, dict) else None
+            print(f"error: envelope failed ({e}); status={status}", file=sys.stderr)
             sys.exit(1)
         except TimeoutError:
             print(

@@ -89,13 +89,13 @@ async function main() {
     });
   } catch (err) {
     if (err instanceof LiftedSignError) {
-      const state = err.body?.state ? ` (state: ${err.body.state})` : "";
-      console.error(`[5/6] failed waiting for completion: ${err.message}${state}`);
+      const status = err.body?.status ? ` (status: ${err.body.status})` : "";
+      console.error(`[5/6] failed waiting for completion: ${err.message}${status}`);
       process.exit(1);
     }
     throw err;
   }
-  console.log(`[5/6] envelope reached terminal state: ${final.state}`);
+  console.log(`[5/6] envelope reached terminal status: ${final.status}`);
 
   // 7. Download the sealed PDF and the certificate of completion.
   const pdfOut = await ls.download(env.id, "signed.pdf");
