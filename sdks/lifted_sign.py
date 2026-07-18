@@ -79,7 +79,7 @@ import time
 import urllib.error
 import urllib.request
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 DEFAULT_BASE_URL = "https://sign.liftedholdings.com"
 
@@ -284,6 +284,24 @@ class LiftedSign:
             metadata the API includes).
         """
         return self._request("GET", f"/api/mysign/agreements?limit={limit}&offset={offset}")
+
+    def iter_agreements(self, *, page_size=50) -> Iterator[Dict[str, Any]]:
+        """Iterate over ALL agreements, transparently fetching pages as needed.
+
+        Yields one agreement dict at a time. ``page_size`` is the per-request page
+        size (the server clamps it to 1..200). Safe against server-side clamping:
+        the offset advances by the number of items actually returned, never by the
+        requested page size, so no rows are skipped.
+        """
+        offset = 0
+        while True:
+            page = self.list_agreements(limit=page_size, offset=offset)
+            items = page.get("agreements") or []
+            for item in items:
+                yield item
+            if not page.get("has_more") or not items:
+                break
+            offset += len(items)
 
     def get(self, aid: int) -> Dict[str, Any]:
         """Fetch a single agreement, including its current status and signers.
