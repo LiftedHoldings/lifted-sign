@@ -285,7 +285,7 @@ class LiftedSign:
         """
         return self._request("GET", f"/api/mysign/agreements?limit={limit}&offset={offset}")
 
-    def iter_agreements(self, *, page_size=50) -> Iterator[Dict[str, Any]]:
+    def iter_agreements(self, *, page_size: int = 50) -> Iterator[Dict[str, Any]]:
         """Iterate over ALL agreements, transparently fetching pages as needed.
 
         Yields one agreement dict at a time. ``page_size`` is the per-request page
