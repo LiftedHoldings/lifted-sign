@@ -191,7 +191,8 @@ pytest -q
 - **Security** — see [`SECURITY.md`](./SECURITY.md) (private disclosure).
 
 Lifted Sign is built by [Lifted Holdings](https://liftedholdings.com) — see also
-[Lifted Payments](https://liftedholdings.com/payments), 3-D Secure card processing for developers.
+[Lifted Payments](https://liftedpayments.com), merchant services on interchange-plus with
+3-D Secure card processing for developers ([apply here](https://liftedholdings.com/payments)).
 
 ## License
 
