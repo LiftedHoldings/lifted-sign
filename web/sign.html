@@ -805,8 +805,10 @@
       here.innerHTML = icon(iconKey(f.type)) + "<span>" + esc(hereTxt) + "</span>";
       fe.appendChild(here);
       if (!isRequired(f)) { fe.classList.add("optional"); here.innerHTML = icon(iconKey(f.type)) + "<span>Optional</span>"; }
-      fe.addEventListener("click", function () { fillField(f, fe); });
-      fe.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); fillField(f, fe); } });
+      // Events from the inline editor inside this field (clicks in the box, Space, Enter) bubble
+      // here too; they must not reopen the field — that wiped what the signer was typing.
+      fe.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest(".ovl, .ovlcal")) return; fillField(f, fe); });
+      fe.addEventListener("keydown", function (ev) { if (ev.target !== fe) return; if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); fillField(f, fe); } });
       pw.appendChild(fe); f._el = fe;
 
       // sender prefill wins; else smart defaults for date/name/email.
@@ -875,6 +877,7 @@
   function allRequiredDone() { return !nextUnfilled(); }
 
   function updateProgress() {
+    if (submitting) return;   // keep "Signing…" disabled until the submit settles
     var a = actionable();
     var done = a.filter(function (f) { return values[f.id]; }).length;
     var pct = a.length ? Math.round(done / a.length * 100) : 100;
@@ -904,6 +907,16 @@
 
   function focusField(f) {
     if (!f || !f._el) return;
+    // Heading to another field: settle the open box NOW (not when the next field opens 460ms
+    // later — an Esc in between used to discard the text). A bad email/date stays open.
+    if (activeOvl && activeOvl.f !== f && !activeOvl.commit(false)) return;
+    // "Next" while editing that very field with something typed means "done with it": save it, or
+    // say what's wrong (bad email/date). An empty box just gets the cursor back — consent opens
+    // the first field, so "Start signing" pressed next must not greet the signer with an error.
+    if (activeOvl && activeOvl.f === f) {
+      if ((activeOvl.input.value || "").trim()) activeOvl.commit(true); else activeOvl.input.focus();
+      return;
+    }
     f._el.classList.add("current");
     f._el.scrollIntoView({ behavior: "smooth", block: "center" });
     setTimeout(function () { fillField(f, f._el); }, 460);
@@ -918,7 +931,11 @@
 
   /* ---------------- field capture ---------------- */
   function fillField(f, fe) {
+    if (submitting) return;
     if (DATA.consent_required && !consentGiven) { openConsent(); return; }
+    // Every field type (not just text boxes) first settles an open box elsewhere; a bad
+    // email/date keeps it open instead of letting a signature dialog open over it.
+    if (activeOvl && activeOvl.f !== f && !activeOvl.commit(false)) return;
     if (f.type === "signature" || f.type === "initials") {
       if (adopted[f.type]) { setImg(f, fe, adopted[f.type], "reuse"); advance(); return; }
       curField = f; openSig(f.type);
@@ -934,9 +951,14 @@
   }
 
   // Inline overlay input positioned exactly over the field rect — replaces prompt().
+  var activeOvl = null;   // the one open inline editor: { f, input, close(keep), commit(explicit) }
+  var submitting = false;   // Finish & Sign request in flight (or done): fields are frozen
   function openOverlay(f, fe, opt) {
-    // tear down any existing overlay first
-    document.querySelectorAll(".field .ovl").forEach(function (n) { n.remove(); });
+    if (activeOvl) {
+      if (activeOvl.f === f) { activeOvl.input.focus(); return; }   // already editing this field
+      // moving to another field: keep what was typed in this one (a bad email/date stays open)
+      if (!activeOvl.commit(false)) return;
+    }
     var multiline = opt.type === "multiline";
     var input = document.createElement(multiline ? "textarea" : "input");
     input.className = "ovl"; input.value = values[f.id] != null ? values[f.id] : defaultFor(f);
@@ -956,26 +978,68 @@
       cal.addEventListener("input", function () { input.value = cal.value; });
     }
 
-    function commit() {
+    var prevVal = values[f.id], prevMeta = fieldMeta[f.id], closed = false;
+    function badFormat(v) {
+      if (opt.type === "email" && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) return "Enter a valid email address";
+      if (opt.type === "date" && v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) return "Use date format YYYY-MM-DD";
+      return "";
+    }
+    function restorePrev() {
+      if (prevVal != null) { values[f.id] = prevVal; fieldMeta[f.id] = prevMeta; }
+      else { delete values[f.id]; delete fieldMeta[f.id]; }
+    }
+    // Live-save: what the signer typed counts the moment it is valid, even if the input never
+    // blurs (iOS Safari doesn't blur it when a button is tapped) and Enter is never pressed.
+    // An empty or not-yet-valid entry counts as no value (Esc still restores the old one). It is
+    // stored as "" rather than dropped: the server only updates keys it is sent, so an omitted key
+    // would keep a sender pre-fill the signer cleared on screen — and seal it.
+    function liveSave() {
       var v = (input.value || "").trim();
-      if (opt.type === "email" && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { toast("Enter a valid email address", "err"); input.focus(); return false; }
-      if (opt.type === "date" && v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) { toast("Use date format YYYY-MM-DD", "err"); input.focus(); return false; }
-      if (isRequired(f) && !v) { toast("This field is required", "err"); input.focus(); return false; }
-      cleanup();
-      if (v) { setVal(f, fe, v, "type"); advance(); } else { updateProgress(); }
+      values[f.id] = v && !badFormat(v) ? v : ""; recordMeta(f, "type");
+      updateProgress();
+    }
+    // keep=true: save the box (commit() has already rejected a bad format; an emptied box
+    // clears the field); keep=false (Esc): cancel back to what was there before.
+    function close(keep) {
+      if (closed) return;
+      closed = true; activeOvl = null;
+      input.remove(); if (cal) cal.remove(); document.removeEventListener("keydown", onKey, true);
+      var v = (input.value || "").trim();
+      if (keep && v && !badFormat(v)) { setVal(f, fe, v, "type"); advance(); return; }
+      if (keep && !v) {
+        values[f.id] = ""; recordMeta(f, "type");   // "" (not delete): see liveSave
+        fe.classList.remove("done"); var s = fe.querySelector(".val"); if (s) s.remove();
+      } else restorePrev();
+      updateProgress();
+    }
+    // explicit=true (Enter): an empty required field or a bad format keeps the editor open.
+    // related = where focus went (blur only): never pull focus back out of a dialog (signature,
+    // decline, …) — the signer's typing would land in this hidden box.
+    function commit(explicit, related) {
+      if (closed) return true;   // Chrome fires blur on the input as close() removes it
+      var v = (input.value || "").trim(), bad = badFormat(v);
+      if (bad) {
+        toast(bad, "err");
+        if (!(related && related.closest && related.closest("[role=dialog]"))) input.focus();
+        return false;
+      }
+      if (!v && explicit && isRequired(f)) { toast("This field is required", "err"); input.focus(); return false; }
+      close(true);
       return true;
     }
-    function cleanup() { input.remove(); if (cal) cal.remove(); document.removeEventListener("keydown", onKey, true); }
     function onKey(ev) {
-      if (ev.key === "Escape") { ev.preventDefault(); cleanup(); }
-      else if (ev.key === "Enter" && !multiline) { ev.preventDefault(); commit(); }
+      if (ev.key === "Escape") { ev.preventDefault(); close(false); }
+      else if (ev.key === "Enter" && !multiline) { ev.preventDefault(); commit(true); }
     }
-    // Commit on blur, but never when focus is moving between the input and its own
-    // date-picker companion. FocusEvent.relatedTarget tells us the next focus target
-    // synchronously — no fragile setTimeout/activeElement timing race (L-35).
-    input.addEventListener("blur", function (ev) { if (ev.relatedTarget !== cal) commit(); });
-    if (cal) cal.addEventListener("blur", function (ev) { if (ev.relatedTarget !== input) commit(); });
+    input.addEventListener("input", liveSave);
+    if (cal) cal.addEventListener("input", liveSave);
+    // Commit on blur — unless focus is just moving between the input and its own date-picker
+    // companion. (relatedTarget is null when focus goes nowhere, e.g. a tap on the page or on
+    // a Safari button, so a bare `relatedTarget !== cal` skipped the commit when cal is null.)
+    input.addEventListener("blur", function (ev) { if (!cal || ev.relatedTarget !== cal) commit(false, ev.relatedTarget); });
+    if (cal) cal.addEventListener("blur", function (ev) { if (ev.relatedTarget !== input) commit(false, ev.relatedTarget); });
     document.addEventListener("keydown", onKey, true);
+    activeOvl = { f: f, input: input, close: close, commit: commit };
 
     fe.appendChild(input);
     if (cal) fe.appendChild(cal);
@@ -1298,16 +1362,22 @@
 
   /* ---------------- finish & sign ---------------- */
   async function finish() {
+    if (submitting) return;
     if (DATA.consent_required && !consentGiven) { openConsent(); return; }
+    // Close an open text box first so exactly what it shows is what gets signed — a bad
+    // email/date (or an emptied required box) stops here instead of sending the old value.
+    if (activeOvl && !activeOvl.commit(true)) return;
     var miss = nextUnfilled();
     if (miss) { toast("Please complete all required fields first.", "err"); focusField(miss); return; }
     var btn = $("actionBtn"); btn.disabled = true; var prev = btn.innerHTML; btn.textContent = "Signing…";
+    submitting = true;   // nothing may edit values or re-enable the button while this is in flight
     var body = { values: values, consent: true, field_meta: fieldMeta };
     var r;
     try { r = await fetch("/api/sign/token/" + token + "/submit", json(body)).then(function (x) { return x.json(); }); }
     catch (e) { r = null; }
     if (r && r.ok) { completed = !!r.completed; showDone(false); }
     else {
+      submitting = false;
       btn.disabled = false; btn.innerHTML = prev;
       var em = r && r.error || "Could not submit your signature.";
       if (/consent/i.test(em)) { toast("Please accept the electronic-records disclosure first.", "err"); openConsent(); }
@@ -1365,6 +1435,18 @@
     var p = $("pad");
     p.addEventListener("mousedown", dStart); p.addEventListener("mousemove", dMove); window.addEventListener("mouseup", dEnd);
     p.addEventListener("touchstart", dStart, { passive: false }); p.addEventListener("touchmove", dMove, { passive: false }); p.addEventListener("touchend", dEnd);
+
+    // Pressing Next / Finish must not pull focus out of an open text box: the blur would
+    // close the box and redraw this button mid-tap, and iOS Safari then swallows the click
+    // (first tap on "Finish & Sign" did nothing). The typed value is already live-saved.
+    $("actionBtn").addEventListener("mousedown", function (ev) { ev.preventDefault(); });
+    // A tap on blank page closes the open text box everywhere (iOS doesn't blur an input for a
+    // tap on non-focusable content). Controls and fields handle their own taps, so leave those.
+    document.addEventListener("pointerdown", function (ev) {
+      if (!activeOvl || !ev.target.closest) return;
+      if (ev.target.closest(".field, button, a, input, textarea, select, label, [role=dialog]")) return;
+      activeOvl.input.blur();
+    });
 
     // sig modal tabs + buttons
     document.querySelectorAll("#sigOverlay .tabs button").forEach(function (b) { b.addEventListener("click", function () { sigTab(b.dataset.tab); }); });

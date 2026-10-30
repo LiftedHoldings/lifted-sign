@@ -4,6 +4,21 @@ All notable changes to Lifted Sign are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Signer page: text typed into a field now sticks without pressing Enter. It is saved on
+  tap/click away, on Next, and on Finish & Sign.
+  - Previously the box only saved on Enter. Clicking or tapping away (or tapping a button on
+    iOS Safari) left the field empty with "This field is required".
+  - Typing a space, or Enter in a multi-line box, reopened the field and wiped the text.
+  - The first Finish & Sign tap on iPhone could do nothing.
+- Signer page: what the signer sees is what gets signed.
+  - Finish & Sign commits the open box first and locks the page while the request is in flight.
+  - Clearing a sender pre-filled value clears it in the sealed PDF too.
+  - A bad email or date stops with an error instead of submitting the old value.
+
 ## [0.1.0] — 2026-07-16
 
 Initial public release.
