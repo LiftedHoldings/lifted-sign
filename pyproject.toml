@@ -16,7 +16,7 @@ dependencies = [
     "cryptography>=42",       # Fernet at-rest encryption + self-signed cert generation
     # --- PDF engine (all permissive-licensed; no AGPL PyMuPDF) ---
     "reportlab>=4.5",         # BSD — text/graphics stamping
-    "pypdf>=4.0",             # BSD — page ops
+    "pypdf>=4.0,<8",          # BSD — page ops (7.x verified; review 8.x before lifting)
     "pikepdf>=9.0",           # MPL-2.0 — low-level PDF ops
     "pypdfium2>=4",           # BSD/Apache — page rasterization
     "pdfplumber>=0.11",       # MIT — text-span extraction for anchor field placement

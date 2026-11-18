@@ -7,6 +7,7 @@ All notable changes to Lifted Sign are documented here. The format is based on
 ## [Unreleased]
 
 ### Fixed
+- Stamping works on pypdf 7. `pdf_stamp._merge_overlays` merged each overlay onto a page still owned by its `PdfReader`; pypdf 7.0 removed that, so every signature submit, finalize/seal and add/edit text raised `DeprecationError`. Pages are now attached to the writer before merging. `pypdf` is capped `<8`.
 
 - Signer page: text typed into a field now sticks without pressing Enter. It is saved on
   tap/click away, on Next, and on Finish & Sign.

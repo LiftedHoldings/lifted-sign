@@ -484,7 +484,11 @@ def _merge_overlays(data: bytes, page_draw: dict[int, list]) -> bytes:
     CTM. Pages without draws pass through untouched. Returns the new PDF bytes."""
     reader = PdfReader(io.BytesIO(data))
     writer = PdfWriter()
-    for i, pg in enumerate(reader.pages):
+    for i, src in enumerate(reader.pages):
+        # Attach the page to the writer BEFORE merging: pypdf 7 removed merging onto a page
+        # that is still owned by its reader ("replace_contents() for pages not assigned to a
+        # writer"). add_page returns the writer's copy; merge onto that.
+        pg = writer.add_page(src)
         draws = page_draw.get(i)
         if draws:
             vw, vh, rot, w0, h0 = _visual_dims(pg)
@@ -497,7 +501,6 @@ def _merge_overlays(data: bytes, page_draw: dict[int, list]) -> bytes:
             buf.seek(0)
             ov = PdfReader(buf).pages[0]
             pg.merge_transformed_page(ov, _ctm(rot, w0, h0))
-        writer.add_page(pg)
     out = io.BytesIO()
     writer.write(out)
     return out.getvalue()
